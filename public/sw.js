@@ -1,7 +1,7 @@
 // public/sw.js
 // Dynamic cache versioning: Increment this version number when deploying to invalidate old caches
 // The service worker file itself will be updated on deployment, triggering a new install
-const CACHE_VERSION = '2'; // Increment this on each deployment to invalidate old caches
+const CACHE_VERSION = '3'; // Increment this on each deployment to invalidate old caches
 const CACHE_NAME = `offline-chatbot-cache-v${CACHE_VERSION}`;
 
 // Static assets to pre-cache (excluding HTML pages for network-first strategy)
@@ -52,6 +52,15 @@ function isHTMLRequest(request) {
 // Fetch event: network-first for HTML, cache-first for static assets
 self.addEventListener('fetch', (event) => {
   const request = event.request;
+
+  // Only handle this app's own GET requests for pages and static files.
+  // API calls (our /api routes, and Supabase on its own host) always go
+  // straight to the network, so a failed call can never be answered with
+  // the cached offline page.
+  const url = new URL(request.url);
+  if (request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) {
+    return;
+  }
   const isHTML = isHTMLRequest(request);
 
   // Network-first strategy for HTML pages
