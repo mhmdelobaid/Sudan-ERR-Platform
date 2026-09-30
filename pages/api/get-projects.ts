@@ -1,6 +1,6 @@
 // /pages/api/get-projects.ts
 import { NextApiRequest, NextApiResponse } from "next";
-import { newSupabase } from "../../services/newSupabaseClient";
+import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
 import { validateSession } from "../../services/auth";
 
 export default async function handler(
@@ -25,6 +25,8 @@ export default async function handler(
 
         // Validate session and get user data
         const user = await validateSession(authHeader.replace('Bearer ', ''));
+        // Query as the signed-in user so the database access rules (roles, rooms, states) apply
+        const db = createAuthenticatedClient(authHeader.replace('Bearer ', ''));
         if (!user) {
             return res
                 .status(401)
@@ -33,7 +35,7 @@ export default async function handler(
 
         const { includeDrafts } = req.query; // Optional query parameter
 
-        const query = newSupabase
+        const query = db
             .from("err_projects")
             .select("id, project_objectives, state, locality, err_id")
             .eq("err_id", user.err_id)
