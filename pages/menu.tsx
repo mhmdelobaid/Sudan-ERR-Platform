@@ -661,36 +661,10 @@ const Menu = () => {
                 </MessageBubble>
             )}
 
-            {/* Feedback Menu */}
-            {currentMenu === CurrentMenu.FEEDBACK && (
-                <>
-                    <MessageBubble
-                        text={t('feedbackInstructions')}
-                        timestamp={getCurrentTimestamp()}
-                        fullWidth
-                    />
-                    <div className="grid grid-cols-1 space-y-2">
-                        <Button
-                            text={t('appFeedback')}
-                            onClick={() => setCurrentMenu(CurrentMenu.FEEDBACK)}
-                            className="w-full"
-                        />
-                        <Button
-                            text={t('returnToMainMenu')}
-                            onClick={() => handleMenuSelection(CurrentMenu.MAIN)}
-                            className="w-full"
-                        />
-                    </div>
-                </>
-            )}
-
-            {/* Feedback Form */}
+            {/* Feedback & support tickets (the form has its own type choice and "return to menu") */}
             {currentMenu === CurrentMenu.FEEDBACK && (
                 <MessageBubble>
-                    <FeedbackForm onReturnToMenu={() => {
-                        console.log('Menu component: Returning to main menu');  // Debug log
-                        handleMenuSelection(CurrentMenu.MAIN);  // Make sure we're using this
-                    }} />
+                    <FeedbackForm onReturnToMenu={() => handleMenuSelection(CurrentMenu.MAIN)} />
                 </MessageBubble>
             )}
 
