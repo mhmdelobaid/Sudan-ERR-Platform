@@ -26,7 +26,7 @@ const ResetPassword = () => {
 
         try {
             const { error } = await newSupabase.auth.resetPasswordForEmail(email, {
-                redirectTo: 'https://sudan-err-bot.vercel.app/update-password'
+                redirectTo: `${window.location.origin}/update-password`
             });
 
             if (error) {

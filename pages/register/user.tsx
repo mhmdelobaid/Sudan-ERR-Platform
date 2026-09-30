@@ -116,7 +116,7 @@ const UserRegistration = () => {
                 email,
                 password,
                 options: {
-                    emailRedirectTo: 'https://sudan-err-bot.vercel.app/login'
+                    emailRedirectTo: `${window.location.origin}/login`
                 }
             });
 
