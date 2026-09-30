@@ -11,7 +11,7 @@ import ProjectApplication from '../components/forms/NewProjectForm/NewProjectFor
 import ProjectStatus from './project-status';
 import FeedbackForm from '../components/forms/FeedbackForm'; // Correct import path
 import ScanPrefillForm from '../pages/scan-prefill-form';
-const LogoImage = '/icons/icon-512x512.png'; 
+const LogoImage = '/brand/err-logo.png'; 
 import Project from '../components/forms/NewProjectForm/Project';
 import ProgramReportForm from '../components/forms/ProgramReportForm/ReportingForm';
 import ProjectDrafts from '../components/forms/NewProjectForm/ProjectDrafts';

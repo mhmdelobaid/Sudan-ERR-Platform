@@ -9,7 +9,7 @@ import Button from '../components/ui/Button';
 import OfflineForm from '../components/forms/OfflineForm';
 import { newSupabase } from '../services/newSupabaseClient';
 import Link from 'next/link';
-const LogoImage = '/icons/icon-512x512.png';
+const LogoImage = '/brand/err-logo.png';
 import i18n from '../services/i18n'; 
 
 /**
