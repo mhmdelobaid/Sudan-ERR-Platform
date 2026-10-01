@@ -1,7 +1,7 @@
 // public/sw.js
 // Dynamic cache versioning: Increment this version number when deploying to invalidate old caches
 // The service worker file itself will be updated on deployment, triggering a new install
-const CACHE_VERSION = '3'; // Increment this on each deployment to invalidate old caches
+const CACHE_VERSION = '4'; // Increment this on each deployment to invalidate old caches
 const CACHE_NAME = `offline-chatbot-cache-v${CACHE_VERSION}`;
 
 // Static assets to pre-cache (excluding HTML pages for network-first strategy)
@@ -66,14 +66,10 @@ self.addEventListener('fetch', (event) => {
   // Network-first strategy for HTML pages
   if (isHTML) {
     event.respondWith(
+      // Whatever the server answers is passed on as it is (don't cache HTML): a page, an error page,
+      // or a redirect such as a login page in front of a test site. The offline page is only for
+      // when there is no network at all (fetch throws).
       fetch(request)
-        .then((networkResponse) => {
-          // If network request succeeds, return it (don't cache HTML)
-          if (networkResponse && networkResponse.status === 200) {
-            return networkResponse;
-          }
-          throw new Error('Network response not ok');
-        })
         .catch(() => {
           // If offline, try to serve from cache
           console.log('Network request failed, trying cache for:', request.url);
