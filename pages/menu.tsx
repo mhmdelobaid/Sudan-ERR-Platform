@@ -406,6 +406,7 @@ const Menu = () => {
                     <div className="grid grid-cols-1 space-y-3">
                         <Button text={t('projects')} onClick={() => handleMenuSelection(CurrentMenu.PROJECTS)} />
                         <Button text={t('reporting')} onClick={() => handleMenuSelection(CurrentMenu.REPORTING)} className="w-full" />
+                        <Button text={t('dashboard')} onClick={() => router.push('/dashboard')} className="w-full" />
                         <Button text={t('feedback')} onClick={() => setCurrentMenu(CurrentMenu.FEEDBACK)} className="w-full" />
                         <Button text={t('exitChat')} onClick={() => router.push('/login')} className="w-full" />
                     </div>
