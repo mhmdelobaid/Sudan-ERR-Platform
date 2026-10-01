@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { newSupabase } from '../../services/newSupabaseClient';
 import { validateSession } from '../../services/auth';
 import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
+import { getAllocationTotals } from '../../services/fundingTotals';
 
 /**
  * Funding Pool API
@@ -96,34 +97,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const allocated = latestAllocations.reduce((sum, a) => sum + Number(a.amount || 0), 0);
         const allocationIds = latestAllocations.map(a => a.id);
 
+        // State-wide totals, the same for every role (see services/fundingTotals.ts)
         let committed = 0;
         let pending = 0;
-        if (allocationIds.length > 0) {
-            const { data: projects, error: projectsError } = await authenticatedClient
-                .from('err_projects')
-                .select('cycle_state_allocation_id, status, funding_status, expenses')
-                .in('cycle_state_allocation_id', allocationIds);
-
-            if (projectsError) {
-                return res.status(500).json({ success: false, message: 'Failed to fetch project totals', error: projectsError.message });
+        try {
+            const totals = await getAllocationTotals(authenticatedClient, allocationIds);
+            for (const t of Object.values(totals)) {
+                committed += t.committed;
+                pending += t.pending;
             }
-
-            const sumExpenses = (expenses: any): number => {
-                if (!expenses) return 0;
-                try {
-                    const arr = Array.isArray(expenses) ? expenses : typeof expenses === 'string' ? JSON.parse(expenses) : [];
-                    if (!Array.isArray(arr)) return 0;
-                    return arr.reduce((sum, e) => sum + Number(e?.total_cost || 0), 0);
-                } catch {
-                    return 0;
-                }
-            };
-
-            projects?.forEach(p => {
-                const amount = sumExpenses(p.expenses);
-                if (p.status === 'approved' && p.funding_status === 'committed') committed += amount;
-                else if (p.status === 'pending' && p.funding_status === 'allocated') pending += amount;
-            });
+        } catch (e: any) {
+            return res.status(500).json({ success: false, message: 'Failed to fetch project totals', error: e.message });
         }
 
         const remaining = Number(allocated) - Number(committed) - Number(pending);
