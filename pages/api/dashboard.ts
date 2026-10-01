@@ -65,6 +65,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 : await fetchByIds(db, 'err_projects', select, 'err_id', scope.roomIds, q => q.eq('is_draft', false));
         }
 
+        // F-1 work plans started but not yet submitted (drafts): counted only, never in totals or budgets
+        let drafts = 0;
+        if (scope.all) {
+            const { count } = await db.from('err_projects').select('id', { count: 'exact', head: true }).eq('is_draft', true);
+            drafts = count || 0;
+        } else {
+            for (let i = 0; i < scope.roomIds.length; i += CHUNK) {
+                const { count } = await db.from('err_projects').select('id', { count: 'exact', head: true })
+                    .eq('is_draft', true).in('err_id', scope.roomIds.slice(i, i + CHUNK));
+                drafts += count || 0;
+            }
+        }
+
         // State of each project comes from its room (err_projects.state may be Arabic or English)
         const rooms = await getRoomNames(db, projects.map(p => String(p.err_id || '')));
         const stateOf = (p: any) => rooms[String(p.err_id)]?.state || p.state || 'Unknown';
@@ -149,6 +162,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             funding,
             projects: {
                 total: projects.length,
+                drafts,
                 byStatus,
                 byState: Object.entries(byState).map(([state, counts]) => ({ state, total: Object.values(counts).reduce((a, b) => a + b, 0), counts }))
                     .sort((a, b) => b.total - a.total),

@@ -14,6 +14,7 @@ const STATUS_ORDER = ['pending', 'feedback', 'approved', 'active', 'completed', 
 // Checked with the dataviz palette validator: colour-blind and normal-vision separation pass. The two light steps are
 // under 3:1 on white, so every stage also shows its name and count as text (never colour alone).
 const STAGE: Record<string, { color: string; form: string }> = {
+    draft: { color: '#C3C9D3', form: 'F-1' },
     pending: { color: '#F9A778', form: 'F-2' },
     feedback: { color: '#D46A2C', form: 'F-2' },
     approved: { color: '#9BB0D4', form: 'F-3' },
@@ -32,7 +33,7 @@ interface DashboardData {
     scope: 'all' | 'states' | 'room';
     states: string[];
     funding: Pool[];
-    projects: { total: number; byStatus: Record<string, number>; byState: { state: string; total: number; counts: Record<string, number> }[] };
+    projects: { total: number; drafts?: number; byStatus: Record<string, number>; byState: { state: string; total: number; counts: Record<string, number> }[] };
     budgets: Budget[];
     people: { individuals: number; households: number; male: number; female: number; under18_male: number; under18_female: number; reports: number; projects_reported: number };
     generated_at: string;
@@ -92,20 +93,24 @@ function Legend({ items }: { items: { label: string; color: string; border?: boo
 }
 
 /** F-System pipeline: one card per stage, in workflow order, with its count, share and form step. */
-function Pipeline({ statuses, counts, total, label, stepLabel, isAr }: {
-    statuses: string[]; counts: Record<string, number>; total: number;
+function Pipeline({ statuses, counts, drafts, total, label, stepLabel, isAr }: {
+    statuses: string[]; counts: Record<string, number>; drafts: number; total: number;
     label: (s: string) => string; stepLabel: (s: string) => string; isAr: boolean;
 }) {
-    const flow = statuses.filter(s => s !== 'rejected');
+    // F-1 drafts lead the flow; they are not submitted yet, so they have no share of the total
+    const flow = ['draft', ...statuses.filter(s => s !== 'rejected' && s !== 'draft')];
+    const countOf = (s: string) => (s === 'draft' ? drafts : counts[s] || 0);
     return (
-        <ol className="flex flex-col md:flex-row md:items-stretch gap-2 md:gap-0" aria-label={label('pipeline')}>
+        <ol className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4" aria-label={label('pipeline')}>
             {flow.map((s, i) => {
-                const n = counts[s] || 0;
+                const n = countOf(s);
+                const isDraft = s === 'draft';
                 const share = total > 0 ? Math.round((n / total) * 100) : 0;
+                const arrow = i < flow.length - 1 && i % 3 !== 2;   // arrows inside each row of three (wide screens)
                 return (
-                    <li key={s} className="flex md:flex-1 items-stretch md:items-center min-w-0">
-                        <div className="flex-1 min-w-0 bg-white rounded-lg border border-gray-200 overflow-hidden flex md:flex-col"
-                             title={`${label(s)}: ${n} (${share}%)`}>
+                    <li key={s} className="relative min-w-0">
+                        <div className={`h-full min-w-0 rounded-lg border overflow-hidden flex md:flex-col ${isDraft ? 'bg-gray-50 border-dashed border-gray-300' : 'bg-white border-gray-200'}`}
+                             title={isDraft ? `${label(s)}: ${n}` : `${label(s)}: ${n} (${share}%)`}>
                             <div className="w-1.5 md:w-auto md:h-1.5 shrink-0" style={{ background: STAGE[s]?.color || C.muted }} />
                             <div className="flex-1 flex md:flex-col items-center md:items-start justify-between gap-2 px-3 py-2 min-w-0">
                                 <div className="min-w-0">
@@ -114,12 +119,12 @@ function Pipeline({ statuses, counts, total, label, stepLabel, isAr }: {
                                 </div>
                                 <div className="text-end md:text-start shrink-0">
                                     <span className="text-2xl font-bold text-gray-900 leading-none"><bdi>{fmt(n)}</bdi></span>
-                                    <span className="text-xs text-gray-500 ms-1"><bdi>{share}%</bdi></span>
+                                    {!isDraft && <span className="text-xs text-gray-500 ms-1"><bdi>{share}%</bdi></span>}
                                 </div>
                             </div>
                         </div>
-                        {i < flow.length - 1 && (
-                            <span aria-hidden="true" className="hidden md:flex items-center px-1 text-brand-orange font-bold">{isAr ? '←' : '→'}</span>
+                        {arrow && (
+                            <span aria-hidden="true" className="hidden md:block absolute top-1/2 -translate-y-1/2 -end-[14px] text-brand-orange font-bold leading-none">{isAr ? '←' : '→'}</span>
                         )}
                     </li>
                 );
@@ -271,7 +276,7 @@ export default function Dashboard() {
                         <Section title={t('projects.title')} subtitle={t('projects.subtitle')}>
                             {data.projects.total === 0 ? <p className="text-sm text-gray-500">{t('empty')}</p> : (
                                 <>
-                                    <Pipeline statuses={statuses} counts={data.projects.byStatus} total={data.projects.total} isAr={isAr}
+                                    <Pipeline statuses={statuses} counts={data.projects.byStatus} drafts={data.projects.drafts || 0} total={data.projects.total} isAr={isAr}
                                         label={s => s === 'pipeline' ? t('projects.title') : statusLabel(s)}
                                         stepLabel={s => t(`stage.${s}`, { defaultValue: STAGE[s]?.form || '' })} />
                                     {(data.projects.byStatus.rejected || 0) > 0 && (

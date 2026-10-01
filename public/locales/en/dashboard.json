@@ -30,7 +30,7 @@
     "title": "Projects by status",
     "byState": "Projects by state",
     "count": "projects",
-    "subtitle": "Where every request is in the F-System, from review to final report.",
+    "subtitle": "Where every work plan is in the F-System, from the F-1 draft to the F-5 final report.",
     "showAll": "Show all {{count}} states",
     "showFewer": "Show fewer states"
   },
@@ -41,7 +41,8 @@
     "active": "Running",
     "completed": "Completed",
     "rejected": "Rejected",
-    "unknown": "Not set"
+    "unknown": "Not set",
+    "draft": "Drafts"
   },
   "budgets": {
     "title": "Planned budgets",
@@ -71,6 +72,7 @@
     "approved": "F-3 · contract, transfer due",
     "active": "F-4 · spending and reporting",
     "completed": "F-5 · final report in",
-    "rejected": "F-2 · not approved"
+    "rejected": "F-2 · not approved",
+    "draft": "F-1 · work plan not submitted yet"
   }
 }
