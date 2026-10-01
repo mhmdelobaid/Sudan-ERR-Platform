@@ -302,6 +302,9 @@ const Menu = () => {
         setCurrentProjectDraft(null);
     };
 
+    // A report form, the scanner or the drafts list is open: hide the report-type buttons
+    const reportWorkflowOpen = showFillForm || showScanForm || showScanCustomForm || showProgramForm || showScanPrefillForm || showFinancialDrafts;
+
     // Menu selection handler
     const handleMenuSelection = (menu: CurrentMenu) => {
         resetFormStates(); // Reset all form states first
@@ -466,7 +469,7 @@ const Menu = () => {
             )}
 
             {/* Reporting Menu for Selected Project */}
-            {currentMenu === CurrentMenu.REPORTING && selectedProject && (
+            {currentMenu === CurrentMenu.REPORTING && selectedProject && !reportWorkflowOpen && (
                 <>
                     <MessageBubble text={t('selectReportType')} />
                     <div className="grid grid-cols-1 gap-2">
@@ -519,6 +522,13 @@ const Menu = () => {
                         />
                     </div>
                 </>
+            )}
+
+            {/* While a report form, the scanner or the drafts list is open: one way back to the report types */}
+            {currentMenu === CurrentMenu.REPORTING && selectedProject && reportWorkflowOpen && (
+                <div className="mb-2">
+                    <Button text={t('backToReportTypes')} onClick={() => resetFormStates()} className="w-full" />
+                </div>
             )}
 
             {/* Other workflows */}
@@ -777,16 +787,6 @@ const Menu = () => {
                         />
                     </div>
 
-                    {/* Single Return to Menu button */}
-                    <Button
-                        text={t('returnToMenu')}
-                        onClick={() => {
-                            resetFormStates();
-                            setSelectedProject(null);
-                            handleMenuSelection(CurrentMenu.REPORTING);
-                        }}
-                        className="w-full mt-4"
-                    />
                 </div>
             )}
         </ChatContainer>

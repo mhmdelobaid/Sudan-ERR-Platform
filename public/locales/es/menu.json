@@ -20,5 +20,6 @@
   "feedback": "Retroalimentación",
   "feedbackInstructions": "Por favor selecciona una opción para retroalimentación.",
   "appFeedback": "Retroalimentación de la aplicación",
-  "dashboard": "Panel"
+  "dashboard": "Panel",
+  "backToReportTypes": "Volver a los tipos de informe"
 }

@@ -32,5 +32,6 @@
     "newReport": "بدء تقرير برنامج جديد"
   },
   "returnToMenu": "العودة إلى القائمة",
-  "dashboard": "لوحة المعلومات"
+  "dashboard": "لوحة المعلومات",
+  "backToReportTypes": "العودة إلى أنواع التقارير"
 }

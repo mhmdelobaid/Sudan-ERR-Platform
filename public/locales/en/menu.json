@@ -32,5 +32,6 @@
     "newReport": "Start New Program Report"
   },
   "returnToMenu": "Return to Menu",
-  "dashboard": "Dashboard"
+  "dashboard": "Dashboard",
+  "backToReportTypes": "Back to report types"
 }
