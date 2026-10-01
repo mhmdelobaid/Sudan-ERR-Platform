@@ -139,5 +139,12 @@
     "yourState": "Your state"
   },
   "grantCall": "Grant Call",
-  "availableAmount": "Available Amount"
+  "availableAmount": "Available Amount",
+  "currency": {
+    "label": "Currency",
+    "usd": "US dollar (USD)",
+    "sdg": "Sudanese pound (SDG)",
+    "hint": "Choose the currency your amounts are in. The grant balance only counts budgets in USD."
+  },
+  "totalExpenses": "Total expenses"
 }
