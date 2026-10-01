@@ -1,6 +1,7 @@
 // /pages/api/get-projects.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
+import { getAccessScope, getRoomNames } from '../../services/accessScope';
 import { validateSession } from "../../services/auth";
 
 export default async function handler(
@@ -35,12 +36,19 @@ export default async function handler(
 
         const { includeDrafts } = req.query; // Optional query parameter
 
+        // Every project this user may see: own room (base), whole state (state ERR),
+        // visible states (admin/support), everything (superadmin)
+        const scope = await getAccessScope(db, user.id);
+        if (!scope.all && scope.roomIds.length === 0) {
+            return res.status(200).json({ success: true, projects: [] });
+        }
+
         const query = db
             .from("err_projects")
             .select("id, project_objectives, state, locality, err_id")
-            .eq("err_id", user.err_id)
             .eq("is_draft", false)
             .eq("status", "active");
+        if (!scope.all) query.in("err_id", scope.roomIds);
 
         // Only include non-draft projects unless specifically requested
         if (!includeDrafts) {
@@ -59,7 +67,15 @@ export default async function handler(
                 .json({ success: false, message: "Failed to fetch projects" });
         }
 
-        return res.status(200).json({ success: true, projects });
+        // Say which room each project belongs to (shown when it isn't the user's own room)
+        const rooms = await getRoomNames(db, (projects || []).map((p: any) => String(p.err_id || '')));
+        const withRooms = (projects || []).map((p: any) => ({
+            ...p,
+            is_own_room: String(p.err_id) === scope.ownRoomId,
+            room: rooms[String(p.err_id)] || null,
+        }));
+
+        return res.status(200).json({ success: true, projects: withRooms });
     } catch (error: any) {
         console.error("Unexpected error in get-projects:", error.message);
         return res

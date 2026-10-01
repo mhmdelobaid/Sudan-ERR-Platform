@@ -135,7 +135,8 @@
     "donor": "Donor",
     "availableAmount": "Available Amount",
     "period": "Application Period",
-    "selectCall": "Select This Call"
+    "selectCall": "Select This Call",
+    "yourState": "Your state"
   },
   "grantCall": "Grant Call",
   "availableAmount": "Available Amount"

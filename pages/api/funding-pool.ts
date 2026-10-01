@@ -1,13 +1,17 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { newSupabase } from '../../services/newSupabaseClient';
 import { validateSession } from '../../services/auth';
 import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
 import { getAllocationTotals } from '../../services/fundingTotals';
+import { getAccessScope } from '../../services/accessScope';
 
 /**
  * Funding Pool API
- * Aggregates Allocated, Committed, Pending, Remaining across ALL open cycles for the user's state.
+ * Allocated, Committed, Pending and Remaining across ALL open cycles, one entry per state the user may see:
+ * their own state (base / state ERR), their visible states (admin / support), or every state (superadmin).
+ * The top-level fields keep the user's own state's figures.
  */
+interface StatePool { state: string; allocated: number; committed: number; pending: number; remaining: number; is_own_state: boolean }
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
         const authHeader = req.headers.authorization;
@@ -26,96 +30,79 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(405).json({ success: false, message: 'Method not allowed' });
         }
 
-        // Create an authenticated client for database queries
-        const authenticatedClient = createAuthenticatedClient(accessToken);
+        const db = createAuthenticatedClient(accessToken);
 
-        // Get user's state via relationships
-        const { data: userStateData, error: userStateError } = await authenticatedClient
-            .from('users')
-            .select(`
-                emergency_rooms!inner (
-                    states!inner (
-                        state_name
-                    )
-                )
-            `)
-            .eq('id', user.id)
-            .single();
-
-        if (userStateError || !userStateData) {
-            return res.status(500).json({ success: false, message: 'Failed to fetch user state', error: userStateError?.message });
-        }
-
-        let userState: string | null = null;
+        let scope;
         try {
-            const emergencyRooms: any = userStateData.emergency_rooms;
-            if (emergencyRooms && emergencyRooms.states) {
-                userState = emergencyRooms.states.state_name;
-            }
+            scope = await getAccessScope(db, user.id);
         } catch (e: any) {
-            return res.status(500).json({ success: false, message: 'Error extracting user state', error: e.message });
+            return res.status(500).json({ success: false, message: 'Failed to fetch user state', error: e.message });
         }
+        const userState = scope.ownState;
+        const empty = { success: true, user_state: userState, allocated: 0, committed: 0, pending: 0, remaining: 0, states: [] as StatePool[] };
 
-        if (!userState) {
-            return res.status(200).json({ success: true, user_state: null, allocated: 0, committed: 0, pending: 0, remaining: 0 });
-        }
+        if (!scope.all && scope.states.length === 0) return res.status(200).json(empty);
 
         // Open cycles only
-        const { data: cycles, error: cyclesError } = await authenticatedClient
+        const { data: cycles, error: cyclesError } = await db
             .from('funding_cycles')
             .select('id')
             .eq('status', 'open');
-
         if (cyclesError) {
             return res.status(500).json({ success: false, message: 'Failed to fetch funding cycles', error: cyclesError.message });
         }
+        const cycleIds = (cycles || []).map((c: any) => c.id);
+        if (cycleIds.length === 0) return res.status(200).json(empty);
 
-        const cycleIds = (cycles || []).map(c => c.id);
-        if (cycleIds.length === 0) {
-            return res.status(200).json({ success: true, user_state: userState, allocated: 0, committed: 0, pending: 0, remaining: 0 });
-        }
-
-        // Latest allocation per cycle for user's state
-        const { data: allocations, error: allocError } = await authenticatedClient
+        // State allocations in those cycles (every state for superadmin, otherwise the user's states)
+        let allocQuery = db
             .from('cycle_state_allocations')
-            .select('id, cycle_id, amount, decision_no')
-            .in('cycle_id', cycleIds)
-            .eq('state_name', userState)
-            .order('decision_no', { ascending: false });
-
+            .select('id, cycle_id, state_name, amount, decision_no')
+            .in('cycle_id', cycleIds);
+        if (!scope.all) allocQuery = allocQuery.in('state_name', scope.states);
+        const { data: allocations, error: allocError } = await allocQuery;
         if (allocError) {
             return res.status(500).json({ success: false, message: 'Failed to fetch allocations', error: allocError.message });
         }
 
-        const latestByCycle = (allocations || []).reduce((acc: Record<string, any>, a: any) => {
-            const existing = acc[a.cycle_id];
-            if (!existing || a.decision_no > existing.decision_no) acc[a.cycle_id] = a;
-            return acc;
-        }, {});
+        // Latest decision per cycle and state
+        const latest: Record<string, any> = {};
+        (allocations || []).forEach((a: any) => {
+            const key = `${a.cycle_id}|${a.state_name}`;
+            if (!latest[key] || a.decision_no > latest[key].decision_no) latest[key] = a;
+        });
+        const latestAllocations = Object.values(latest);
 
-        const latestAllocations = Object.values(latestByCycle) as Array<{ id: string; amount: number }>;
-        const allocated = latestAllocations.reduce((sum, a) => sum + Number(a.amount || 0), 0);
-        const allocationIds = latestAllocations.map(a => a.id);
-
-        // State-wide totals, the same for every role (see services/fundingTotals.ts)
-        let committed = 0;
-        let pending = 0;
+        // State-wide committed / pending totals, the same for every role (see services/fundingTotals.ts)
+        let totals;
         try {
-            const totals = await getAllocationTotals(authenticatedClient, allocationIds);
-            for (const t of Object.values(totals)) {
-                committed += t.committed;
-                pending += t.pending;
-            }
+            totals = await getAllocationTotals(db, latestAllocations.map((a: any) => a.id));
         } catch (e: any) {
             return res.status(500).json({ success: false, message: 'Failed to fetch project totals', error: e.message });
         }
 
-        const remaining = Number(allocated) - Number(committed) - Number(pending);
+        const byState: Record<string, StatePool> = {};
+        latestAllocations.forEach((a: any) => {
+            const s = (byState[a.state_name] ||= { state: a.state_name, allocated: 0, committed: 0, pending: 0, remaining: 0, is_own_state: a.state_name === userState });
+            s.allocated += Number(a.amount || 0);
+            s.committed += totals[a.id]?.committed || 0;
+            s.pending += totals[a.id]?.pending || 0;
+        });
+        const states = Object.values(byState)
+            .map(s => ({ ...s, remaining: s.allocated - s.committed - s.pending }))
+            .sort((a, b) => (Number(b.is_own_state) - Number(a.is_own_state)) || a.state.localeCompare(b.state));
 
-        return res.status(200).json({ success: true, user_state: userState, allocated, committed, pending, remaining });
+        const own = states.find(s => s.is_own_state);
+        return res.status(200).json({
+            success: true,
+            user_state: userState,
+            allocated: own?.allocated || 0,
+            committed: own?.committed || 0,
+            pending: own?.pending || 0,
+            remaining: own?.remaining || 0,
+            states,
+        });
     } catch (error: any) {
         return res.status(500).json({ success: false, message: 'Unexpected server error', error: error.message });
     }
 }
-
-

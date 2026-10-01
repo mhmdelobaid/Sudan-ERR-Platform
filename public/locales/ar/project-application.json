@@ -143,7 +143,8 @@
     "donor": "المانح",
     "availableAmount": "المبلغ المتاح",
     "period": "فترة التقديم",
-    "selectCall": "اختر هذا النداء"
+    "selectCall": "اختر هذا النداء",
+    "yourState": "ولايتك"
   },
   "grantCall": "نداء المنحة",
   "availableAmount": "المبلغ المتاح",

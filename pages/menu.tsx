@@ -452,7 +452,9 @@ const Menu = () => {
                         {projects.map((project: any) => (
                             <Button
                                 key={project.id}
-                                text={`${project.project_objectives} (${project.locality})`}
+                                text={!project.is_own_room && project.room
+                                    ? `${project.project_objectives} — ${(i18n.language === 'ar' ? project.room.name_ar || project.room.name : project.room.name || project.room.name_ar) || project.room.err_code} (${project.locality})`
+                                    : `${project.project_objectives} (${project.locality})`}
                                 onClick={() => setSelectedProject(project)}
                                 className="w-full"
                             />
