@@ -10,6 +10,20 @@ import { newSupabase } from '../services/newSupabaseClient';
 // Chart colours: ERR blue and orange, deepened to pass colour-blind and contrast checks on white
 const C = { blue: '#3B68B8', orange: '#D46A2C', track: '#E4EAF4', ink: '#1F2937', muted: '#6B7280', line: '#E5E7EB' };
 const STATUS_ORDER = ['pending', 'feedback', 'approved', 'active', 'completed', 'rejected'];
+// F-System pipeline colours. Orange = waiting on review or changes; ERR blue light -> deep as funding moves to completion.
+// Checked with the dataviz palette validator: colour-blind and normal-vision separation pass. The two light steps are
+// under 3:1 on white, so every stage also shows its name and count as text (never colour alone).
+const STAGE: Record<string, { color: string; form: string }> = {
+    pending: { color: '#F9A778', form: 'F-2' },
+    feedback: { color: '#D46A2C', form: 'F-2' },
+    approved: { color: '#9BB0D4', form: 'F-3' },
+    active: { color: '#5D7EB3', form: 'F-4' },
+    completed: { color: '#33496D', form: 'F-5' },
+    rejected: { color: '#9CA3AF', form: 'F-2' },
+};
+// Bars per state are stacked from done to waiting, so the most advanced work sits at the start of the bar
+const STACK_ORDER = ['completed', 'active', 'approved', 'feedback', 'pending', 'rejected'];
+const STATES_SHOWN = 8;
 
 interface Pool { state: string; allocated: number; committed: number; pending: number; remaining: number; is_own_state: boolean }
 interface NamedAmount { id: string; en: string; ar: string | null; amount: number }
@@ -48,6 +62,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
     return (
         <section className="bg-white rounded-xl border border-gray-200 p-4 mb-4 break-inside-avoid">
             <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+            <span aria-hidden="true" className="block w-10 h-1 rounded-full bg-brand-orange mt-1 mb-2" />
             {subtitle && <p className="text-xs text-gray-500 mb-3">{subtitle}</p>}
             {children}
         </section>
@@ -76,12 +91,70 @@ function Legend({ items }: { items: { label: string; color: string; border?: boo
     );
 }
 
+/** F-System pipeline: one card per stage, in workflow order, with its count, share and form step. */
+function Pipeline({ statuses, counts, total, label, stepLabel, isAr }: {
+    statuses: string[]; counts: Record<string, number>; total: number;
+    label: (s: string) => string; stepLabel: (s: string) => string; isAr: boolean;
+}) {
+    const flow = statuses.filter(s => s !== 'rejected');
+    return (
+        <ol className="flex flex-col md:flex-row md:items-stretch gap-2 md:gap-0" aria-label={label('pipeline')}>
+            {flow.map((s, i) => {
+                const n = counts[s] || 0;
+                const share = total > 0 ? Math.round((n / total) * 100) : 0;
+                return (
+                    <li key={s} className="flex md:flex-1 items-stretch md:items-center min-w-0">
+                        <div className="flex-1 min-w-0 bg-white rounded-lg border border-gray-200 overflow-hidden flex md:flex-col"
+                             title={`${label(s)}: ${n} (${share}%)`}>
+                            <div className="w-1.5 md:w-auto md:h-1.5 shrink-0" style={{ background: STAGE[s]?.color || C.muted }} />
+                            <div className="flex-1 flex md:flex-col items-center md:items-start justify-between gap-2 px-3 py-2 min-w-0">
+                                <div className="min-w-0">
+                                    <div className="text-sm font-semibold text-gray-900 leading-tight">{label(s)}</div>
+                                    <div className="text-xs text-gray-500"><bdi>{stepLabel(s)}</bdi></div>
+                                </div>
+                                <div className="text-end md:text-start shrink-0">
+                                    <span className="text-2xl font-bold text-gray-900 leading-none"><bdi>{fmt(n)}</bdi></span>
+                                    <span className="text-xs text-gray-500 ms-1"><bdi>{share}%</bdi></span>
+                                </div>
+                            </div>
+                        </div>
+                        {i < flow.length - 1 && (
+                            <span aria-hidden="true" className="hidden md:flex items-center px-1 text-brand-orange font-bold">{isAr ? '←' : '→'}</span>
+                        )}
+                    </li>
+                );
+            })}
+        </ol>
+    );
+}
+
+/** One line per state: name, a bar split by stage (2px white gaps), and the total. */
+function StateStack({ label, counts, total, max, statusLabel }: {
+    label: string; counts: Record<string, number>; total: number; max: number; statusLabel: (s: string) => string;
+}) {
+    const parts = [...STACK_ORDER, ...Object.keys(counts).filter(k => !STACK_ORDER.includes(k))].filter(k => counts[k] > 0);
+    const breakdown = parts.map(k => `${statusLabel(k)} ${counts[k]}`).join(' · ');
+    return (
+        <div className="grid items-center gap-2 py-1" style={{ gridTemplateColumns: 'minmax(6.5rem, 9rem) 1fr 2.5rem' }}
+             title={`${label}: ${total} — ${breakdown}`} aria-label={`${label}: ${total}. ${breakdown}`}>
+            <div className="text-sm text-gray-800 truncate">{label}</div>
+            <div className="h-4">
+                <div className="flex h-4 rounded-e overflow-hidden gap-[2px]" style={{ width: `${max > 0 ? (total / max) * 100 : 0}%` }}>
+                    {parts.map(k => <div key={k} style={{ flex: counts[k], background: STAGE[k]?.color || C.muted }} />)}
+                </div>
+            </div>
+            <div className="text-sm font-semibold text-gray-900 text-end" dir="ltr">{fmt(total)}</div>
+        </div>
+    );
+}
+
 export default function Dashboard() {
     const { t, i18n } = useTranslation('dashboard');
     const { t: tPA } = useTranslation('projectApplication');
     const router = useRouter();
     const [data, setData] = useState<DashboardData | null>(null);
     const [error, setError] = useState('');
+    const [allStates, setAllStates] = useState(false);
     const isAr = i18n.language === 'ar';
 
     useEffect(() => {
@@ -195,21 +268,38 @@ export default function Dashboard() {
                             )}
                         </Section>
 
-                        <Section title={t('projects.title')}>
+                        <Section title={t('projects.title')} subtitle={t('projects.subtitle')}>
                             {data.projects.total === 0 ? <p className="text-sm text-gray-500">{t('empty')}</p> : (
                                 <>
-                                    {statuses.map(s => {
-                                        const max = Math.max(...statuses.map(x => data.projects.byStatus[x]));
-                                        return <BarRow key={s} label={statusLabel(s)} value={data.projects.byStatus[s]} max={max} display={fmt(data.projects.byStatus[s])} />;
-                                    })}
-                                    {data.projects.byState.length > 1 && (
-                                        <div className="mt-4">
-                                            <h3 className="font-semibold text-gray-900 mb-1">{t('projects.byState')}</h3>
-                                            {data.projects.byState.map(s => (
-                                                <BarRow key={s.state} label={stateName(s.state)} value={s.total} max={data.projects.byState[0].total} display={fmt(s.total)} />
-                                            ))}
-                                        </div>
+                                    <Pipeline statuses={statuses} counts={data.projects.byStatus} total={data.projects.total} isAr={isAr}
+                                        label={s => s === 'pipeline' ? t('projects.title') : statusLabel(s)}
+                                        stepLabel={s => t(`stage.${s}`, { defaultValue: STAGE[s]?.form || '' })} />
+                                    {(data.projects.byStatus.rejected || 0) > 0 && (
+                                        <p className="text-xs text-gray-600 mt-2">{statusLabel('rejected')}: <b dir="ltr">{fmt(data.projects.byStatus.rejected)}</b></p>
                                     )}
+
+                                    {data.projects.byState.length > 1 && (() => {
+                                        const rows = data.projects.byState;
+                                        const max = Math.max(...rows.map(r => r.total), 1);
+                                        const present = STACK_ORDER.filter(k => rows.some(r => (r.counts[k] || 0) > 0));
+                                        return (
+                                            <div className="mt-5">
+                                                <h3 className="font-semibold text-gray-900">{t('projects.byState')}</h3>
+                                                <Legend items={present.map(k => ({ label: statusLabel(k), color: STAGE[k].color }))} />
+                                                {rows.map((r, i) => (
+                                                    <div key={r.state} className={!allStates && i >= STATES_SHOWN ? 'hidden print:block' : ''}>
+                                                        <StateStack label={stateName(r.state)} counts={r.counts} total={r.total} max={max} statusLabel={statusLabel} />
+                                                    </div>
+                                                ))}
+                                                {rows.length > STATES_SHOWN && (
+                                                    <button onClick={() => setAllStates(v => !v)}
+                                                        className="no-print mt-2 text-sm font-semibold text-brand-deep underline underline-offset-2">
+                                                        {allStates ? t('projects.showFewer') : t('projects.showAll', { count: rows.length })}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
                                 </>
                             )}
                         </Section>

@@ -29,7 +29,10 @@
   "projects": {
     "title": "Projects by status",
     "byState": "Projects by state",
-    "count": "projects"
+    "count": "projects",
+    "subtitle": "Where every request is in the F-System, from review to final report.",
+    "showAll": "Show all {{count}} states",
+    "showFewer": "Show fewer states"
   },
   "status": {
     "pending": "Pending review",
@@ -61,5 +64,13 @@
     "reports": "Reports",
     "none": "No program reports yet."
   },
-  "table": "Show numbers"
+  "table": "Show numbers",
+  "stage": {
+    "pending": "F-2 · waiting for review",
+    "feedback": "F-2 · back with the room",
+    "approved": "F-3 · contract, transfer due",
+    "active": "F-4 · spending and reporting",
+    "completed": "F-5 · final report in",
+    "rejected": "F-2 · not approved"
+  }
 }
