@@ -1,7 +1,8 @@
 // pages/wg-projects.tsx
-// Working groups (LCC level): follow the projects they run across states, give the LCC-level
-// approval when they are the program lead group, follow F-4 / F-5 reports, and comment.
-// Every check and decision is made in the database (wg_* functions); this page only shows them.
+// Working groups (LCC level): follow every project that has passed F-2 (screened, approved, active,
+// completed): its F-1 lines, the reps' F-2 votes, F-4 / F-5 reports, and comment on it.
+// The LCC approval step is switched off for now (Yung, 12 Oct 2026): after F-2 a project goes
+// straight to the portal. The database decides what each member may see (wg_* functions).
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
@@ -52,14 +53,10 @@ const STATUS_CHIP: Record<string, string> = {
     approved: 'bg-green-100 text-green-900', active: 'bg-green-200 text-green-900', completed: 'bg-green-800 text-white',
     rejected: 'bg-gray-200 text-gray-800',
 };
-const LCC_CHIP: Record<LccStatus, string> = {
-    no_working_group: 'bg-gray-100 text-gray-700', waiting: 'bg-amber-100 text-amber-900',
-    approved: 'bg-emerald-100 text-emerald-900', returned: 'bg-red-100 text-red-900',
-};
 const VERDICT_CHIP: Record<Verdict, string> = {
     approve: 'bg-emerald-100 text-emerald-800', conditional: 'bg-amber-100 text-amber-800', reject: 'bg-red-100 text-red-800',
 };
-const TOPICS = ['general', 'f1', 'f2', 'lcc', 'f4', 'f5'];
+const TOPICS = ['general', 'f1', 'f2', 'f4', 'f5'];
 
 // Defined at module level so inputs inside them keep focus while typing (no remount per render)
 const Chip: React.FC<{ className: string; children: React.ReactNode }> = ({ className, children }) => (
@@ -92,14 +89,12 @@ const WgProjects: React.FC = () => {
     const errorText = (code?: string) => t(`errors.${code || 'server_error'}`, { defaultValue: t('errors.server_error') });
 
     const [auth, setAuth] = useState<'loading' | 'ok' | 'denied'>('loading');
-    const [tab, setTab] = useState<'needsDecision' | 'all'>('needsDecision');
     const [rows, setRows] = useState<ListRow[]>([]);
     const [loadingList, setLoadingList] = useState(false);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [detail, setDetail] = useState<Detail | null>(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
-    const [lccNote, setLccNote] = useState('');
     const [busy, setBusy] = useState(false);
     const [commentTopic, setCommentTopic] = useState('general');
     const [commentBody, setCommentBody] = useState('');
@@ -124,7 +119,6 @@ const WgProjects: React.FC = () => {
             const data = await res.json();
             if (!res.ok || !data.success) throw new Error(data.code);
             setRows(data.projects);
-            if (!data.projects.some((r: ListRow) => r.needs_my_decision)) setTab('all');
         } catch (e: any) {
             console.error('WG load list failed:', e);
             setMessage({ kind: 'error', text: errorText(e?.message) });
@@ -167,21 +161,6 @@ const WgProjects: React.FC = () => {
         return data;
     };
 
-    const decide = async (decision: 'approved' | 'returned') => {
-        setBusy(true); setMessage(null);
-        try {
-            await post({ action: 'decide', decision, note: lccNote });
-            setMessage({ kind: 'ok', text: t('lcc.saved') });
-            setLccNote('');
-            await loadDetail(detail!.project.id);
-        } catch (e: any) {
-            setMessage({ kind: 'error', text: errorText(e?.message) });
-        } finally {
-            setBusy(false);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    };
-
     const addComment = async () => {
         if (!commentBody.trim()) return;
         setBusy(true); setMessage(null);
@@ -196,7 +175,7 @@ const WgProjects: React.FC = () => {
         }
     };
 
-    const openProject = (id: string) => { setMessage(null); setLccNote(''); setCommentBody(''); setSelectedId(id); window.scrollTo({ top: 0 }); };
+    const openProject = (id: string) => { setMessage(null); setCommentBody(''); setSelectedId(id); window.scrollTo({ top: 0 }); };
     const closeProject = () => { setSelectedId(null); setMessage(null); loadList(); };
 
     const lineTitle = (l: Line) => {
@@ -214,21 +193,20 @@ const WgProjects: React.FC = () => {
         </div>
     );
 
-    if (auth === 'loading') return <div dir={isAr ? 'rtl' : 'ltr'} className="p-6 text-center text-gray-600">{t('loading')}</div>;
+    if (auth === 'loading') return <div dir={isAr ? 'rtl' : 'ltr'} className="text-start p-6 text-center text-gray-600">{t('loading')}</div>;
     if (auth === 'denied') {
         return (
-            <div dir={isAr ? 'rtl' : 'ltr'} className="max-w-xl mx-auto p-6 space-y-4">
+            <div dir={isAr ? 'rtl' : 'ltr'} className="text-start max-w-xl mx-auto p-6 space-y-4">
                 <div className="bg-white rounded-2xl shadow-md p-4 text-gray-700">{t('notAllowed')}</div>
                 <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
             </div>
         );
     }
 
-    const needs = rows.filter(r => r.needs_my_decision);
-    const list = tab === 'needsDecision' ? needs : rows;
+    const list = rows;
 
     return (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="min-h-screen bg-gray-100">
+        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
             <div className="max-w-3xl mx-auto p-4 pb-16 space-y-4">
                 {langSwitch}
                 <header className="bg-white rounded-2xl shadow-md p-4">
@@ -245,18 +223,10 @@ const WgProjects: React.FC = () => {
                 {/* ---------- List ---------- */}
                 {!selectedId && (
                     <>
-                        <div className="flex gap-2">
-                            {(['needsDecision', 'all'] as const).map(k => (
-                                <button key={k} onClick={() => setTab(k)}
-                                    className={`flex-1 rounded-xl py-2 text-sm font-semibold border transition ${tab === k ? 'bg-primaryGreen text-white border-primaryGreen' : 'bg-white text-gray-700 border-gray-300'}`}>
-                                    {t(`tabs.${k}`)} ({k === 'needsDecision' ? needs.length : rows.length})
-                                </button>
-                            ))}
-                        </div>
                         {loadingList ? (
                             <div className="bg-white rounded-2xl shadow-md p-4 text-gray-600">{t('loading')}</div>
                         ) : list.length === 0 ? (
-                            <div className="bg-white rounded-2xl shadow-md p-4 text-gray-600">{t(`empty.${tab}`)}</div>
+                            <div className="bg-white rounded-2xl shadow-md p-4 text-gray-600">{t('empty.all')}</div>
                         ) : (
                             <ul className="space-y-3">
                                 {list.map(r => (
@@ -270,12 +240,11 @@ const WgProjects: React.FC = () => {
                                                 </div>
                                                 <Chip className={STATUS_CHIP[r.status] || 'bg-gray-100 text-gray-700'}>{t(`status.${r.status}`, { defaultValue: r.status })}</Chip>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
-                                                <Chip className={LCC_CHIP[r.lcc_status]}>{t(`lccStatus.${r.lcc_status}`)}</Chip>
+                                            {r.groups.length > 0 && <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
                                                 {r.groups.map(g => (
                                                     <Chip key={g.id} className={g.is_program_lead ? 'bg-brand-blue text-white' : 'bg-gray-100 text-gray-700'}>{groupName(g)}</Chip>
                                                 ))}
-                                            </div>
+                                            </div>}
                                             <div className="grid grid-cols-3 gap-2 mt-3 text-sm">
                                                 <div><span className="block text-gray-500 text-xs">{t('card.budget')}</span><span className="font-bold text-primaryGreen"><bdi>{fmt(r.total_budget)} {r.currency || ''}</bdi></span></div>
                                                 <div><span className="block text-gray-500 text-xs">{t('card.reports')}</span><bdi dir="ltr">F4 {r.f4_count} · F5 {r.f5_count}</bdi></div>
@@ -303,7 +272,7 @@ const WgProjects: React.FC = () => {
                                 </div>
                                 <Chip className={STATUS_CHIP[detail.project.status] || 'bg-gray-100 text-gray-700'}>{t(`status.${detail.project.status}`, { defaultValue: detail.project.status })}</Chip>
                             </div>
-                            <div>
+                            {detail.groups.length > 0 && <div>
                                 <span className="block text-xs text-gray-500 mb-1">{t('groups.title')}</span>
                                 <div className="flex flex-wrap gap-2">
                                     {detail.groups.map(g => (
@@ -312,36 +281,8 @@ const WgProjects: React.FC = () => {
                                         </Chip>
                                     ))}
                                 </div>
-                            </div>
+                            </div>}
                         </section>
-
-                        {/* LCC approval */}
-                        <Section title={t('sections.lcc')}>
-                            <div className="flex flex-wrap items-center gap-2"><Chip className={LCC_CHIP[detail.lcc_status]}>{t(`lccStatus.${detail.lcc_status}`)}</Chip></div>
-                            {detail.lcc && (
-                                <p className="text-sm mb-0">
-                                    {t('lcc.decidedBy')}: <strong>{detail.lcc.decided_by_name || '—'}</strong> {t('lcc.decidedAt')} {fmtDate(detail.lcc.decided_at)}
-                                    {detail.lcc.note && <><br />{t('lcc.note')}: {detail.lcc.note}</>}
-                                </p>
-                            )}
-                            <p className="text-xs text-gray-500 mb-0">{t('lcc.help')}</p>
-                            {detail.can_decide ? (
-                                <div className="space-y-2">
-                                    <textarea rows={2} value={lccNote} onChange={e => setLccNote(e.target.value)} placeholder={t('lcc.notePlaceholder')}
-                                        className="w-full rounded-lg border border-gray-300 p-2 text-sm outline-none focus:border-brand-blue" />
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <button type="button" disabled={busy} onClick={() => decide('approved')}
-                                            className="rounded-lg bg-emerald-600 text-white font-semibold py-2 disabled:opacity-50">✓ {t('lcc.approve')}</button>
-                                        <button type="button" disabled={busy || !lccNote.trim()} onClick={() => decide('returned')}
-                                            className="rounded-lg border-2 border-red-600 text-red-700 bg-white font-semibold py-2 disabled:opacity-50">↩ {t('lcc.return')}</button>
-                                    </div>
-                                </div>
-                            ) : detail.project.status === 'screened' && detail.lcc_status === 'waiting' ? (
-                                <p className="text-xs text-gray-600 mb-0">{t('lcc.onlyProgram')}</p>
-                            ) : !detail.lcc && detail.project.status === 'pending' ? (
-                                <p className="text-xs text-gray-600 mb-0">{t('lcc.notYet')}</p>
-                            ) : null}
-                        </Section>
 
                         {/* F-2 record */}
                         <Section title={t('sections.f2')}>

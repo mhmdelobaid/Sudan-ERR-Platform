@@ -53,7 +53,7 @@ const F3Contracts: React.FC = () => {
     }, [router]);
 
     return (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="min-h-screen bg-gray-100">
+        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
             <div className="max-w-3xl mx-auto p-4 pb-16 space-y-4">
                 <div className="flex justify-end text-sm">
                     <button onClick={() => i18n.changeLanguage('en')} className="mx-2 text-blue-500 hover:underline">English</button>

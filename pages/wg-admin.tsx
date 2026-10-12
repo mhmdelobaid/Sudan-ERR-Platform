@@ -39,7 +39,8 @@ const WgAdmin: React.FC = () => {
         (isAr ? r.room_name_ar || r.room_name : r.room_name || r.room_name_ar) || '—';
 
     const [auth, setAuth] = useState<'loading' | 'ok' | 'denied'>('loading');
-    const [tab, setTab] = useState<'projects' | 'groups'>('projects');
+    // Assigning groups to projects is switched off for now (12 Oct 2026); the code stays for later.
+    const [tab] = useState<'projects' | 'groups'>('groups');
     const [groups, setGroups] = useState<Group[]>([]);
     const [projects, setProjects] = useState<ProjectRow[]>([]);
     const [search, setSearch] = useState('');
@@ -144,10 +145,10 @@ const WgAdmin: React.FC = () => {
         </div>
     );
 
-    if (auth === 'loading') return <div dir={isAr ? 'rtl' : 'ltr'} className="p-6 text-center text-gray-600">{t('loading')}</div>;
+    if (auth === 'loading') return <div dir={isAr ? 'rtl' : 'ltr'} className="text-start p-6 text-center text-gray-600">{t('loading')}</div>;
     if (auth === 'denied') {
         return (
-            <div dir={isAr ? 'rtl' : 'ltr'} className="max-w-xl mx-auto p-6 space-y-4">
+            <div dir={isAr ? 'rtl' : 'ltr'} className="text-start max-w-xl mx-auto p-6 space-y-4">
                 <div className="bg-white rounded-2xl shadow-md p-4 text-gray-700">{t('notAllowed')}</div>
                 <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
             </div>
@@ -155,7 +156,7 @@ const WgAdmin: React.FC = () => {
     }
 
     return (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="min-h-screen bg-gray-100">
+        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
             <div className="max-w-3xl mx-auto p-4 pb-16 space-y-4">
                 {langSwitch}
                 <header className="bg-white rounded-2xl shadow-md p-4">
@@ -169,14 +170,6 @@ const WgAdmin: React.FC = () => {
                     </div>
                 )}
 
-                <div className="flex gap-2">
-                    {(['projects', 'groups'] as const).map(k => (
-                        <button key={k} onClick={() => setTab(k)}
-                            className={`flex-1 rounded-xl py-2 text-sm font-semibold border transition ${tab === k ? 'bg-primaryGreen text-white border-primaryGreen' : 'bg-white text-gray-700 border-gray-300'}`}>
-                            {t(`tabs.${k}`)}
-                        </button>
-                    ))}
-                </div>
 
                 {/* ---------- Assign projects ---------- */}
                 {tab === 'projects' && (

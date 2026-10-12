@@ -299,11 +299,11 @@ const F2Review: React.FC = () => {
 
     // --- Render ---------------------------------------------------------------------------------
     if (auth === 'loading') {
-        return <div dir={isAr ? 'rtl' : 'ltr'} className="p-6 text-center text-gray-600">{t('loading')}</div>;
+        return <div dir={isAr ? 'rtl' : 'ltr'} className="text-start p-6 text-center text-gray-600">{t('loading')}</div>;
     }
     if (auth === 'denied') {
         return (
-            <div dir={isAr ? 'rtl' : 'ltr'} className="max-w-xl mx-auto p-6 space-y-4">
+            <div dir={isAr ? 'rtl' : 'ltr'} className="text-start max-w-xl mx-auto p-6 space-y-4">
                 <div className="bg-white rounded-2xl shadow-md p-4 text-gray-700">{t('notAllowed')}</div>
                 <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
             </div>
@@ -316,7 +316,7 @@ const F2Review: React.FC = () => {
     const stateName = queue[0]?.state;
 
     return (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="min-h-screen bg-gray-100">
+        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
             <div className="max-w-3xl mx-auto p-4 pb-32 space-y-4">
                 {langSwitch}
 

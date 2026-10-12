@@ -1,6 +1,6 @@
 {
   "title": "Project Working Group",
-  "subtitle": "Projects your group runs at national (LCC) level",
+  "subtitle": "Follow projects after F2: the plan, the reps' votes, financial and program reports, and add your comments",
   "backToMenu": "Back to menu",
   "backToList": "Back to list",
   "loading": "Loading...",
@@ -11,7 +11,7 @@
   },
   "empty": {
     "needsDecision": "No projects are waiting for your group's approval.",
-    "all": "No projects have been assigned to your group yet."
+    "all": "No projects have passed F2 yet."
   },
   "card": {
     "room": "Room",
