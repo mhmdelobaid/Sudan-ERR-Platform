@@ -2,7 +2,7 @@
   "welcomeMessage": "Welcome to the Sudan ERR App",
   "introMessage": "The ERR App will help you with project applications and reporting on ERR impact and sharing information with the community and donors.",
   "startButton": "Start",
-  "chooseMainMenu": "Choose <strong> Projects </strong> to apply for projects and review status. Choose <strong> Reporting </strong> to report on your existing projects. Choose <strong> Feedback </strong> to share your experience.",
+  "chooseMainMenu": "Choose <strong>F1</strong> to submit your work plan and budget and follow it, <strong>F3</strong> for your project's contract, and <strong>F4</strong> and <strong>F5</strong> to write reports. Choose <strong>Feedback</strong> to share your experience.",
   "projects": "Projects",
   "reporting": "Reporting",
   "exitChat": "Exit Chat",
@@ -33,5 +33,29 @@
   },
   "returnToMenu": "Return to Menu",
   "dashboard": "Dashboard",
-  "backToReportTypes": "Back to report types"
+  "f2Review": "Project screening (F2)",
+  "wgProjects": "Project Working Group",
+  "wgAdmin": "Manage working groups",
+  "wgInstructions": "Choose <strong>Working group projects</strong> to follow the projects your group runs and approve them at LCC level.",
+  "f2Instructions": "Choose <strong>Project screening</strong> to review and vote on F1 proposals in your state.",
+  "backToReportTypes": "Back to report types",
+  "cards": {
+    "f2Review": "Vote on F1 lines in your state",
+    "wgProjects": "Follow and approve your group's projects",
+    "wgAdmin": "Create groups and assign them to projects",
+    "projects": "Work plan and budget: apply or check its status",
+    "dashboard": "Funding, projects and people reached",
+    "feedback": "Tell us about your experience with the app",
+    "exitChat": "Log out of the app",
+    "f3": "Your project's contract (MOU) and transfer date",
+    "f4": "Financial report and receipts",
+    "f5": "Program report and people reached"
+  },
+  "cardsTitle": {
+    "f1": "F1 Planning & Budget",
+    "f2": "F2 Project screening",
+    "f3": "F3 Contract (MOU)",
+    "f4": "F4 Financial report",
+    "f5": "F5 Program report"
+  }
 }

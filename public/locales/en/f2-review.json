@@ -1,0 +1,92 @@
+{
+  "title": "Project screening (F2)",
+  "subtitle": "Reps committee — review every F1 line and vote on each one",
+  "stateLabel": "State",
+  "backToMenu": "Back to menu",
+  "backToList": "Back to list",
+  "loading": "Loading...",
+  "notAllowed": "This page is for state reps only.",
+  "tabs": {
+    "pending": "Awaiting decision",
+    "decided": "Decided"
+  },
+  "emptyPending": "No proposals are waiting for the committee.",
+  "emptyDecided": "No proposals have been decided yet.",
+  "card": {
+    "room": "Room",
+    "locality": "Locality",
+    "submitted": "Submitted",
+    "budget": "Requested budget",
+    "beneficiaries": "Estimated beneficiaries",
+    "votes": "Votes",
+    "youVoted": "You voted",
+    "notVoted": "Not voted yet",
+    "version": "Version"
+  },
+  "details": {
+    "objectives": "Project objectives",
+    "intendedBeneficiaries": "Intended beneficiaries",
+    "timeframe": "Timeframe",
+    "officers": "Officers",
+    "programOfficer": "Program officer",
+    "financeOfficer": "Finance officer",
+    "reportingOfficer": "Reporting officer"
+  },
+  "quorum": {
+    "title": "Committee quorum",
+    "progress": "{{count}} of {{quorum}} votes",
+    "help": "Each line goes with the majority (at least 2 of {{quorum}} reps); the project is rejected if two or more reps reject it. The decision is made once everyone has voted; you can change your vote until then."
+  },
+  "lines": {
+    "title": "F1 budget lines",
+    "line": "Line {{n}}",
+    "location": "Location",
+    "quantity": "Quantity",
+    "duration": "Duration (days)",
+    "expense": "Expense",
+    "description": "Description",
+    "frequency": "Frequency",
+    "unitPrice": "Unit price",
+    "total": "Total",
+    "lineTotal": "Line total",
+    "grandTotal": "Total budget",
+    "otherVotes": "Committee votes",
+    "noVotesYet": "No votes yet",
+    "yourVote": "Your vote",
+    "notePlaceholder": "Reason for the condition or rejection (required)",
+    "noteOptional": "Note (optional)"
+  },
+  "verdict": {
+    "approve": "Approve",
+    "conditional": "Conditional",
+    "reject": "Reject"
+  },
+  "overallNote": "General notes on the proposal (optional)",
+  "submit": "Submit my vote",
+  "update": "Update my vote",
+  "submitting": "Submitting...",
+  "missing": "Vote on every line and give a reason for each conditional or rejected line ({{done}} of {{total}} done).",
+  "saved": "Your vote is recorded ({{count}} of {{quorum}}).",
+  "finalized": "Quorum reached — the committee decision is final.",
+  "readOnly": "View only — voting is for state reps.",
+  "decision": {
+    "title": "Committee decision (F2)",
+    "approved": "Screened — sent to the portal for final review and the MOU",
+    "conditional": "Conditional — returned to the room for review",
+    "rejected": "Rejected",
+    "decidedAt": "Decided on",
+    "summary": "Notes sent to the room",
+    "tally": "Approve {{a}} · Conditional {{c}} · Reject {{r}}"
+  },
+  "errors": {
+    "unauthorized": "Your session has expired. Please log in again.",
+    "only_state_reps_can_vote": "Only state reps can vote.",
+    "not_found": "Proposal not found, or outside your state.",
+    "project_not_pending": "This proposal has already been decided.",
+    "project_has_no_lines": "This proposal has no budget lines.",
+    "invalid_ballot": "Invalid ballot.",
+    "ballot_must_cover_every_line": "You must vote on every line.",
+    "note_required_for_conditional_or_reject": "Give a reason for each conditional or rejected line.",
+    "server_error": "Something went wrong. Please try again."
+  }
+}

@@ -3,7 +3,7 @@
 //
 //   superadmin                        every room, every state
 //   admin / support                   rooms in their visible states (all if can_see_all_states)
-//   state_err                         rooms in their own room's state
+//   state_err / state_rep             rooms in their own room's state (reps: read only)
 //   base_err                          their own room only
 
 export interface AccessScope {
@@ -38,7 +38,7 @@ export async function getAccessScope(db: any, userId: string): Promise<AccessSco
     if (seesAll) return { all: true, roomIds: [], states: [], ownRoomId, ownState };
 
     let states: string[] = [];
-    if (role === 'state_err') states = ownState ? [ownState] : [];
+    if (role === 'state_err' || role === 'state_rep') states = ownState ? [ownState] : [];
     else if (role === 'admin' || role === 'support') states = (me.visible_states || []).filter(Boolean);
 
     const roomIds = new Set<string>(ownRoomId ? [ownRoomId] : []);

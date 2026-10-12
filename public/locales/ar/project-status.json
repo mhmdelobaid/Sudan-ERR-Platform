@@ -7,7 +7,9 @@
   "submittedAt": "تاريخ التقديم",
   "pending": "قيد الانتظار",
   "approved": "موافق عليه",
+  "screened": "اجتاز الفرز (بانتظار المراجعة النهائية)",
   "declined": "مرفوض",
+  "rejected": "مرفوض",
   "active": "نشط",
   "feedbackStatus": "مطلوب تعديلات",
   "noProjectsFound": "لم يتم العثور على مشاريع.",
@@ -19,7 +21,8 @@
     "by": "الملاحظات من",
     "at": "تاريخ الملاحظات",
     "editProject": "تعديل المشروع",
-    "viewHistory": "عرض سجل الملاحظات"
+    "viewHistory": "عرض سجل الملاحظات",
+    "rejectedReason": "سبب الرفض"
   },
   "details": {
     "basicInfo": "معلومات أساسية",

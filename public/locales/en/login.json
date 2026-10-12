@@ -2,6 +2,8 @@
   "welcomeMessage": "Welcome to the Sudan Emergency Response Rooms App",
   "emailPlaceholder": "Enter Email",
   "passwordPlaceholder": "Enter Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
   "loginButton": "Login",
   "loggingIn": "Logging in...",
   "loginError": "Login failed. Please check your credentials.",

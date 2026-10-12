@@ -9,7 +9,7 @@ import { newSupabase } from '../services/newSupabaseClient';
 
 // Chart colours: ERR blue and orange, deepened to pass colour-blind and contrast checks on white
 const C = { blue: '#3B68B8', orange: '#D46A2C', track: '#E4EAF4', ink: '#1F2937', muted: '#6B7280', line: '#E5E7EB' };
-const STATUS_ORDER = ['pending', 'feedback', 'approved', 'active', 'completed', 'rejected'];
+const STATUS_ORDER = ['pending', 'feedback', 'screened', 'approved', 'active', 'completed', 'rejected'];
 // F-System pipeline colours. Orange = waiting on review or changes; ERR blue light -> deep as funding moves to completion.
 // Checked with the dataviz palette validator: colour-blind and normal-vision separation pass. The two light steps are
 // under 3:1 on white, so every stage also shows its name and count as text (never colour alone).
@@ -17,13 +17,14 @@ const STAGE: Record<string, { color: string; form: string }> = {
     draft: { color: '#C3C9D3', form: 'F-1' },
     pending: { color: '#F9A778', form: 'F-2' },
     feedback: { color: '#D46A2C', form: 'F-2' },
+    screened: { color: '#BCCBE3', form: 'F-2' },   // passed the reps' F-2, waiting for the portal's final review
     approved: { color: '#9BB0D4', form: 'F-3' },
     active: { color: '#5D7EB3', form: 'F-4' },
     completed: { color: '#33496D', form: 'F-5' },
     rejected: { color: '#9CA3AF', form: 'F-2' },
 };
 // Bars per state are stacked from done to waiting, so the most advanced work sits at the start of the bar
-const STACK_ORDER = ['completed', 'active', 'approved', 'feedback', 'pending', 'rejected'];
+const STACK_ORDER = ['completed', 'active', 'approved', 'screened', 'feedback', 'pending', 'rejected'];
 const STATES_SHOWN = 8;
 
 interface Pool { state: string; allocated: number; committed: number; pending: number; remaining: number; is_own_state: boolean }

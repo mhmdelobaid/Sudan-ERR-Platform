@@ -7,6 +7,9 @@ export type AllocationTotals = Record<string, { committed: number; pending: numb
 /** Project statuses that count as committed when funding_status is 'committed'. */
 export const COMMITTED_STATUSES = ['approved', 'active', 'completed'];
 
+/** Statuses whose allocated funding is still waiting on a decision: F-2 (pending) and the portal's final review (screened). */
+export const PENDING_STATUSES = ['pending', 'screened'];
+
 const sumExpenses = (expenses: any): number => {
     if (!expenses) return 0;
     try {
@@ -42,7 +45,7 @@ export async function getAllocationTotals(db: any, allocationIds: string[]): Pro
         if (!totals[key]) totals[key] = { committed: 0, pending: 0 };
         const amount = sumExpenses(p.expenses);
         if (p.funding_status === 'committed' && COMMITTED_STATUSES.includes(p.status)) totals[key].committed += amount;
-        else if (p.funding_status === 'allocated' && p.status === 'pending') totals[key].pending += amount;
+        else if (p.funding_status === 'allocated' && PENDING_STATUSES.includes(p.status)) totals[key].pending += amount;
     }
     return totals;
 }

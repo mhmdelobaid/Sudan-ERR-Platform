@@ -1,0 +1,29 @@
+{
+  "title": "F3 Contract (MOU)",
+  "subtitle": "Contracts for your room's projects. The Partner team makes the MOU in the portal after screening (F2) and the final review.",
+  "loading": "Loading...",
+  "empty": "No contracts, or projects waiting for one, yet.",
+  "backToMenu": "Back to menu",
+  "state": {
+    "ready": "Contract ready",
+    "portalReview": "Waiting for portal review",
+    "preparing": "Contract being prepared"
+  },
+  "mouCode": "MOU code",
+  "partner": "Partner",
+  "amount": "Contract amount",
+  "start": "Start date",
+  "end": "End date",
+  "transfer": "Transfer date",
+  "rate": "Exchange rate",
+  "serial": "Grant serial",
+  "budget": "Requested budget",
+  "signedInPortal": "The signed copy is in the portal with the Partner team.",
+  "notSignedYet": "The signed copy hasn't been uploaded yet.",
+  "portalReviewNote": "The project passed screening and is in the portal for its final review before the contract is made.",
+  "preparingNote": "The project is approved and the Partner team is preparing the contract in the portal.",
+  "errors": {
+    "unauthorized": "Your session has expired. Please log in again.",
+    "server_error": "Something went wrong. Please try again."
+  }
+}

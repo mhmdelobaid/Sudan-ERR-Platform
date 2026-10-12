@@ -7,7 +7,9 @@
   "submittedAt": "Submitted At",
   "pending": "Pending",
   "approved": "Approved",
+  "screened": "Screened (waiting for final review)",
   "declined": "Declined",
+  "rejected": "Rejected",
   "active": "Active",
   "feedbackStatus": "Changes Requested",
   "noProjectsFound": "No projects found.",
@@ -19,7 +21,8 @@
     "by": "Feedback by",
     "at": "Provided at",
     "editProject": "Edit Project",
-    "viewHistory": "View Feedback History"
+    "viewHistory": "View Feedback History",
+    "rejectedReason": "Reason for rejection"
   },
   "details": {
     "basicInfo": "Basic Information",

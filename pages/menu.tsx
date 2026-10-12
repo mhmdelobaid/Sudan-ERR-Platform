@@ -4,6 +4,11 @@ import { useTranslation } from 'react-i18next';
 import ChatContainer from '../components/ui/ChatContainer';
 import MessageBubble from '../components/ui/MessageBubble';
 import Button from '../components/ui/Button';
+import MenuCard from '../components/ui/MenuCard';
+import {
+    ClipboardDocumentCheckIcon, UserGroupIcon, Cog6ToothIcon, FolderIcon, DocumentTextIcon, DocumentCheckIcon,
+    BanknotesIcon, PresentationChartLineIcon, ChartBarIcon, ChatBubbleLeftEllipsisIcon, ArrowRightStartOnRectangleIcon,
+} from '@heroicons/react/24/outline';
 import ReportingForm from '../components/forms/ReportForm/ReportingForm';
 import ScanForm from './scan-form';
 import ScanCustomForm from './scan-custom-form'; // Import the new component
@@ -96,6 +101,8 @@ const Menu = () => {
     const [financialDrafts, setFinancialDrafts] = useState([]);
     const [programDrafts, setProgramDrafts] = useState([]);
     const [projectToEdit, setProjectToEdit] = useState(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [reportKind, setReportKind] = useState<'f4' | 'f5' | null>(null); // set by the F4 / F5 cards
 
     const router = useRouter();
     const errId = router.query.errId;
@@ -130,7 +137,9 @@ const Menu = () => {
                 if (!data.success) {
                     console.log('Auth check failed:', data.message);
                     router.push('/login');
+                    return;
                 }
+                setUserRole(data.user?.role || null);
             } catch (error) {
                 console.error('Auth check error:', error);
                 router.push('/login');
@@ -302,12 +311,16 @@ const Menu = () => {
         setCurrentProjectDraft(null);
     };
 
+    // Reps and working groups don't run a room, so they don't get F1 / F3 / F4 / F5 (reps do get the dashboard, read only)
+    const isRoomUser = userRole !== null && !['state_rep', 'lcc_wg'].includes(userRole);
+
     // A report form, the scanner or the drafts list is open: hide the report-type buttons
     const reportWorkflowOpen = showFillForm || showScanForm || showScanCustomForm || showProgramForm || showScanPrefillForm || showFinancialDrafts;
 
     // Menu selection handler
-    const handleMenuSelection = (menu: CurrentMenu) => {
+    const handleMenuSelection = (menu: CurrentMenu, kind: 'f4' | 'f5' | null = null) => {
         resetFormStates(); // Reset all form states first
+        setReportKind(menu === CurrentMenu.REPORTING ? kind : null);
         setCurrentMenu(menu);
         setShowDraftList(true); // Reset draft list view
         setSelectedProject(null);
@@ -406,12 +419,61 @@ const Menu = () => {
                         timestamp={getCurrentTimestamp()}
                         fullWidth
                     />
-                    <div className="grid grid-cols-1 space-y-3">
-                        <Button text={t('projects')} onClick={() => handleMenuSelection(CurrentMenu.PROJECTS)} />
-                        <Button text={t('reporting')} onClick={() => handleMenuSelection(CurrentMenu.REPORTING)} className="w-full" />
-                        <Button text={t('dashboard')} onClick={() => router.push('/dashboard')} className="w-full" />
-                        <Button text={t('feedback')} onClick={() => setCurrentMenu(CurrentMenu.FEEDBACK)} className="w-full" />
-                        <Button text={t('exitChat')} onClick={() => router.push('/login')} className="w-full" />
+                    {userRole === 'state_rep' && (
+                        <MessageBubble
+                            text={t('f2Instructions')}
+                            timestamp={getCurrentTimestamp()}
+                            fullWidth
+                        />
+                    )}
+                    {userRole === 'lcc_wg' && (
+                        <MessageBubble
+                            text={t('wgInstructions')}
+                            timestamp={getCurrentTimestamp()}
+                            fullWidth
+                        />
+                    )}
+                    {/* Main menu as cards, in F-System order: F1 -> F5, then working groups, then the rest.
+                        2 per row on phones, 3 on wide screens. Each role only sees what it uses. */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {/* Rooms (and admins): F1, F3, F4, F5. Reps and working groups don't run a room. */}
+                        {isRoomUser && (
+                            <MenuCard title={t('cardsTitle.f1')} description={t('cards.projects')}
+                                icon={<FolderIcon className="w-6 h-6" />} onClick={() => handleMenuSelection(CurrentMenu.PROJECTS)} />
+                        )}
+                        {/* F2 screening: reps vote; admins can open it read-only */}
+                        {['state_rep', 'admin', 'superadmin'].includes(userRole || '') && (
+                            <MenuCard title={t('cardsTitle.f2')} description={t('cards.f2Review')}
+                                icon={<ClipboardDocumentCheckIcon className="w-6 h-6" />} onClick={() => router.push('/f2-review')} />
+                        )}
+                        {isRoomUser && (
+                            <>
+                                <MenuCard title={t('cardsTitle.f3')} description={t('cards.f3')}
+                                    icon={<DocumentCheckIcon className="w-6 h-6" />} onClick={() => router.push('/f3-contracts')} />
+                                <MenuCard title={t('cardsTitle.f4')} description={t('cards.f4')}
+                                    icon={<BanknotesIcon className="w-6 h-6" />} onClick={() => handleMenuSelection(CurrentMenu.REPORTING, 'f4')} />
+                                <MenuCard title={t('cardsTitle.f5')} description={t('cards.f5')}
+                                    icon={<PresentationChartLineIcon className="w-6 h-6" />} onClick={() => handleMenuSelection(CurrentMenu.REPORTING, 'f5')} />
+                            </>
+                        )}
+                        {/* Project Working Group (LCC level): the projects a member's group runs */}
+                        {['lcc_wg', 'superadmin'].includes(userRole || '') && (
+                            <MenuCard title={t('wgProjects')} description={t('cards.wgProjects')}
+                                icon={<UserGroupIcon className="w-6 h-6" />} onClick={() => router.push('/wg-projects')} />
+                        )}
+                        {/* Admins: create working groups, add members, assign them to projects */}
+                        {['admin', 'superadmin'].includes(userRole || '') && (
+                            <MenuCard title={t('wgAdmin')} description={t('cards.wgAdmin')}
+                                icon={<Cog6ToothIcon className="w-6 h-6" />} onClick={() => router.push('/wg-admin')} />
+                        )}
+                        {(isRoomUser || userRole === 'state_rep') && (
+                            <MenuCard title={t('dashboard')} description={t('cards.dashboard')}
+                                icon={<ChartBarIcon className="w-6 h-6" />} onClick={() => router.push('/dashboard')} />
+                        )}
+                        <MenuCard title={t('feedback')} description={t('cards.feedback')}
+                            icon={<ChatBubbleLeftEllipsisIcon className="w-6 h-6" />} onClick={() => setCurrentMenu(CurrentMenu.FEEDBACK)} />
+                        <MenuCard title={t('exitChat')} description={t('cards.exitChat')}
+                            icon={<ArrowRightStartOnRectangleIcon className="w-6 h-6 rtl:-scale-x-100" />} onClick={() => router.push('/login')} />
                     </div>
                 </>
             )}
@@ -473,31 +535,38 @@ const Menu = () => {
                 <>
                     <MessageBubble text={t('selectReportType')} />
                     <div className="grid grid-cols-1 gap-2">
-                        <Button
-                            text={t('reportFillForm')}
-                            onClick={() => {
-                                resetFormStates();
-                                createNewReportId();
-                                setShowFillForm(true);
-                            }}
-                            className="w-full"
-                        />
-                        <Button
-                            text={t('reportScanForm')}
-                            onClick={() => {
-                                resetFormStates();
-                                setShowScanForm(true);
-                            }}
-                            className="w-full"
-                        />
-                        <Button
-                            text={t('reportProgramForm')}
-                            onClick={() => {
-                                resetFormStates();
-                                setShowProgramForm(true);
-                            }}
-                            className="w-full"
-                        />
+                        {/* F4 card: financial report only; F5 card: program report only; otherwise both */}
+                        {reportKind !== 'f5' && (
+                            <>
+                                <Button
+                                    text={t('reportFillForm')}
+                                    onClick={() => {
+                                        resetFormStates();
+                                        createNewReportId();
+                                        setShowFillForm(true);
+                                    }}
+                                    className="w-full"
+                                />
+                                <Button
+                                    text={t('reportScanForm')}
+                                    onClick={() => {
+                                        resetFormStates();
+                                        setShowScanForm(true);
+                                    }}
+                                    className="w-full"
+                                />
+                            </>
+                        )}
+                        {reportKind !== 'f4' && (
+                            <Button
+                                text={t('reportProgramForm')}
+                                onClick={() => {
+                                    resetFormStates();
+                                    setShowProgramForm(true);
+                                }}
+                                className="w-full"
+                            />
+                        )}
                         <Button
                             text={t('viewDrafts')}
                             onClick={() => {

@@ -1,0 +1,76 @@
+{
+  "title": "Manage working groups",
+  "subtitle": "Create groups, add their members and assign them to projects",
+  "backToMenu": "Back to menu",
+  "loading": "Loading...",
+  "notAllowed": "This page is for admins only.",
+  "tabs": {
+    "projects": "Assign projects",
+    "groups": "Groups and members"
+  },
+  "projects": {
+    "search": "Search by project, room or locality",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "none": "No projects.",
+    "groups": "Groups",
+    "noGroups": "No groups assigned",
+    "edit": "Assign groups",
+    "save": "Save",
+    "cancel": "Cancel",
+    "programLead": "Program group",
+    "pickGroups": "Pick the groups that run this project and mark the program lead.",
+    "noGroupsYet": "Create a working group first in the Groups tab.",
+    "saved": "Saved."
+  },
+  "groups": {
+    "create": "Create group",
+    "nameAr": "Name in Arabic",
+    "nameEn": "Name in English",
+    "none": "No groups yet.",
+    "members": "Members",
+    "noMembers": "No members yet.",
+    "projects": "projects",
+    "addMember": "Add member",
+    "email": "Member's email",
+    "isLead": "Group lead",
+    "add": "Add",
+    "remove": "Remove",
+    "lead": "Lead",
+    "roleNote": "The account must have the working-group role (lcc_wg).",
+    "created": "Group created.",
+    "added": "Member added."
+  },
+  "status": {
+    "pending": "Waiting for F2",
+    "feedback": "Back with the room",
+    "screened": "Screened",
+    "approved": "Approved (F3)",
+    "active": "Running",
+    "completed": "Completed",
+    "rejected": "Rejected"
+  },
+  "lccStatus": {
+    "no_working_group": "No program group set",
+    "waiting": "Waiting for the program group",
+    "approved": "Program group approved",
+    "returned": "Program group returned it to the room"
+  },
+  "errors": {
+    "unauthorized": "Your session has expired. Please log in again.",
+    "not_found": "Project not found, or not one of your group's projects.",
+    "only_program_working_group_can_decide": "Only the program lead group can decide.",
+    "project_not_screened": "This project isn't waiting for the LCC decision.",
+    "invalid_decision": "Invalid decision.",
+    "note_required_to_return": "Give a reason for returning it.",
+    "already_decided": "This version has already been decided.",
+    "comment_empty": "Write the comment first.",
+    "admins_only": "This page is for admins only.",
+    "name_required": "Enter the group name.",
+    "user_not_found": "No account with that email.",
+    "user_not_lcc_wg": "That account doesn't have the working-group role (lcc_wg). Change its role first.",
+    "program_lead_required": "Pick the program lead from the selected groups.",
+    "invalid_request": "Invalid request.",
+    "server_error": "Something went wrong. Please try again."
+  }
+}

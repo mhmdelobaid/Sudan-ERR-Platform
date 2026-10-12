@@ -2,6 +2,8 @@
   "welcomeMessage": "مرحبًا بك في تطبيق غرف الطوارئ في السودان",
   "emailPlaceholder": "أدخل البريد الإلكتروني",
   "passwordPlaceholder": "أدخل كلمة المرور",
+  "showPassword": "إظهار كلمة المرور",
+  "hidePassword": "إخفاء كلمة المرور",
   "loginButton": "تسجيل الدخول",
   "loggingIn": "جاري تسجيل الدخول...",
   "loginError": "فشل تسجيل الدخول. يرجى التحقق من بياناتك.",

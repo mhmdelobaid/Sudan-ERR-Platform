@@ -1,0 +1,143 @@
+{
+  "title": "Project Working Group",
+  "subtitle": "Projects your group runs at national (LCC) level",
+  "backToMenu": "Back to menu",
+  "backToList": "Back to list",
+  "loading": "Loading...",
+  "notAllowed": "This page is for working groups only.",
+  "tabs": {
+    "needsDecision": "Waiting for your approval",
+    "all": "All projects"
+  },
+  "empty": {
+    "needsDecision": "No projects are waiting for your group's approval.",
+    "all": "No projects have been assigned to your group yet."
+  },
+  "card": {
+    "room": "Room",
+    "state": "State",
+    "budget": "Budget",
+    "status": "Status",
+    "lcc": "LCC level",
+    "reports": "Reports",
+    "comments": "comments",
+    "version": "Version"
+  },
+  "status": {
+    "pending": "Waiting for F2",
+    "feedback": "Back with the room",
+    "screened": "Screened",
+    "approved": "Approved (F3)",
+    "active": "Running",
+    "completed": "Completed",
+    "rejected": "Rejected"
+  },
+  "lccStatus": {
+    "no_working_group": "No program group set",
+    "waiting": "Waiting for the program group",
+    "approved": "Program group approved",
+    "returned": "Program group returned it to the room"
+  },
+  "groups": {
+    "title": "Working groups on this project",
+    "programLead": "Program (lead) group",
+    "supporting": "Supporting group"
+  },
+  "sections": {
+    "f1": "Work plan and budget (F1)",
+    "f2": "Screening decision (F2)",
+    "lcc": "LCC-level approval",
+    "f4": "Financial reports (F4)",
+    "f5": "Program reports (F5)",
+    "comments": "Comments"
+  },
+  "f1": {
+    "objectives": "Project objectives",
+    "beneficiaries": "Estimated beneficiaries",
+    "line": "Line {{n}}",
+    "total": "Total",
+    "location": "Location"
+  },
+  "f2": {
+    "none": "No screening decision yet.",
+    "decidedAt": "Decided on",
+    "outcome": {
+      "approved": "Screened",
+      "conditional": "Conditional — back with the room",
+      "rejected": "Rejected"
+    },
+    "votes": "Reps' votes",
+    "summary": "Notes",
+    "verdict": {
+      "approve": "Approve",
+      "conditional": "Conditional",
+      "reject": "Reject"
+    }
+  },
+  "lcc": {
+    "help": "The program lead group decides; other groups follow and comment. Once approved, the project goes with its F2 to the portal for final review and the MOU.",
+    "approve": "Approve and send to the portal",
+    "return": "Return to the room",
+    "notePlaceholder": "Note (required to return it)",
+    "decidedBy": "Decided by",
+    "decidedAt": "on",
+    "note": "Note",
+    "onlyProgram": "Only the program lead group decides.",
+    "notYet": "The project hasn't reached this step yet.",
+    "saved": "Decision recorded."
+  },
+  "f4": {
+    "none": "No financial reports yet.",
+    "reportDate": "Report date",
+    "totalGrant": "Grant",
+    "totalExpenses": "Spent",
+    "remainder": "Remaining",
+    "review": "Review",
+    "expenses": "Expenses"
+  },
+  "f5": {
+    "none": "No program reports yet.",
+    "reportDate": "Report date",
+    "by": "By",
+    "positive": "Positive changes",
+    "lessons": "Lessons learned",
+    "reach": "Reach",
+    "individuals": "individuals",
+    "households": "households",
+    "female": "female",
+    "male": "male",
+    "disabilities": "with disabilities"
+  },
+  "comments": {
+    "none": "No comments yet.",
+    "placeholder": "Write a comment on the project or its reports...",
+    "topic": "About",
+    "send": "Send comment",
+    "you": "You",
+    "topics": {
+      "general": "General",
+      "f1": "F1",
+      "f2": "F2",
+      "lcc": "LCC",
+      "f4": "F4",
+      "f5": "F5"
+    }
+  },
+  "errors": {
+    "unauthorized": "Your session has expired. Please log in again.",
+    "not_found": "Project not found, or not one of your group's projects.",
+    "only_program_working_group_can_decide": "Only the program lead group can decide.",
+    "project_not_screened": "This project isn't waiting for the LCC decision.",
+    "invalid_decision": "Invalid decision.",
+    "note_required_to_return": "Give a reason for returning it.",
+    "already_decided": "This version has already been decided.",
+    "comment_empty": "Write the comment first.",
+    "admins_only": "This page is for admins only.",
+    "name_required": "Enter the group name.",
+    "user_not_found": "No account with that email.",
+    "user_not_lcc_wg": "That account doesn't have the working-group role (lcc_wg). Change its role first.",
+    "program_lead_required": "Pick the program lead from the selected groups.",
+    "invalid_request": "Invalid request.",
+    "server_error": "Something went wrong. Please try again."
+  }
+}

@@ -48,7 +48,7 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                     setProjects(data.projects);
                     
                     // Pre-fetch feedback for all projects with feedback status
-                    const feedbackProjects = data.projects.filter(p => p.status === 'feedback');
+                    const feedbackProjects = data.projects.filter(p => p.status === 'feedback' || p.status === 'rejected');
                     await Promise.all(
                         feedbackProjects.map(async (project) => {
                             try {
@@ -172,7 +172,9 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                         <span className={
                                             project.status === 'active' ? 'text-green-600' : 
                                             project.status === 'pending' ? 'text-orange-500' :
-                                            project.status === 'feedback' ? 'text-blue-500' : ''
+                                            project.status === 'feedback' ? 'text-blue-500' :
+                                            project.status === 'screened' ? 'text-brand-deep' :
+                                            project.status === 'rejected' ? 'text-red-600' : ''
                                         }>
                                             {project.status === 'feedback' ? t('feedbackStatus') : t(project.status)}
                                         </span>
@@ -262,6 +264,19 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                         <div className="bg-gray-50 p-3 rounded-lg mt-2">
                                             <h4 className="font-semibold mb-2">{t('details.additional')}</h4>
                                             <p className="text-sm"><strong>{t('details.additionalSupport')}:</strong> {project.additional_support}</p>
+                                        </div>
+                                    )}
+
+                                    {/* The reps' reason when the F-2 decision was a rejection */}
+                                    {project.status === 'rejected' && feedbackMap[project.id]?.[0] && (
+                                        <div className="bg-red-50 p-3 rounded-lg border border-red-100 mt-2">
+                                            <h4 className="font-semibold mb-2">{t('feedback.rejectedReason')}</h4>
+                                            <p className="mb-2 text-sm whitespace-pre-line">{feedbackMap[project.id][0].feedback_text}</p>
+                                            {feedbackMap[project.id][0].created_at && (
+                                                <p className="text-xs text-gray-600">
+                                                    {t('feedback.at')}: {formatDate(feedbackMap[project.id][0].created_at)}
+                                                </p>
+                                            )}
                                         </div>
                                     )}
 

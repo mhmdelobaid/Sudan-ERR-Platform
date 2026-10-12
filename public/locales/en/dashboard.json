@@ -37,6 +37,7 @@
   "status": {
     "pending": "Pending review",
     "feedback": "Changes requested",
+    "screened": "Screened",
     "approved": "Approved",
     "active": "Running",
     "completed": "Completed",
@@ -69,6 +70,7 @@
   "stage": {
     "pending": "F-2 · waiting for review",
     "feedback": "F-2 · back with the room",
+    "screened": "F-2 · screened, waiting for portal review",
     "approved": "F-3 · contract, transfer due",
     "active": "F-4 · spending and reporting",
     "completed": "F-5 · final report in",
