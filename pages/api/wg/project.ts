@@ -1,6 +1,7 @@
 // GET  /api/wg/project?id=<uuid>  — one project as its working groups see it (F-1, F-2, LCC, F-4, F-5, comments)
-// POST /api/wg/project?id=<uuid>  — { action: 'comment', topic, body }
-//                                   (LCC approval is switched off for now, 12 Oct 2026)
+// POST /api/wg/project?id=<uuid>  — { action: 'confirm', note? }   working groups confirm they have seen the
+//                                                                    F-2 result and are OK with it (-> partner)
+//                                   { action: 'comment', topic, body }
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCaller, sendRpcError, withJsonErrors, lineNames, isUuid } from '../../../services/f2Api';
 
@@ -19,6 +20,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     if (req.method === 'POST') {
         const body = req.body || {};
+        if (body.action === 'confirm') {
+            const { data, error } = await caller.client.rpc('wg_lcc_decide', {
+                p_project_id: id,
+                p_decision: 'approved',
+                p_note: typeof body.note === 'string' ? body.note.slice(0, 4000) : null,
+            });
+            if (error) return sendRpcError(res, error);
+            return res.status(200).json({ success: true, result: data });
+        }
         if (body.action === 'comment') {
             const { data, error } = await caller.client.rpc('wg_add_comment', {
                 p_project_id: id,

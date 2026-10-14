@@ -1,6 +1,6 @@
 {
   "title": "Project Working Group",
-  "subtitle": "Follow projects after F2: the plan, the reps' votes, financial and program reports, and add your comments",
+  "subtitle": "Projects that passed F2, by state. Check the result and confirm you've seen it and are OK with it, so it goes on to the intermediate partner.",
   "backToMenu": "Back to menu",
   "backToList": "Back to list",
   "loading": "Loading...",
@@ -20,13 +20,13 @@
     "status": "Status",
     "lcc": "LCC level",
     "reports": "Reports",
-    "comments": "comments",
+    "comments": "Comments",
     "version": "Version"
   },
   "status": {
     "pending": "Waiting for F2",
     "feedback": "Back with the room",
-    "screened": "Screened",
+    "screened": "Passed F2",
     "approved": "Approved (F3)",
     "active": "Running",
     "completed": "Completed",
@@ -49,7 +49,8 @@
     "lcc": "LCC-level approval",
     "f4": "Financial reports (F4)",
     "f5": "Program reports (F5)",
-    "comments": "Comments"
+    "comments": "Comments",
+    "confirm": "Working group confirmation"
   },
   "f1": {
     "objectives": "Project objectives",
@@ -130,7 +131,7 @@
     "project_not_screened": "This project isn't waiting for the LCC decision.",
     "invalid_decision": "Invalid decision.",
     "note_required_to_return": "Give a reason for returning it.",
-    "already_decided": "This version has already been decided.",
+    "already_decided": "This project has already been confirmed.",
     "comment_empty": "Write the comment first.",
     "admins_only": "This page is for admins only.",
     "name_required": "Enter the group name.",
@@ -138,6 +139,25 @@
     "user_not_lcc_wg": "That account doesn't have the working-group role (lcc_wg). Change its role first.",
     "program_lead_required": "Pick the program lead from the selected groups.",
     "invalid_request": "Invalid request.",
-    "server_error": "Something went wrong. Please try again."
+    "server_error": "Something went wrong. Please try again.",
+    "only_working_groups_confirm": "Only working-group members can confirm.",
+    "lcc_step_off": "This step is switched off."
+  },
+  "confirm": {
+    "button": "Confirm: seen and OK",
+    "waiting": "Waiting for working group confirmation",
+    "summary": "{{count}} project(s) waiting for your confirmation",
+    "noneWaiting": "Nothing is waiting for confirmation right now.",
+    "waitingCount": "{{count}} waiting",
+    "confirmedCount": "{{count}} confirmed",
+    "doneBy": "Confirmed by {{name}} on {{date}} · ready for the intermediate partner",
+    "help": "Check the F2 result and the work plan below. Confirming means you have seen it and are OK with it; the project then goes on to the intermediate partner. Any feedback you write goes with it to the partner and the room.",
+    "notePlaceholder": "Note (optional)",
+    "note": "Working group feedback",
+    "saved": "Confirmed. The project is now ready for the intermediate partner.",
+    "feedbackButton": "Feedback + confirm",
+    "feedbackPlaceholder": "Your feedback for the intermediate partner and the room",
+    "sendFeedback": "Send feedback and confirm",
+    "cancel": "Cancel"
   }
 }

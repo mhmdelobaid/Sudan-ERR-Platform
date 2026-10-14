@@ -55,5 +55,10 @@
       "committed": "Application is committed to a grant"
     }
   },
-  "room": "Room"
+  "room": "Room",
+  "wg": {
+    "confirmed": "Confirmed by the working group on {{date}}; now with the intermediate partner for final review",
+    "note": "Working group feedback",
+    "waiting": "Passed F2, waiting for the working group to confirm"
+  }
 }

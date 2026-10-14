@@ -1,8 +1,8 @@
 // pages/wg-projects.tsx
-// Working groups (LCC level): follow every project that has passed F-2 (screened, approved, active,
-// completed): its F-1 lines, the reps' F-2 votes, F-4 / F-5 reports, and comment on it.
-// The LCC approval step is switched off for now (Yung, 12 Oct 2026): after F-2 a project goes
-// straight to the portal. The database decides what each member may see (wg_* functions).
+// Working groups (LCC level), Yung 14 Oct 2026: projects that passed F-2, grouped by state.
+// Working groups don't screen; they see the F-2 result and confirm they have seen it and are OK
+// with it. One confirmation sends the project on to the intermediate partner. They also follow
+// F-4 / F-5 and comment. The database decides who may see and confirm what (wg_* functions).
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
 
 type Verdict = 'approve' | 'conditional' | 'reject';
-type LccStatus = 'no_working_group' | 'waiting' | 'approved' | 'returned';
+type LccStatus = 'no_working_group' | 'waiting' | 'approved' | 'returned' | 'not_needed';
 
 interface Group { id: string; name_en: string; name_ar: string | null; is_program_lead: boolean }
 interface Core {
@@ -19,7 +19,9 @@ interface Core {
     room_name: string | null; room_name_ar: string | null; estimated_beneficiaries: number | null;
     project_objectives?: string | null;
 }
+interface Lcc { decision: 'approved' | 'returned'; note: string | null; decided_at: string; decided_by_name: string | null }
 interface ListRow extends Core {
+    state_ar: string | null; lcc: Lcc | null; f2_outcome: string | null;
     groups: Group[]; i_am_program: boolean; lcc_status: LccStatus; needs_my_decision: boolean;
     f4_count: number; f5_count: number; comments_count: number;
 }
@@ -37,7 +39,7 @@ interface Detail {
         line_outcomes: { key: string; line_no: number; outcome: Verdict; approve: number; conditional: number; reject: number }[];
         ballots: { voter_name: string | null; line_votes: { key: string; verdict: Verdict; note: string | null }[]; overall_note: string | null }[];
     };
-    lcc: null | { decision: 'approved' | 'returned'; note: string | null; decided_at: string; decided_by_name: string | null };
+    lcc: Lcc | null;
     lcc_status: LccStatus;
     can_decide: boolean;
     f4: { id: number; report_date: string | null; total_grant: number | null; total_expenses: number | null; remainder: number | null; review_status: string | null; expense_count: number }[];
@@ -52,6 +54,9 @@ const STATUS_CHIP: Record<string, string> = {
     pending: 'bg-orange-100 text-orange-800', feedback: 'bg-orange-200 text-orange-900', screened: 'bg-brand-orangeSoft text-gray-900',
     approved: 'bg-green-100 text-green-900', active: 'bg-green-200 text-green-900', completed: 'bg-green-800 text-white',
     rejected: 'bg-gray-200 text-gray-800',
+};
+const LCC_CHIP: Record<string, string> = {
+    waiting: 'bg-brand-orangeSoft text-gray-900', approved: 'bg-emerald-100 text-emerald-900',
 };
 const VERDICT_CHIP: Record<Verdict, string> = {
     approve: 'bg-emerald-100 text-emerald-800', conditional: 'bg-amber-100 text-amber-800', reject: 'bg-red-100 text-red-800',
@@ -98,6 +103,9 @@ const WgProjects: React.FC = () => {
     const [busy, setBusy] = useState(false);
     const [commentTopic, setCommentTopic] = useState('general');
     const [commentBody, setCommentBody] = useState('');
+    const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+    const [confirmNote, setConfirmNote] = useState('');
+    const [noteFor, setNoteFor] = useState<string | null>(null);   // list: project whose feedback box is open
 
     useEffect(() => {
         (async () => {
@@ -119,6 +127,12 @@ const WgProjects: React.FC = () => {
             const data = await res.json();
             if (!res.ok || !data.success) throw new Error(data.code);
             setRows(data.projects);
+            setExpanded(prev => {
+                if (Object.keys(prev).length > 0) return prev;
+                const open: Record<string, boolean> = {};
+                (data.projects as ListRow[]).forEach(r => { if (r.needs_my_decision) open[r.state || '—'] = true; });
+                return open;
+            });
         } catch (e: any) {
             console.error('WG load list failed:', e);
             setMessage({ kind: 'error', text: errorText(e?.message) });
@@ -151,14 +165,31 @@ const WgProjects: React.FC = () => {
 
     useEffect(() => { if (selectedId) loadDetail(selectedId); else setDetail(null); }, [selectedId, loadDetail]);
 
-    const post = async (body: object) => {
-        if (!detail) return null;
+    const postFor = async (id: string, body: object) => {
         const headers = await authHeaders();
         if (!headers) { router.push('/login'); return null; }
-        const res = await fetch(`/api/wg/project?id=${detail.project.id}`, { method: 'POST', headers, body: JSON.stringify(body) });
+        const res = await fetch(`/api/wg/project?id=${id}`, { method: 'POST', headers, body: JSON.stringify(body) });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.code);
         return data;
+    };
+    const post = async (body: object) => (detail ? postFor(detail.project.id, body) : null);
+
+    // "Seen and OK": one confirmation sends the project on to the intermediate partner
+    const confirmProject = async (id: string, note?: string) => {
+        setBusy(true); setMessage(null);
+        try {
+            await postFor(id, { action: 'confirm', note: note || '' });
+            setMessage({ kind: 'ok', text: t('confirm.saved') });
+            setConfirmNote(''); setNoteFor(null);
+            if (selectedId === id) await loadDetail(id);
+            await loadList();
+        } catch (e: any) {
+            setMessage({ kind: 'error', text: errorText(e?.message) });
+        } finally {
+            setBusy(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     };
 
     const addComment = async () => {
@@ -175,7 +206,7 @@ const WgProjects: React.FC = () => {
         }
     };
 
-    const openProject = (id: string) => { setMessage(null); setCommentBody(''); setSelectedId(id); window.scrollTo({ top: 0 }); };
+    const openProject = (id: string) => { setMessage(null); setCommentBody(''); setConfirmNote(''); setSelectedId(id); window.scrollTo({ top: 0 }); };
     const closeProject = () => { setSelectedId(null); setMessage(null); loadList(); };
 
     const lineTitle = (l: Line) => {
@@ -203,7 +234,18 @@ const WgProjects: React.FC = () => {
         );
     }
 
-    const list = rows;
+    // Group by state, states with projects waiting for confirmation first
+    const stateLabel = (r: { state: string | null; state_ar?: string | null }) => (isAr ? r.state_ar || r.state : r.state) || '—';
+    const byState = new Map<string, ListRow[]>();
+    rows.forEach(r => {
+        const k = r.state || '—';
+        byState.set(k, [...(byState.get(k) || []), r]);
+    });
+    const states = Array.from(byState.entries())
+        .map(([key, items]) => ({ key, label: stateLabel(items[0]), items, waiting: items.filter(r => r.needs_my_decision).length,
+            confirmed: items.filter(r => r.lcc_status === 'approved').length }))
+        .sort((a, b) => (b.waiting - a.waiting) || a.label.localeCompare(b.label));
+    const totalWaiting = rows.filter(r => r.needs_my_decision).length;
 
     return (
         <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
@@ -225,35 +267,97 @@ const WgProjects: React.FC = () => {
                     <>
                         {loadingList ? (
                             <div className="bg-white rounded-2xl shadow-md p-4 text-gray-600">{t('loading')}</div>
-                        ) : list.length === 0 ? (
+                        ) : rows.length === 0 ? (
                             <div className="bg-white rounded-2xl shadow-md p-4 text-gray-600">{t('empty.all')}</div>
                         ) : (
-                            <ul className="space-y-3">
-                                {list.map(r => (
-                                    <li key={r.id}>
-                                        <button onClick={() => openProject(r.id)}
-                                            className="w-full text-start bg-white rounded-2xl shadow-md p-4 border border-transparent hover:border-brand-blue transition">
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-gray-900 mb-0">{r.project_name || '—'}</p>
-                                                    <p className="text-sm text-gray-600 mb-0">{roomName(r)} · {r.state || '—'}</p>
-                                                </div>
-                                                <Chip className={STATUS_CHIP[r.status] || 'bg-gray-100 text-gray-700'}>{t(`status.${r.status}`, { defaultValue: r.status })}</Chip>
-                                            </div>
-                                            {r.groups.length > 0 && <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
-                                                {r.groups.map(g => (
-                                                    <Chip key={g.id} className={g.is_program_lead ? 'bg-brand-blue text-white' : 'bg-gray-100 text-gray-700'}>{groupName(g)}</Chip>
-                                                ))}
-                                            </div>}
-                                            <div className="grid grid-cols-3 gap-2 mt-3 text-sm">
-                                                <div><span className="block text-gray-500 text-xs">{t('card.budget')}</span><span className="font-bold text-primaryGreen"><bdi>{fmt(r.total_budget)} {r.currency || ''}</bdi></span></div>
-                                                <div><span className="block text-gray-500 text-xs">{t('card.reports')}</span><bdi dir="ltr">F4 {r.f4_count} · F5 {r.f5_count}</bdi></div>
-                                                <div><span className="block text-gray-500 text-xs">{t('card.comments')}</span>{r.comments_count}</div>
-                                            </div>
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
+                            <>
+                                <div className={`rounded-2xl p-4 text-sm font-semibold ${totalWaiting > 0 ? 'bg-brand-orangeSoft text-gray-900' : 'bg-white text-gray-700 shadow-md'}`}>
+                                    {totalWaiting > 0 ? t('confirm.summary', { count: totalWaiting }) : t('confirm.noneWaiting')}
+                                </div>
+                                <ul className="space-y-3">
+                                    {states.map(st => {
+                                        const open = !!expanded[st.key];
+                                        return (
+                                            <li key={st.key} className="bg-white rounded-2xl shadow-md overflow-hidden">
+                                                <button type="button" aria-expanded={open} onClick={() => setExpanded(prev => ({ ...prev, [st.key]: !open }))}
+                                                    className="w-full text-start p-4 flex items-center justify-between gap-2 hover:bg-gray-50 transition">
+                                                    <span className="flex items-center gap-2 min-w-0">
+                                                        <span aria-hidden="true" className={`inline-block transition-transform ${open ? 'rotate-90' : isAr ? 'rotate-180' : ''}`}>▸</span>
+                                                        <span className="font-bold text-gray-900 truncate">{st.label}</span>
+                                                        <span className="text-xs text-gray-500">({st.items.length})</span>
+                                                    </span>
+                                                    <span className="flex flex-wrap items-center justify-end gap-1">
+                                                        {st.waiting > 0 && <Chip className={LCC_CHIP.waiting}>{t('confirm.waitingCount', { count: st.waiting })}</Chip>}
+                                                        {st.confirmed > 0 && <Chip className={LCC_CHIP.approved}>{t('confirm.confirmedCount', { count: st.confirmed })}</Chip>}
+                                                    </span>
+                                                </button>
+                                                {open && (
+                                                    <ul className="border-t border-gray-100 divide-y divide-gray-100">
+                                                        {st.items.map(r => (
+                                                            <li key={r.id} className="p-4 space-y-3">
+                                                                <button type="button" onClick={() => openProject(r.id)} className="w-full text-start group">
+                                                                    <div className="flex items-start justify-between gap-2">
+                                                                        <div className="min-w-0">
+                                                                            <p className="font-bold text-gray-900 mb-0 group-hover:underline">{r.project_name || '—'}</p>
+                                                                            <p className="text-sm text-gray-600 mb-0">{roomName(r)} · {r.locality || '—'}</p>
+                                                                        </div>
+                                                                        <Chip className={STATUS_CHIP[r.status] || 'bg-gray-100 text-gray-700'}>{t(`status.${r.status}`, { defaultValue: r.status })}</Chip>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-3 gap-2 mt-3 text-sm">
+                                                                        <div><span className="block text-gray-500 text-xs">{t('card.budget')}</span><span className="font-bold text-primaryGreen"><bdi>{fmt(r.total_budget)} {r.currency || ''}</bdi></span></div>
+                                                                        <div><span className="block text-gray-500 text-xs">{t('card.reports')}</span><bdi dir="ltr">F4 {r.f4_count} · F5 {r.f5_count}</bdi></div>
+                                                                        <div><span className="block text-gray-500 text-xs">{t('card.comments')}</span>{r.comments_count}</div>
+                                                                    </div>
+                                                                </button>
+                                                                {r.needs_my_decision ? (
+                                                                    <div className="space-y-2">
+                                                                        <Chip className={LCC_CHIP.waiting}>{t('confirm.waiting')}</Chip>
+                                                                        {noteFor === r.id ? (
+                                                                            <div className="space-y-2">
+                                                                                <textarea rows={3} autoFocus value={confirmNote} onChange={e => setConfirmNote(e.target.value)}
+                                                                                    placeholder={t('confirm.feedbackPlaceholder')} aria-label={t('confirm.feedbackButton')}
+                                                                                    className="w-full rounded-lg border border-gray-300 p-2 text-sm outline-none focus:border-brand-blue" />
+                                                                                <div className="grid grid-cols-2 gap-2">
+                                                                                    <button type="button" disabled={busy || !confirmNote.trim()} onClick={() => confirmProject(r.id, confirmNote)}
+                                                                                        className="rounded-lg bg-emerald-600 text-white text-sm font-semibold px-3 py-2 disabled:opacity-50">
+                                                                                        ✓ {t('confirm.sendFeedback')}
+                                                                                    </button>
+                                                                                    <button type="button" disabled={busy} onClick={() => { setNoteFor(null); setConfirmNote(''); }}
+                                                                                        className="rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold px-3 py-2">
+                                                                                        {t('confirm.cancel')}
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="grid grid-cols-2 gap-2">
+                                                                                <button type="button" disabled={busy} onClick={() => confirmProject(r.id)}
+                                                                                    className="rounded-lg bg-emerald-600 text-white text-sm font-semibold px-3 py-2 disabled:opacity-50">
+                                                                                    ✓ {t('confirm.button')}
+                                                                                </button>
+                                                                                <button type="button" disabled={busy} onClick={() => { setNoteFor(r.id); setConfirmNote(''); }}
+                                                                                    className="rounded-lg border-2 border-brand-blue text-brand-deep bg-white text-sm font-semibold px-3 py-2 disabled:opacity-50">
+                                                                                    ✎ {t('confirm.feedbackButton')}
+                                                                                </button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ) : r.lcc_status === 'approved' ? (
+                                                                    <div className="text-xs text-emerald-800 space-y-1">
+                                                                        <p className="mb-0">✓ {t('confirm.doneBy', { name: r.lcc?.decided_by_name || '—', date: fmtDate(r.lcc?.decided_at) })}</p>
+                                                                        {r.lcc?.note && <p className="mb-0 whitespace-pre-line text-gray-700 bg-gray-50 rounded-lg p-2"><strong>{t('confirm.note')}:</strong> {r.lcc.note}</p>}
+                                                                    </div>
+                                                                ) : r.lcc_status === 'waiting' ? (
+                                                                    <Chip className={LCC_CHIP.waiting}>{t('confirm.waiting')}</Chip>
+                                                                ) : null}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </>
                         )}
                         <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
                     </>
@@ -283,6 +387,28 @@ const WgProjects: React.FC = () => {
                                 </div>
                             </div>}
                         </section>
+
+                        {/* Working-group confirmation */}
+                        {(detail.lcc_status === 'waiting' || detail.lcc_status === 'approved') && (
+                            <Section title={t('sections.confirm')}>
+                                {detail.lcc_status === 'approved' ? (
+                                    <p className="text-sm text-emerald-900 mb-0">
+                                        ✓ {t('confirm.doneBy', { name: detail.lcc?.decided_by_name || '—', date: fmtDate(detail.lcc?.decided_at) })}
+                                        {detail.lcc?.note && <><br />{t('confirm.note')}: {detail.lcc.note}</>}
+                                    </p>
+                                ) : detail.can_decide ? (
+                                    <div className="space-y-2">
+                                        <p className="text-sm text-gray-700 mb-0">{t('confirm.help')}</p>
+                                        <textarea rows={2} value={confirmNote} onChange={e => setConfirmNote(e.target.value)} placeholder={t('confirm.feedbackPlaceholder')}
+                                            className="w-full rounded-lg border border-gray-300 p-2 text-sm outline-none focus:border-brand-blue" />
+                                        <button type="button" disabled={busy} onClick={() => confirmProject(detail.project.id, confirmNote)}
+                                            className="w-full rounded-lg bg-emerald-600 text-white font-semibold py-2 disabled:opacity-50">✓ {t('confirm.button')}</button>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-700 mb-0">{t('confirm.waiting')}</p>
+                                )}
+                            </Section>
+                        )}
 
                         {/* F-2 record */}
                         <Section title={t('sections.f2')}>

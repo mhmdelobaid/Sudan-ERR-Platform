@@ -125,9 +125,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             };
         });
 
+        // Working-group confirmation and feedback for projects that passed F-2 (sent on to the partner)
+        const screenedIds = processedProjects.filter((p: any) => p.status === 'screened').map((p: any) => p.id);
+        const confirmations: Record<string, any> = {};
+        if (screenedIds.length > 0) {
+            const { data: conf, error: confError } = await authenticatedClient.rpc('wg_room_confirmations', { p_project_ids: screenedIds });
+            if (confError) console.error('Error fetching working-group confirmations:', confError.message);
+            (conf || []).forEach((c: any) => { confirmations[c.project_id] = c; });
+        }
+
         return res.status(200).json({
             success: true,
-            projects: processedProjects
+            projects: processedProjects.map((p: any) => ({ ...p, wg_confirmation: confirmations[p.id] || null }))
         });
     } catch (error) {
         console.error('Project status error:', error);

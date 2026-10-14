@@ -6,7 +6,7 @@ import MessageBubble from '../components/ui/MessageBubble';
 import Button from '../components/ui/Button';
 import MenuCard from '../components/ui/MenuCard';
 import {
-    ClipboardDocumentCheckIcon, UserGroupIcon, Cog6ToothIcon, FolderIcon, DocumentTextIcon, DocumentCheckIcon,
+    ClipboardDocumentCheckIcon, UserGroupIcon, FolderIcon, DocumentTextIcon, DocumentCheckIcon,
     BanknotesIcon, PresentationChartLineIcon, ChartBarIcon, ChatBubbleLeftEllipsisIcon, ArrowRightStartOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import ReportingForm from '../components/forms/ReportForm/ReportingForm';
@@ -460,11 +460,6 @@ const Menu = () => {
                         {['lcc_wg', 'superadmin'].includes(userRole || '') && (
                             <MenuCard title={t('wgProjects')} description={t('cards.wgProjects')}
                                 icon={<UserGroupIcon className="w-6 h-6" />} onClick={() => router.push('/wg-projects')} />
-                        )}
-                        {/* Admins: create working groups, add members, assign them to projects */}
-                        {['admin', 'superadmin'].includes(userRole || '') && (
-                            <MenuCard title={t('wgAdmin')} description={t('cards.wgAdmin')}
-                                icon={<Cog6ToothIcon className="w-6 h-6" />} onClick={() => router.push('/wg-admin')} />
                         )}
                         {(isRoomUser || userRole === 'state_rep') && (
                             <MenuCard title={t('dashboard')} description={t('cards.dashboard')}

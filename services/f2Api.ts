@@ -49,6 +49,8 @@ const KNOWN_ERRORS: Record<string, number> = {
     note_required_for_conditional_or_reject: 400,
     // Working groups / LCC
     only_program_working_group_can_decide: 403,
+    only_working_groups_confirm: 403,
+    lcc_step_off: 403,
     project_not_screened: 409,
     invalid_decision: 400,
     note_required_to_return: 400,

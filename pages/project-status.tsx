@@ -179,6 +179,18 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                             {project.status === 'feedback' ? t('feedbackStatus') : t(project.status)}
                                         </span>
                                     </p>
+                                    {project.status === 'screened' && (
+                                        project.wg_confirmation ? (
+                                            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 my-1 text-sm">
+                                                <p className="mb-0 text-emerald-900">✓ {t('wg.confirmed', { date: formatDate(project.wg_confirmation.decided_at) })}</p>
+                                                {project.wg_confirmation.note && (
+                                                    <p className="mb-0 mt-1 whitespace-pre-line text-gray-800"><strong>{t('wg.note')}:</strong> {project.wg_confirmation.note}</p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-600 mb-0">{t('wg.waiting')}</p>
+                                        )
+                                    )}
                                     <p>
                                         <strong>{t('submittedAt')}:</strong>{' '}
                                         {formatDate(project.submitted_at)}
