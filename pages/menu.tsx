@@ -311,7 +311,7 @@ const Menu = () => {
         setCurrentProjectDraft(null);
     };
 
-    // Reps and working groups don't run a room, so they don't get F1 / F3 / F4 / F5 (reps do get the dashboard, read only)
+    // Reps and working groups don't run a room, so they don't get F1 / F3 / F4 / F5 (everyone gets the dashboard)
     const isRoomUser = userRole !== null && !['state_rep', 'lcc_wg'].includes(userRole);
 
     // A report form, the scanner or the drafts list is open: hide the report-type buttons
@@ -461,7 +461,8 @@ const Menu = () => {
                             <MenuCard title={t('wgProjects')} description={t('cards.wgProjects')}
                                 icon={<UserGroupIcon className="w-6 h-6" />} onClick={() => router.push('/wg-projects')} />
                         )}
-                        {(isRoomUser || userRole === 'state_rep') && (
+                        {/* Everyone sees the dashboard at their own level (room, state, their states, or all for working groups) */}
+                        {userRole !== null && (
                             <MenuCard title={t('dashboard')} description={t('cards.dashboard')}
                                 icon={<ChartBarIcon className="w-6 h-6" />} onClick={() => router.push('/dashboard')} />
                         )}

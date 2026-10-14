@@ -31,10 +31,12 @@ interface Pool { state: string; allocated: number; committed: number; pending: n
 interface NamedAmount { id: string; en: string; ar: string | null; amount: number }
 interface Budget { currency: string; total: number; byActivity: NamedAmount[]; byExpense: NamedAmount[] }
 interface DashboardData {
-    scope: 'all' | 'states' | 'room';
+    scope: 'all' | 'states' | 'locality' | 'room';
+    locality?: { name: string | null; name_ar: string | null } | null;
+    locality_labels_ar?: Record<string, string>;
     states: string[];
     funding: Pool[];
-    projects: { total: number; drafts?: number; byStatus: Record<string, number>; byState: { state: string; total: number; counts: Record<string, number> }[] };
+    projects: { total: number; drafts?: number; byStatus: Record<string, number>; byState: { state: string; total: number; counts: Record<string, number>; localities?: { locality: string; total: number; counts: Record<string, number> }[] }[] };
     budgets: Budget[];
     people: { individuals: number; households: number; male: number; female: number; under18_male: number; under18_female: number; reports: number; projects_reported: number };
     generated_at: string;
@@ -161,6 +163,7 @@ export default function Dashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [error, setError] = useState('');
     const [allStates, setAllStates] = useState(false);
+    const [openStates, setOpenStates] = useState<Record<string, boolean>>({});   // states expanded to show their localities
     const isAr = i18n.language === 'ar';
 
     useEffect(() => {
@@ -188,10 +191,13 @@ export default function Dashboard() {
     const name = (n: NamedAmount) => (n.id === 'other' ? t('budgets.other') : (isAr && n.ar) || tPA(n.en, { defaultValue: n.en }));
     const statusLabel = (s: string) => t(`status.${s}`, { defaultValue: s });
     const stateName = (s: string) => (isAr && data?.state_labels_ar?.[s]) || s;
+    const localityName = (l: string) => (isAr && data?.locality_labels_ar?.[l]) || l;
 
     const statuses = data ? [...STATUS_ORDER.filter(s => data.projects.byStatus[s]), ...Object.keys(data.projects.byStatus).filter(s => !STATUS_ORDER.includes(s))] : [];
     const remainingUsd = data ? data.funding.reduce((s, f) => s + f.remaining, 0) : 0;
-    const scopeLabel = data ? (data.scope === 'all' ? t('scope.all') : data.scope === 'states' ? `${t('scope.states')}: ${data.states.map(stateName).join(isAr ? '، ' : ', ')}` : `${t('scope.room')}${data.states[0] ? ` · ${stateName(data.states[0])}` : ''}`) : '';
+    const scopeLabel = data ? (data.scope === 'all' ? t('scope.all')
+        : data.scope === 'locality' ? `${t('scope.locality')}: ${(isAr ? data.locality?.name_ar || data.locality?.name : data.locality?.name) || '—'}${data.states[0] ? ` · ${stateName(data.states[0])}` : ''}`
+        : data.scope === 'states' ? `${t('scope.states')}: ${data.states.map(stateName).join(isAr ? '، ' : ', ')}` : `${t('scope.room')}${data.states[0] ? ` · ${stateName(data.states[0])}` : ''}`) : '';
 
     return (
         <div className="min-h-screen bg-gray-50 dashboard-page">
@@ -284,6 +290,21 @@ export default function Dashboard() {
                                         <p className="text-xs text-gray-600 mt-2">{statusLabel('rejected')}: <b dir="ltr">{fmt(data.projects.byStatus.rejected)}</b></p>
                                     )}
 
+                                    {/* One state: its localities directly. Several states: each state opens to show its localities. */}
+                                    {data.projects.byState.length === 1 && (data.projects.byState[0].localities || []).length > 1 && (() => {
+                                        const locs = data.projects.byState[0].localities || [];
+                                        const max = Math.max(...locs.map(l => l.total), 1);
+                                        const present = STACK_ORDER.filter(k => locs.some(l => (l.counts[k] || 0) > 0));
+                                        return (
+                                            <div className="mt-5">
+                                                <h3 className="font-semibold text-gray-900">{t('projects.byLocality')}</h3>
+                                                <Legend items={present.map(k => ({ label: statusLabel(k), color: STAGE[k].color }))} />
+                                                {locs.map(l => (
+                                                    <StateStack key={l.locality} label={localityName(l.locality)} counts={l.counts} total={l.total} max={max} statusLabel={statusLabel} />
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
                                     {data.projects.byState.length > 1 && (() => {
                                         const rows = data.projects.byState;
                                         const max = Math.max(...rows.map(r => r.total), 1);
@@ -291,12 +312,32 @@ export default function Dashboard() {
                                         return (
                                             <div className="mt-5">
                                                 <h3 className="font-semibold text-gray-900">{t('projects.byState')}</h3>
+                                                <p className="no-print text-xs text-gray-500 mb-1">{t('projects.tapState')}</p>
                                                 <Legend items={present.map(k => ({ label: statusLabel(k), color: STAGE[k].color }))} />
-                                                {rows.map((r, i) => (
-                                                    <div key={r.state} className={!allStates && i >= STATES_SHOWN ? 'hidden print:block' : ''}>
-                                                        <StateStack label={stateName(r.state)} counts={r.counts} total={r.total} max={max} statusLabel={statusLabel} />
-                                                    </div>
-                                                ))}
+                                                {rows.map((r, i) => {
+                                                    const locs = r.localities || [];
+                                                    const open = !!openStates[r.state];
+                                                    const arrow = open ? '▾' : isAr ? '◂' : '▸';
+                                                    return (
+                                                        <div key={r.state} className={!allStates && i >= STATES_SHOWN ? 'hidden print:block' : ''}>
+                                                            {locs.length > 0 ? (
+                                                                <button type="button" aria-expanded={open} onClick={() => setOpenStates(prev => ({ ...prev, [r.state]: !open }))}
+                                                                    className="w-full text-start rounded hover:bg-gray-50">
+                                                                    <StateStack label={`${arrow} ${stateName(r.state)}`} counts={r.counts} total={r.total} max={max} statusLabel={statusLabel} />
+                                                                </button>
+                                                            ) : (
+                                                                <StateStack label={stateName(r.state)} counts={r.counts} total={r.total} max={max} statusLabel={statusLabel} />
+                                                            )}
+                                                            {open && (
+                                                                <div className="ms-3 ps-2 border-s-2 border-gray-200 mb-1">
+                                                                    {locs.map(l => (
+                                                                        <StateStack key={l.locality} label={localityName(l.locality)} counts={l.counts} total={l.total} max={max} statusLabel={statusLabel} />
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
                                                 {rows.length > STATES_SHOWN && (
                                                     <button onClick={() => setAllStates(v => !v)}
                                                         className="no-print mt-2 text-sm font-semibold text-brand-deep underline underline-offset-2">

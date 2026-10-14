@@ -1,7 +1,8 @@
 // Who may use the ERR app. Partners use the partner portal, not this app.
 // state_rep: the reps committee, who only screen F-1s (F-2) on /f2-review.
 // lcc_wg: national / LCC working groups, who follow the projects they run on /wg-projects.
-export const APP_ROLES = ['base_err', 'state_err', 'support', 'admin', 'superadmin', 'state_rep', 'lcc_wg'] as const;
+// locality_err: the locality level between base rooms and the state; works on every room in its locality.
+export const APP_ROLES = ['base_err', 'locality_err', 'state_err', 'support', 'admin', 'superadmin', 'state_rep', 'lcc_wg'] as const;
 
 export type AppAccess = 'ok' | 'pending' | 'no_access';
 

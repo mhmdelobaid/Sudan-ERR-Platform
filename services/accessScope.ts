@@ -4,6 +4,8 @@
 //   superadmin                        every room, every state
 //   admin / support                   rooms in their visible states (all if can_see_all_states)
 //   state_err / state_rep             rooms in their own room's state (reps: read only)
+//   lcc_wg (working groups)           every room, every state, read only (national / LCC level)
+//   locality_err                      rooms in their own room's locality (same state + locality row)
 //   base_err                          their own room only
 
 export interface AccessScope {
@@ -12,6 +14,8 @@ export interface AccessScope {
     states: string[];          // state names the user may see (empty + all=true means every state)
     ownRoomId: string | null;
     ownState: string | null;
+    ownLocality: string | null;     // locality of the user's own room (shown for locality users)
+    ownLocalityAr: string | null;
 }
 
 export async function getAccessScope(db: any, userId: string): Promise<AccessScope> {
@@ -24,18 +28,24 @@ export async function getAccessScope(db: any, userId: string): Promise<AccessSco
 
     const ownRoomId: string | null = me.err_id ? String(me.err_id) : null;
     let ownState: string | null = null;
+    let ownLocality: string | null = null;
+    let ownLocalityAr: string | null = null;
+    let ownLocalityRef: string | null = null;   // the states row (state + locality) of the user's room
     if (ownRoomId) {
         const { data: room } = await db
             .from('emergency_rooms')
-            .select('states ( state_name )')
+            .select('state_reference, states ( state_name, locality, locality_ar )')
             .eq('id', ownRoomId)
             .maybeSingle();
         ownState = (room as any)?.states?.state_name || null;
+        ownLocality = (room as any)?.states?.locality || null;
+        ownLocalityAr = (room as any)?.states?.locality_ar || null;
+        ownLocalityRef = (room as any)?.state_reference ? String((room as any).state_reference) : null;
     }
 
     const role: string = me.role;
-    const seesAll = role === 'superadmin' || ((role === 'admin' || role === 'support') && me.can_see_all_states === true);
-    if (seesAll) return { all: true, roomIds: [], states: [], ownRoomId, ownState };
+    const seesAll = role === 'superadmin' || role === 'lcc_wg' || ((role === 'admin' || role === 'support') && me.can_see_all_states === true);
+    if (seesAll) return { all: true, roomIds: [], states: [], ownRoomId, ownState, ownLocality, ownLocalityAr };
 
     let states: string[] = [];
     if (role === 'state_err' || role === 'state_rep') states = ownState ? [ownState] : [];
@@ -50,21 +60,27 @@ export async function getAccessScope(db: any, userId: string): Promise<AccessSco
             (rooms || []).forEach((r: any) => roomIds.add(String(r.id)));
         }
     }
-    if (role === 'base_err' && ownState) states = [ownState];
-    return { all: false, roomIds: Array.from(roomIds), states, ownRoomId, ownState };
+    // Locality level: every room in the same locality (same state + locality row as their own room)
+    if (role === 'locality_err' && ownLocalityRef) {
+        const { data: rooms } = await db.from('emergency_rooms').select('id').eq('state_reference', ownLocalityRef);
+        (rooms || []).forEach((r: any) => roomIds.add(String(r.id)));
+    }
+    if ((role === 'base_err' || role === 'locality_err') && ownState) states = [ownState];
+    return { all: false, roomIds: Array.from(roomIds), states, ownRoomId, ownState, ownLocality, ownLocalityAr };
 }
 
 /** Room names for a list of room ids, so screens can say which room a project belongs to. */
-export async function getRoomNames(db: any, roomIds: string[]): Promise<Record<string, { name: string | null; name_ar: string | null; err_code: string | null; state: string | null }>> {
+export async function getRoomNames(db: any, roomIds: string[]): Promise<Record<string, { name: string | null; name_ar: string | null; err_code: string | null; state: string | null; locality: string | null; locality_ar: string | null }>> {
     const ids = Array.from(new Set(roomIds.filter(id => /^[0-9a-f-]{36}$/i.test(id))));
     if (ids.length === 0) return {};
     const { data } = await db
         .from('emergency_rooms')
-        .select('id, name, name_ar, err_code, states ( state_name )')
+        .select('id, name, name_ar, err_code, states ( state_name, locality, locality_ar )')
         .in('id', ids);
     const out: Record<string, any> = {};
     (data || []).forEach((r: any) => {
-        out[String(r.id)] = { name: r.name, name_ar: r.name_ar, err_code: r.err_code, state: r.states?.state_name || null };
+        out[String(r.id)] = { name: r.name, name_ar: r.name_ar, err_code: r.err_code, state: r.states?.state_name || null,
+            locality: r.states?.locality || null, locality_ar: r.states?.locality_ar || null };
     });
     return out;
 }

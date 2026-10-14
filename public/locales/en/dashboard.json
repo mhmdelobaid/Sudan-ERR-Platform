@@ -3,7 +3,8 @@
   "scope": {
     "all": "All states",
     "states": "Your states",
-    "room": "Your room"
+    "room": "Your room",
+    "locality": "Locality"
   },
   "updated": "Updated",
   "print": "Print / Save as PDF",
@@ -32,7 +33,9 @@
     "count": "projects",
     "subtitle": "Where every work plan is in the F-System, from the F-1 draft to the F-5 final report.",
     "showAll": "Show all {{count}} states",
-    "showFewer": "Show fewer states"
+    "showFewer": "Show fewer states",
+    "byLocality": "Projects by locality",
+    "tapState": "Tap a state to see its localities"
   },
   "status": {
     "pending": "Pending review",

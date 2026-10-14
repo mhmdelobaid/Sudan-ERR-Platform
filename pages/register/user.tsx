@@ -13,7 +13,7 @@ interface EmergencyRoom {
     id: string;
     name: string;
     name_ar: string | null;
-    type: 'state' | 'base';
+    type: 'state' | 'locality' | 'base';
 }
 
 const UserRegistration = () => {
@@ -130,7 +130,7 @@ const UserRegistration = () => {
                     auth_user_id: authData.user?.id,
                     err_id: selectedRoom.id,
                     display_name: displayName,
-                    role: selectedRoom.type === 'state' ? 'state_err' : 'base_err',
+                    role: selectedRoom.type === 'state' ? 'state_err' : selectedRoom.type === 'locality' ? 'locality_err' : 'base_err',
                     status: 'pending'
                 }]);
 

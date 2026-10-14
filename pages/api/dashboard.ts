@@ -81,16 +81,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // State of each project comes from its room (err_projects.state may be Arabic or English)
         const rooms = await getRoomNames(db, projects.map(p => String(p.err_id || '')));
         const stateOf = (p: any) => rooms[String(p.err_id)]?.state || p.state || 'Unknown';
+        // Locality comes from the project's room (its states row), falling back to the project's own text
+        const localityOf = (p: any) => rooms[String(p.err_id)]?.locality || p.locality || 'Unknown';
+        const locality_labels_ar: Record<string, string> = {};
+        Object.values(rooms).forEach((r: any) => { if (r.locality && r.locality_ar) locality_labels_ar[r.locality] = r.locality_ar; });
 
         const byStatus: Record<string, number> = {};
         const byState: Record<string, Record<string, number>> = {};
+        const byLocality: Record<string, Record<string, Record<string, number>>> = {};   // state -> locality -> status -> count
         projects.forEach(p => {
             const status = p.status || 'unknown';
             byStatus[status] = (byStatus[status] || 0) + 1;
             const st = stateOf(p);
             byState[st] ||= {};
             byState[st][status] = (byState[st][status] || 0) + 1;
+            const loc = localityOf(p);
+            byLocality[st] ||= {};
+            byLocality[st][loc] ||= {};
+            byLocality[st][loc][status] = (byLocality[st][loc][status] || 0) + 1;
         });
+        const sumCounts = (c: Record<string, number>) => Object.values(c).reduce((a, b) => a + b, 0);
 
         // 3) Planned budgets by activity and by expense type, kept apart per currency (no conversion)
         const budgetByActivity: Record<string, Record<string, number>> = {};   // currency -> activity id -> amount
@@ -157,15 +167,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({
             success: true,
             state_labels_ar,
-            scope: scope.all ? 'all' : (scope.states.length > 0 && user.role !== 'base_err' ? 'states' : 'room'),
+            scope: scope.all ? 'all' : user.role === 'locality_err' ? 'locality' : (scope.states.length > 0 && user.role !== 'base_err' ? 'states' : 'room'),
             states: scope.all ? funding.map(f => f.state) : scope.states,
+            locality: user.role === 'locality_err' ? { name: scope.ownLocality, name_ar: scope.ownLocalityAr } : null,
+            locality_labels_ar,
             funding,
             projects: {
                 total: projects.length,
                 drafts,
                 byStatus,
-                byState: Object.entries(byState).map(([state, counts]) => ({ state, total: Object.values(counts).reduce((a, b) => a + b, 0), counts }))
-                    .sort((a, b) => b.total - a.total),
+                byState: Object.entries(byState).map(([state, counts]) => ({
+                    state, total: sumCounts(counts), counts,
+                    localities: Object.entries(byLocality[state] || {}).map(([locality, lc]) => ({ locality, total: sumCounts(lc), counts: lc }))
+                        .sort((a, b) => b.total - a.total),
+                })).sort((a, b) => b.total - a.total),
             },
             budgets,
             people: { ...people, reports: reports.length, projects_reported: new Set(reports.map(r => r.project_id)).size },

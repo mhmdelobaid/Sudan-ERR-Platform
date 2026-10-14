@@ -1,5 +1,5 @@
 // pages/wg-projects.tsx
-// Working groups (LCC level), Yung 14 Oct 2026: projects that passed F-2, grouped by state.
+// Working groups (LCC level), Yung 14 Oct 2026: projects that passed F-2, grouped by state, then locality.
 // Working groups don't screen; they see the F-2 result and confirm they have seen it and are OK
 // with it. One confirmation sends the project on to the intermediate partner. They also follow
 // F-4 / F-5 and comment. The database decides who may see and confirm what (wg_* functions).
@@ -21,7 +21,7 @@ interface Core {
 }
 interface Lcc { decision: 'approved' | 'returned'; note: string | null; decided_at: string; decided_by_name: string | null }
 interface ListRow extends Core {
-    state_ar: string | null; lcc: Lcc | null; f2_outcome: string | null;
+    state_ar: string | null; room_locality: string | null; room_locality_ar: string | null; lcc: Lcc | null; f2_outcome: string | null;
     groups: Group[]; i_am_program: boolean; lcc_status: LccStatus; needs_my_decision: boolean;
     f4_count: number; f5_count: number; comments_count: number;
 }
@@ -130,7 +130,9 @@ const WgProjects: React.FC = () => {
             setExpanded(prev => {
                 if (Object.keys(prev).length > 0) return prev;
                 const open: Record<string, boolean> = {};
-                (data.projects as ListRow[]).forEach(r => { if (r.needs_my_decision) open[r.state || '—'] = true; });
+                (data.projects as ListRow[]).forEach(r => {
+                    if (r.needs_my_decision) { open[r.state || '—'] = true; open[`${r.state || '—'}|${r.room_locality || r.locality || '—'}`] = true; }
+                });
                 return open;
             });
         } catch (e: any) {
@@ -241,9 +243,18 @@ const WgProjects: React.FC = () => {
         const k = r.state || '—';
         byState.set(k, [...(byState.get(k) || []), r]);
     });
+    const localityLabel = (r: ListRow) => (isAr ? r.room_locality_ar || r.room_locality || r.locality : r.room_locality || r.locality) || '—';
+    const counts = (items: ListRow[]) => ({ waiting: items.filter(r => r.needs_my_decision).length, confirmed: items.filter(r => r.lcc_status === 'approved').length });
     const states = Array.from(byState.entries())
-        .map(([key, items]) => ({ key, label: stateLabel(items[0]), items, waiting: items.filter(r => r.needs_my_decision).length,
-            confirmed: items.filter(r => r.lcc_status === 'approved').length }))
+        .map(([key, items]) => {
+            // State -> localities (from each project's room)
+            const byLoc = new Map<string, ListRow[]>();
+            items.forEach(r => { const lk = r.room_locality || r.locality || '—'; byLoc.set(lk, [...(byLoc.get(lk) || []), r]); });
+            const localities = Array.from(byLoc.entries())
+                .map(([lk, li]) => ({ key: `${key}|${lk}`, label: localityLabel(li[0]), items: li, ...counts(li) }))
+                .sort((a, b) => (b.waiting - a.waiting) || a.label.localeCompare(b.label));
+            return { key, label: stateLabel(items[0]), items, localities, ...counts(items) };
+        })
         .sort((a, b) => (b.waiting - a.waiting) || a.label.localeCompare(b.label));
     const totalWaiting = rows.filter(r => r.needs_my_decision).length;
 
@@ -292,14 +303,32 @@ const WgProjects: React.FC = () => {
                                                     </span>
                                                 </button>
                                                 {open && (
-                                                    <ul className="border-t border-gray-100 divide-y divide-gray-100">
-                                                        {st.items.map(r => (
+                                                    <ul className="border-t border-gray-100">
+                                                        {st.localities.map(lc => {
+                                                            const lopen = !!expanded[lc.key];
+                                                            return (
+                                                    <li key={lc.key} className="border-b last:border-b-0 border-gray-100">
+                                                    <button type="button" aria-expanded={lopen} onClick={() => setExpanded(prev => ({ ...prev, [lc.key]: !lopen }))}
+                                                        className="w-full text-start ps-8 pe-4 py-3 flex items-center justify-between gap-2 bg-gray-50 hover:bg-gray-100 transition">
+                                                        <span className="flex items-center gap-2 min-w-0">
+                                                            <span aria-hidden="true" className={`inline-block text-xs transition-transform ${lopen ? 'rotate-90' : isAr ? 'rotate-180' : ''}`}>▸</span>
+                                                            <span className="font-semibold text-gray-800 truncate">{lc.label}</span>
+                                                            <span className="text-xs text-gray-500">({lc.items.length})</span>
+                                                        </span>
+                                                        <span className="flex flex-wrap items-center justify-end gap-1">
+                                                            {lc.waiting > 0 && <Chip className={LCC_CHIP.waiting}>{t('confirm.waitingCount', { count: lc.waiting })}</Chip>}
+                                                            {lc.confirmed > 0 && <Chip className={LCC_CHIP.approved}>{t('confirm.confirmedCount', { count: lc.confirmed })}</Chip>}
+                                                        </span>
+                                                    </button>
+                                                    {lopen && (
+                                                    <ul className="divide-y divide-gray-100">
+                                                        {lc.items.map(r => (
                                                             <li key={r.id} className="p-4 space-y-3">
                                                                 <button type="button" onClick={() => openProject(r.id)} className="w-full text-start group">
                                                                     <div className="flex items-start justify-between gap-2">
                                                                         <div className="min-w-0">
                                                                             <p className="font-bold text-gray-900 mb-0 group-hover:underline">{r.project_name || '—'}</p>
-                                                                            <p className="text-sm text-gray-600 mb-0">{roomName(r)} · {r.locality || '—'}</p>
+                                                                            <p className="text-sm text-gray-600 mb-0">{roomName(r)}</p>
                                                                         </div>
                                                                         <Chip className={STATUS_CHIP[r.status] || 'bg-gray-100 text-gray-700'}>{t(`status.${r.status}`, { defaultValue: r.status })}</Chip>
                                                                     </div>
@@ -351,6 +380,11 @@ const WgProjects: React.FC = () => {
                                                                 ) : null}
                                                             </li>
                                                         ))}
+                                                    </ul>
+                                                    )}
+                                                    </li>
+                                                            );
+                                                        })}
                                                     </ul>
                                                 )}
                                             </li>
