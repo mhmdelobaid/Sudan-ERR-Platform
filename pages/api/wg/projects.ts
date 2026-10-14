@@ -1,6 +1,7 @@
 // GET /api/wg/projects — projects run by the caller's working groups (role lcc_wg)
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCaller, sendRpcError, withJsonErrors } from '../../../services/f2Api';
+import { isComingState } from '../../../services/comingStates';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') {
@@ -11,7 +12,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!caller) return;
     const { data, error } = await caller.client.rpc('wg_projects');
     if (error) return sendRpcError(res, error);
-    return res.status(200).json({ success: true, projects: data || [] });
+    // Coming states (not yet in the programme) are not shown
+    const projects = (Array.isArray(data) ? data : []).filter((p: any) => !isComingState(p?.state));
+    return res.status(200).json({ success: true, projects });
 }
 
 export default withJsonErrors(handler);

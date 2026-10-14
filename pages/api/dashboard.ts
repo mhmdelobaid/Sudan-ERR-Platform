@@ -6,6 +6,7 @@ import { validateSession } from '../../services/auth';
 import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
 import { getAccessScope, getRoomNames } from '../../services/accessScope';
 import { getFundingByState } from '../../services/fundingPool';
+import { isComingState } from '../../services/comingStates';
 
 const PAGE = 1000;   // Supabase returns at most 1,000 rows per request
 const CHUNK = 150;   // ids per ".in()" filter, to keep URLs short
@@ -54,7 +55,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const scope = await getAccessScope(db, user.id);
 
         // 1) Funding by state (same numbers as the funding screen)
-        const funding = await getFundingByState(db, scope);
+        // Coming states (not yet in the programme) are left out, except for a user's own state
+        const hidden = (st: string | null | undefined) => isComingState(st) && st !== scope.ownState;
+        const funding = (await getFundingByState(db, scope)).filter(f => !hidden(f.state));
 
         // 2) Submitted projects the user may see
         let projects: any[] = [];
@@ -66,21 +69,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // F-1 work plans started but not yet submitted (drafts): counted only, never in totals or budgets
-        let drafts = 0;
+        let draftRows: any[] = [];
         if (scope.all) {
-            const { count } = await db.from('err_projects').select('id', { count: 'exact', head: true }).eq('is_draft', true);
-            drafts = count || 0;
-        } else {
-            for (let i = 0; i < scope.roomIds.length; i += CHUNK) {
-                const { count } = await db.from('err_projects').select('id', { count: 'exact', head: true })
-                    .eq('is_draft', true).in('err_id', scope.roomIds.slice(i, i + CHUNK));
-                drafts += count || 0;
-            }
+            draftRows = await fetchAll((from, to) => db.from('err_projects').select('id, err_id, state').eq('is_draft', true).range(from, to));
+        } else if (scope.roomIds.length > 0) {
+            draftRows = await fetchByIds(db, 'err_projects', 'id, err_id, state', 'err_id', scope.roomIds, q => q.eq('is_draft', true));
         }
 
         // State of each project comes from its room (err_projects.state may be Arabic or English)
-        const rooms = await getRoomNames(db, projects.map(p => String(p.err_id || '')));
+        const rooms = await getRoomNames(db, [...projects, ...draftRows].map(p => String(p.err_id || '')));
         const stateOf = (p: any) => rooms[String(p.err_id)]?.state || p.state || 'Unknown';
+        projects = projects.filter(p => !hidden(stateOf(p)));
+        const drafts = draftRows.filter(p => !hidden(stateOf(p))).length;
         // Locality comes from the project's room (its states row), falling back to the project's own text
         const localityOf = (p: any) => rooms[String(p.err_id)]?.locality || p.locality || 'Unknown';
         const locality_labels_ar: Record<string, string> = {};
@@ -169,7 +169,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             success: true,
             state_labels_ar,
             scope: scope.all ? 'all' : user.role === 'locality_err' ? 'locality' : (scope.states.length > 0 && user.role !== 'base_err' ? 'states' : 'room'),
-            states: scope.all ? funding.map(f => f.state) : scope.states,
+            states: (scope.all ? funding.map(f => f.state) : scope.states).filter(st => !hidden(st)),
             locality: user.role === 'locality_err' ? { name: scope.ownLocality, name_ar: scope.ownLocalityAr } : null,
             locality_labels_ar,
             funding,
