@@ -148,7 +148,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // 4) People reached, from submitted F5 program reports on these projects
         const reports = await fetchByIds(db, 'err_program_report', 'id, project_id', 'project_id', projects.map(p => p.id));
         const reach = await fetchByIds(db, 'err_program_reach',
-            'report_id, individual_count, household_count, male_count, female_count, under18_male, under18_female',
+            'report_id, individual_count, household_count, male_count, female_count, under18_male, under18_female, people_with_disabilities',
             'report_id', reports.map(r => r.id));
         const people = reach.reduce((t, r) => ({
             individuals: t.individuals + num(r.individual_count),
@@ -157,7 +157,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             female: t.female + num(r.female_count),
             under18_male: t.under18_male + num(r.under18_male),
             under18_female: t.under18_female + num(r.under18_female),
-        }), { individuals: 0, households: 0, male: 0, female: 0, under18_male: 0, under18_female: 0 });
+            disabilities: t.disabilities + num(r.people_with_disabilities),
+        }), { individuals: 0, households: 0, male: 0, female: 0, under18_male: 0, under18_female: 0, disabilities: 0 });
 
         // Arabic state names for the Arabic screen
         const { data: stateRows } = await db.from('states').select('state_name, state_name_ar');

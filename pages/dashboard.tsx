@@ -38,7 +38,7 @@ interface DashboardData {
     funding: Pool[];
     projects: { total: number; drafts?: number; byStatus: Record<string, number>; byState: { state: string; total: number; counts: Record<string, number>; localities?: { locality: string; total: number; counts: Record<string, number> }[] }[] };
     budgets: Budget[];
-    people: { individuals: number; households: number; male: number; female: number; under18_male: number; under18_female: number; reports: number; projects_reported: number };
+    people: { individuals: number; households: number; male: number; female: number; under18_male: number; under18_female: number; disabilities?: number; reports: number; projects_reported: number };
     generated_at: string;
     state_labels_ar?: Record<string, string>;
 }
@@ -243,6 +243,42 @@ export default function Dashboard() {
                             <Tile label={t('tiles.remaining')} value={money(remainingUsd, 'USD')} />
                         </div>
 
+                        {/* Beneficiaries first (from F5 program reports) */}
+                        <Section title={t('people.title')} subtitle={t('people.subtitle')}>
+                            {data.people.reports === 0 ? <p className="text-sm text-gray-500">{t('people.none')}</p> : (
+                                <>
+                                    <div className="grid grid-cols-3 gap-3 mb-3">
+                                        <Tile label={t('people.individuals')} value={fmt(data.people.individuals)} />
+                                        <Tile label={t('people.households')} value={fmt(data.people.households)} />
+                                        <Tile label={t('people.reports')} value={fmt(data.people.reports)} />
+                                    </div>
+                                    {(data.people.female + data.people.male) > 0 && (() => {
+                                        const tot = data.people.female + data.people.male;
+                                        const fPct = (data.people.female / tot) * 100;
+                                        return (
+                                            <>
+                                                <Legend items={[{ label: t('people.female'), color: C.orange }, { label: t('people.male'), color: C.blue }]} />
+                                                <div className="flex h-5 rounded-e overflow-hidden" title={`${t('people.female')} ${fmt(data.people.female)} · ${t('people.male')} ${fmt(data.people.male)}`}>
+                                                    <div style={{ width: `${fPct}%`, background: C.orange }} />
+                                                    <div style={{ width: 2, background: '#fff' }} />
+                                                    <div style={{ flex: 1, background: C.blue }} />
+                                                </div>
+                                                <div className="flex justify-between text-xs text-gray-700 mt-1">
+                                                    <span>{t('people.female')}: <b dir="ltr">{fmt(data.people.female)}</b> ({Math.round(fPct)}%)</span>
+                                                    <span>{t('people.male')}: <b dir="ltr">{fmt(data.people.male)}</b> ({100 - Math.round(fPct)}%)</span>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
+                                    <div className="grid grid-cols-3 gap-3 mt-3">
+                                        <Tile label={t('people.girls')} value={fmt(data.people.under18_female)} />
+                                        <Tile label={t('people.boys')} value={fmt(data.people.under18_male)} />
+                                        <Tile label={t('people.disabilities')} value={fmt(data.people.disabilities || 0)} />
+                                    </div>
+                                </>
+                            )}
+                        </Section>
+
                         <Section title={t('funding.title')} subtitle={t('funding.subtitle')}>
                             {data.funding.length === 0 ? <p className="text-sm text-gray-500">{t('empty')}</p> : (
                                 <>
@@ -376,40 +412,6 @@ export default function Dashboard() {
                                     )}
                                 </div>
                             ))}
-                        </Section>
-
-                        <Section title={t('people.title')} subtitle={t('people.subtitle')}>
-                            {data.people.reports === 0 ? <p className="text-sm text-gray-500">{t('people.none')}</p> : (
-                                <>
-                                    <div className="grid grid-cols-3 gap-3 mb-3">
-                                        <Tile label={t('people.individuals')} value={fmt(data.people.individuals)} />
-                                        <Tile label={t('people.households')} value={fmt(data.people.households)} />
-                                        <Tile label={t('people.reports')} value={fmt(data.people.reports)} />
-                                    </div>
-                                    {(data.people.female + data.people.male) > 0 && (() => {
-                                        const tot = data.people.female + data.people.male;
-                                        const fPct = (data.people.female / tot) * 100;
-                                        return (
-                                            <>
-                                                <Legend items={[{ label: t('people.female'), color: C.orange }, { label: t('people.male'), color: C.blue }]} />
-                                                <div className="flex h-5 rounded-e overflow-hidden" title={`${t('people.female')} ${fmt(data.people.female)} · ${t('people.male')} ${fmt(data.people.male)}`}>
-                                                    <div style={{ width: `${fPct}%`, background: C.orange }} />
-                                                    <div style={{ width: 2, background: '#fff' }} />
-                                                    <div style={{ flex: 1, background: C.blue }} />
-                                                </div>
-                                                <div className="flex justify-between text-xs text-gray-700 mt-1">
-                                                    <span>{t('people.female')}: <b dir="ltr">{fmt(data.people.female)}</b> ({Math.round(fPct)}%)</span>
-                                                    <span>{t('people.male')}: <b dir="ltr">{fmt(data.people.male)}</b> ({100 - Math.round(fPct)}%)</span>
-                                                </div>
-                                            </>
-                                        );
-                                    })()}
-                                    <div className="grid grid-cols-2 gap-3 mt-3">
-                                        <Tile label={t('people.girls')} value={fmt(data.people.under18_female)} />
-                                        <Tile label={t('people.boys')} value={fmt(data.people.under18_male)} />
-                                    </div>
-                                </>
-                            )}
                         </Section>
                     </>
                 )}
