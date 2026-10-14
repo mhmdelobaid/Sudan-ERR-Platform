@@ -598,7 +598,7 @@ const Menu = () => {
 
             {/* Other workflows */}
             {showFillForm && (
-                <MessageBubble>
+                <MessageBubble centered>
                     <ReportingForm
                         errId={errId as string}
                         reportId={activeReportId}
@@ -618,7 +618,7 @@ const Menu = () => {
             )}
 
             {showScanForm && (
-                <MessageBubble>
+                <MessageBubble centered>
                     <ScanForm 
                         project={selectedProject} 
                         onReturnToMenu={() => {
@@ -630,7 +630,7 @@ const Menu = () => {
             )}
 
             {showScanCustomForm && (
-                <MessageBubble>
+                <MessageBubble centered>
                     <ScanCustomForm
                         project={selectedProject}
                         onReturnToMenu={() => {
@@ -646,7 +646,7 @@ const Menu = () => {
             )}
 
             {showFundingCycleSelection && (
-                <MessageBubble>
+                <MessageBubble centered>
                     <FundingCycleSelection
                         onReturnToMenu={() => {
                             setShowFundingCycleSelection(false);
@@ -659,7 +659,7 @@ const Menu = () => {
             )}
 
             {showProjectApplication && (
-                <MessageBubble>
+                <MessageBubble centered>
                     {showDraftList && !projectToEdit ? (
                         <ProjectDrafts
                             drafts={drafts.map(draft => ({
@@ -709,7 +709,7 @@ const Menu = () => {
             )}
 
             {showProjectStatus && (
-                <MessageBubble>
+                <MessageBubble centered>
                     <ProjectStatus 
                         onReturnToMenu={() => handleMenuSelection(CurrentMenu.MAIN)} 
                         onEditProject={(projectId) => {
@@ -723,7 +723,7 @@ const Menu = () => {
             )}
 
             {showProgramForm && (
-                <MessageBubble>
+                <MessageBubble centered>
                     <ProgramReportForm
                         project={selectedProject}
                         onReturnToMenu={() => {
@@ -741,14 +741,14 @@ const Menu = () => {
 
             {/* Feedback & support tickets (the form has its own type choice and "return to menu") */}
             {currentMenu === CurrentMenu.FEEDBACK && (
-                <MessageBubble>
+                <MessageBubble centered>
                     <FeedbackForm onReturnToMenu={() => handleMenuSelection(CurrentMenu.MAIN)} />
                 </MessageBubble>
             )}
 
             {/* Scan Prefill Form */}
             {showScanPrefillForm && (
-                <MessageBubble>
+                <MessageBubble centered>
                     <ScanPrefillForm project={selectedProject} />
                 </MessageBubble>
             )}

@@ -98,7 +98,7 @@
   "errMembers": "ERR Members",
   "validation": {
     "required": "This field is required",
-    "pleaseFixErrors": "Please fix the errors before submitting.",
+    "pleaseFixErrors": "A few things are missing. Fill them in to send the request:",
     "atLeastOneActivity": "At least one activity is required",
     "minValue": "Value must be greater than 0"
   },

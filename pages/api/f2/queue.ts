@@ -12,7 +12,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const { data, error } = await caller.client.rpc('f2_queue');
     if (error) return sendRpcError(res, error);
-    return res.status(200).json({ success: true, projects: data || [] });
+    // F1s from the rep's own locality: shown, but the rep can't vote on them
+    const { data: own } = await caller.client.rpc('f2_own_locality_ids');
+    const ownIds = new Set<string>((Array.isArray(own) ? own : []).map(String));
+    const projects = (data || []).map((p: any) => ({ ...p, own_locality: ownIds.has(String(p.id)) }));
+    return res.status(200).json({ success: true, projects });
 }
 
 export default withJsonErrors(handler);

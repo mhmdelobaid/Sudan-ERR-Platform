@@ -546,7 +546,7 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
            )}
            <Formik
              initialValues={{
-               date: editingProject?.date || initialValues?.date || '',
+               date: editingProject?.date || initialValues?.date || new Date().toISOString().slice(0, 10),   // today by default
                err: userErrId,
                state: editingProject?.state || initialValues?.state || roomState || '',
                locality: editingProject?.locality || initialValues?.locality || (editingProject?.state || initialValues?.state ? '' : roomLocality) || '',

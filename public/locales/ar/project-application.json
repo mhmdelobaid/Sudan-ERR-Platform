@@ -105,10 +105,10 @@
   },
   "errMembers": "أعضاء ERR",
   "validation": {
-    "required": "هذا الحقل مطلوب",
-    "pleaseFixErrors": "يرجى تصحيح الأخطاء قبل التقديم.",
-    "atLeastOneActivity": "مطلوب نشاط واحد على الأقل",
-    "minValue": "يجب أن تكون القيمة أكبر من 0"
+    "required": "الخانة دي مطلوبة",
+    "pleaseFixErrors": "في حاجات ناقصة، كمّلها عشان تقدر ترسل الطلب:",
+    "atLeastOneActivity": "ضيف نشاط واحد على الأقل",
+    "minValue": "الرقم لازم يكون أكبر من صفر"
   },
   "drafts": {
     "title": "مسودات المشاريع",

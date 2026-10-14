@@ -21,7 +21,8 @@
     "votes": "الأصوات",
     "youVoted": "صوّتَّ",
     "notVoted": "لم تصوّت بعد",
-    "version": "النسخة"
+    "version": "النسخة",
+    "ownLocality": "من محليتك"
   },
   "details": {
     "objectives": "أهداف المشروع",
@@ -87,6 +88,8 @@
     "invalid_ballot": "بيانات التصويت غير صالحة.",
     "ballot_must_cover_every_line": "يجب التصويت على كل البنود.",
     "note_required_for_conditional_or_reject": "اكتب سبباً لكل بند بشرط أو مرفوض.",
-    "server_error": "حدث خطأ، حاول مرة أخرى."
-  }
+    "server_error": "حدث خطأ، حاول مرة أخرى.",
+    "own_locality": "لا يمكنك التصويت على مقترح من محليتك."
+  },
+  "ownLocality": "هذا المقترح من محليتك، لذلك لا تصوّت عليه. يقرّه ثلاثة ممثلين من محليات أخرى."
 }

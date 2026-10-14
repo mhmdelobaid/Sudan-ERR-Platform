@@ -42,6 +42,7 @@ export function withJsonErrors(handler: (req: NextApiRequest, res: NextApiRespon
 const KNOWN_ERRORS: Record<string, number> = {
     // F-2
     only_state_reps_can_vote: 403,
+    own_locality: 403,
     project_not_pending: 409,
     project_has_no_lines: 422,
     invalid_ballot: 400,

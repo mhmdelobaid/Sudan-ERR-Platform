@@ -27,6 +27,7 @@ interface QueueRow {
     votes_count: number;
     quorum: number;
     i_voted: boolean;
+    own_locality?: boolean;   // from the rep's own locality: they can't vote on it
     decision_outcome: Outcome | null;
     decided_at: string | null;
 }
@@ -98,6 +99,7 @@ interface Detail {
     lines: Line[];
     quorum: number;
     can_vote: boolean;
+    own_locality?: boolean;
     ballots: Ballot[];
     decision: null | {
         outcome: Outcome;
@@ -377,8 +379,8 @@ const F2Review: React.FC = () => {
                                                         {t(`decision.${q.decision_outcome}`)}
                                                     </span>
                                                 ) : (
-                                                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${q.i_voted ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}`}>
-                                                        {q.i_voted ? t('card.youVoted') : t('card.notVoted')}
+                                                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${q.own_locality ? 'bg-amber-100 text-amber-900' : q.i_voted ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}`}>
+                                                        {q.own_locality ? t('card.ownLocality') : q.i_voted ? t('card.youVoted') : t('card.notVoted')}
                                                     </span>
                                                 )}
                                             </div>
@@ -491,7 +493,9 @@ const F2Review: React.FC = () => {
                             )}
                             {detail.can_vote && <p className="text-xs text-gray-500 mb-0">{t('quorum.help', { quorum: detail.quorum })}</p>}
                             {!detail.can_vote && detail.project.status === 'pending' && (
-                                <p className="text-xs text-gray-500 mb-0">{t('readOnly')}</p>
+                                detail.own_locality
+                                    ? <p className="text-sm bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-2 mb-0">{t('ownLocality')}</p>
+                                    : <p className="text-xs text-gray-500 mb-0">{t('readOnly')}</p>
                             )}
                         </section>
 
