@@ -5,6 +5,7 @@ import MessageBubble from '../components/ui/MessageBubble';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import StatusChip from '../components/ui/StatusChip';
 
 interface ProjectStatusProps {
     onReturnToMenu: () => void;
@@ -169,15 +170,7 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                     )}
                                     <p>
                                         <strong>{t('status')}:</strong>{' '}
-                                        <span className={
-                                            project.status === 'active' ? 'text-green-600' : 
-                                            project.status === 'pending' ? 'text-orange-500' :
-                                            project.status === 'feedback' ? 'text-blue-500' :
-                                            project.status === 'screened' ? 'text-brand-deep' :
-                                            project.status === 'rejected' ? 'text-red-600' : ''
-                                        }>
-                                            {project.status === 'feedback' ? t('feedbackStatus') : t(project.status)}
-                                        </span>
+                                        <StatusChip status={project.status} />
                                     </p>
                                     {project.status === 'screened' && (
                                         project.wg_confirmation ? (

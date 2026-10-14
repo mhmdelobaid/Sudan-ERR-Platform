@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
+import StatusChip from '../components/ui/StatusChip';
 
 type Verdict = 'approve' | 'conditional' | 'reject';
 type LccStatus = 'no_working_group' | 'waiting' | 'approved' | 'returned' | 'not_needed';
@@ -50,11 +51,6 @@ interface Detail {
     expenseNames: Record<string, string>;
 }
 
-const STATUS_CHIP: Record<string, string> = {
-    pending: 'bg-orange-100 text-orange-800', feedback: 'bg-orange-200 text-orange-900', screened: 'bg-brand-orangeSoft text-gray-900',
-    approved: 'bg-green-100 text-green-900', active: 'bg-green-200 text-green-900', completed: 'bg-green-800 text-white',
-    rejected: 'bg-gray-200 text-gray-800',
-};
 const LCC_CHIP: Record<string, string> = {
     waiting: 'bg-brand-orangeSoft text-gray-900', approved: 'bg-emerald-100 text-emerald-900',
 };
@@ -330,7 +326,7 @@ const WgProjects: React.FC = () => {
                                                                             <p className="font-bold text-gray-900 mb-0 group-hover:underline">{r.project_name || '—'}</p>
                                                                             <p className="text-sm text-gray-600 mb-0">{roomName(r)}</p>
                                                                         </div>
-                                                                        <Chip className={STATUS_CHIP[r.status] || 'bg-gray-100 text-gray-700'}>{t(`status.${r.status}`, { defaultValue: r.status })}</Chip>
+                                                                        <StatusChip status={r.status} />
                                                                     </div>
                                                                     <div className="grid grid-cols-3 gap-2 mt-3 text-sm">
                                                                         <div><span className="block text-gray-500 text-xs">{t('card.budget')}</span><span className="font-bold text-primaryGreen"><bdi>{fmt(r.total_budget)} {r.currency || ''}</bdi></span></div>
@@ -408,7 +404,7 @@ const WgProjects: React.FC = () => {
                                     <h2 className="text-lg font-bold mb-0">{detail.project.project_name || '—'}</h2>
                                     <p className="text-sm text-gray-600 mb-0">{roomName(detail.project)} · {detail.project.locality || '—'} · {detail.project.state || '—'} · {t('card.version')} {detail.project.version}</p>
                                 </div>
-                                <Chip className={STATUS_CHIP[detail.project.status] || 'bg-gray-100 text-gray-700'}>{t(`status.${detail.project.status}`, { defaultValue: detail.project.status })}</Chip>
+                                <StatusChip status={detail.project.status} />
                             </div>
                             {detail.groups.length > 0 && <div>
                                 <span className="block text-xs text-gray-500 mb-1">{t('groups.title')}</span>

@@ -6,25 +6,19 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { newSupabase } from '../services/newSupabaseClient';
+import { RESPONSE_STATUSES, STATUS_STYLE, toResponseCounts } from '../services/responseStatus';
 
 // Chart colours: ERR blue and orange, deepened to pass colour-blind and contrast checks on white
 const C = { blue: '#3B68B8', orange: '#D46A2C', track: '#E4EAF4', ink: '#1F2937', muted: '#6B7280', line: '#E5E7EB' };
-const STATUS_ORDER = ['pending', 'feedback', 'screened', 'approved', 'active', 'completed', 'rejected'];
-// F-System pipeline colours. Orange = waiting on review or changes; ERR blue light -> deep as funding moves to completion.
-// Checked with the dataviz palette validator: colour-blind and normal-vision separation pass. The two light steps are
-// under 3:1 on white, so every stage also shows its name and count as text (never colour alone).
+// Project statuses for the whole response (services/responseStatus.ts): Pending, Check-in, Waiting, Active,
+// Completed, Suspended, in the response tracker's colours. Every stage also shows its name and count as text.
+const STATUS_ORDER: string[] = RESPONSE_STATUSES;
 const STAGE: Record<string, { color: string; form: string }> = {
     draft: { color: '#C3C9D3', form: 'F-1' },
-    pending: { color: '#F9A778', form: 'F-2' },
-    feedback: { color: '#D46A2C', form: 'F-2' },
-    screened: { color: '#BCCBE3', form: 'F-2' },   // passed the reps' F-2, waiting for the portal's final review
-    approved: { color: '#9BB0D4', form: 'F-3' },
-    active: { color: '#5D7EB3', form: 'F-4' },
-    completed: { color: '#33496D', form: 'F-5' },
-    rejected: { color: '#9CA3AF', form: 'F-2' },
+    ...Object.fromEntries(RESPONSE_STATUSES.map(s => [s, { color: STATUS_STYLE[s].chart, form: '' }])),
 };
 // Bars per state are stacked from done to waiting, so the most advanced work sits at the start of the bar
-const STACK_ORDER = ['completed', 'active', 'approved', 'screened', 'feedback', 'pending', 'rejected'];
+const STACK_ORDER = ['completed', 'active', 'waiting', 'checkin', 'pending', 'suspended'];
 const STATES_SHOWN = 8;
 
 interface Pool { state: string; allocated: number; committed: number; pending: number; remaining: number; is_own_state: boolean }
@@ -38,6 +32,7 @@ interface DashboardData {
     funding: Pool[];
     projects: { total: number; drafts?: number; byStatus: Record<string, number>; byState: { state: string; total: number; counts: Record<string, number>; localities?: { locality: string; total: number; counts: Record<string, number> }[] }[] };
     budgets: Budget[];
+    reach?: { active_base_errs: number; supported_activities: number; funded_projects: number };
     people: { individuals: number; households: number; male: number; female: number; under18_male: number; under18_female: number; disabilities?: number; reports: number; projects_reported: number };
     generated_at: string;
     state_labels_ar?: Record<string, string>;
@@ -101,7 +96,7 @@ function Pipeline({ statuses, counts, drafts, total, label, stepLabel, isAr }: {
     label: (s: string) => string; stepLabel: (s: string) => string; isAr: boolean;
 }) {
     // F-1 drafts lead the flow; they are not submitted yet, so they have no share of the total
-    const flow = ['draft', ...statuses.filter(s => s !== 'rejected' && s !== 'draft')];
+    const flow = ['draft', ...statuses.filter(s => s !== 'suspended' && s !== 'draft')];
     const countOf = (s: string) => (s === 'draft' ? drafts : counts[s] || 0);
     return (
         <ol className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4" aria-label={label('pipeline')}>
@@ -159,6 +154,7 @@ function StateStack({ label, counts, total, max, statusLabel }: {
 export default function Dashboard() {
     const { t, i18n } = useTranslation('dashboard');
     const { t: tPA } = useTranslation('projectApplication');
+    const { t: tS } = useTranslation('status');
     const router = useRouter();
     const [data, setData] = useState<DashboardData | null>(null);
     const [error, setError] = useState('');
@@ -180,6 +176,14 @@ export default function Dashboard() {
                 if (res.status === 401) { router.push('/login'); return; }
                 const json = await res.json();
                 if (!res.ok || !json.success) throw new Error(json.message || 'failed');
+                // Database steps -> the six response statuses (counts are added up)
+                const counts = (c: Record<string, number>) =>
+                    Object.fromEntries(Object.entries(toResponseCounts(c)).filter(([, n]) => n > 0)) as Record<string, number>;
+                json.projects.byStatus = counts(json.projects.byStatus);
+                json.projects.byState = (json.projects.byState || []).map((r: any) => ({
+                    ...r, counts: counts(r.counts),
+                    localities: (r.localities || []).map((l: any) => ({ ...l, counts: counts(l.counts) })),
+                }));
                 setData(json);
             } catch (e) {
                 console.error('Dashboard load failed:', e);
@@ -189,11 +193,11 @@ export default function Dashboard() {
     }, [router, t]);
 
     const name = (n: NamedAmount) => (n.id === 'other' ? t('budgets.other') : (isAr && n.ar) || tPA(n.en, { defaultValue: n.en }));
-    const statusLabel = (s: string) => t(`status.${s}`, { defaultValue: s });
+    const statusLabel = (s: string) => (s === 'draft' ? t('status.draft') : tS(s, { defaultValue: s }));
     const stateName = (s: string) => (isAr && data?.state_labels_ar?.[s]) || s;
     const localityName = (l: string) => (isAr && data?.locality_labels_ar?.[l]) || l;
 
-    const statuses = data ? [...STATUS_ORDER.filter(s => data.projects.byStatus[s]), ...Object.keys(data.projects.byStatus).filter(s => !STATUS_ORDER.includes(s))] : [];
+    const statuses = STATUS_ORDER;   // always the full response flow, empty stages show 0
     const remainingUsd = data ? data.funding.reduce((s, f) => s + f.remaining, 0) : 0;
     const scopeLabel = data ? (data.scope === 'all' ? t('scope.all')
         : data.scope === 'locality' ? `${t('scope.locality')}: ${(isAr ? data.locality?.name_ar || data.locality?.name : data.locality?.name) || '—'}${data.states[0] ? ` · ${stateName(data.states[0])}` : ''}`
@@ -236,9 +240,11 @@ export default function Dashboard() {
                     <>
                         <p className="text-xs text-gray-500 mb-3">{t('updated')}: <bdi>{new Date(data.generated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</bdi></p>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                             <Tile label={t('tiles.projects')} value={fmt(data.projects.total)} />
                             <Tile label={t('tiles.active')} value={fmt(data.projects.byStatus.active || 0)} />
+                            <Tile label={t('tiles.activeBaseErrs')} value={fmt(data.reach?.active_base_errs || 0)} />
+                            <Tile label={t('tiles.supportedActivities')} value={fmt(data.reach?.supported_activities || 0)} />
                             <Tile label={t('tiles.people')} value={fmt(data.people.individuals)} />
                             <Tile label={t('tiles.remaining')} value={money(remainingUsd, 'USD')} />
                         </div>
@@ -322,8 +328,8 @@ export default function Dashboard() {
                                     <Pipeline statuses={statuses} counts={data.projects.byStatus} drafts={data.projects.drafts || 0} total={data.projects.total} isAr={isAr}
                                         label={s => s === 'pipeline' ? t('projects.title') : statusLabel(s)}
                                         stepLabel={s => t(`stage.${s}`, { defaultValue: STAGE[s]?.form || '' })} />
-                                    {(data.projects.byStatus.rejected || 0) > 0 && (
-                                        <p className="text-xs text-gray-600 mt-2">{statusLabel('rejected')}: <b dir="ltr">{fmt(data.projects.byStatus.rejected)}</b></p>
+                                    {(data.projects.byStatus.suspended || 0) > 0 && (
+                                        <p className="text-xs text-gray-600 mt-2">{statusLabel('suspended')}: <b dir="ltr">{fmt(data.projects.byStatus.suspended)}</b></p>
                                     )}
 
                                     {/* One state: its localities directly. Several states: each state opens to show its localities. */}

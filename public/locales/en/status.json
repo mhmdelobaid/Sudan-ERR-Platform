@@ -1,0 +1,16 @@
+{
+    "pending": "Pending",
+    "checkin": "Check-in",
+    "waiting": "Waiting",
+    "active": "Active",
+    "completed": "Completed",
+    "suspended": "Suspended",
+    "hint": {
+        "pending": "Work plan (F1) submitted, waiting for the approval decision (F2)",
+        "checkin": "Back with the ERR after F2 for clarification or changes",
+        "waiting": "Passed F2; waiting for working-group confirmation, the contract (F3) and transfer",
+        "active": "Funded and implementing, with financial and program reports (F4, F5)",
+        "completed": "Project completed",
+        "suspended": "Rejected at F2 or stopped"
+    }
+}

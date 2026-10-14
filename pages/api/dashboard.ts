@@ -7,6 +7,7 @@ import { createAuthenticatedClient } from '../../services/createAuthenticatedCli
 import { getAccessScope, getRoomNames } from '../../services/accessScope';
 import { getFundingByState } from '../../services/fundingPool';
 import { isComingState } from '../../services/comingStates';
+import { COMMITTED_STATUSES } from '../../services/fundingTotals';
 
 const PAGE = 1000;   // Supabase returns at most 1,000 rows per request
 const CHUNK = 150;   // ids per ".in()" filter, to keep URLs short
@@ -100,6 +101,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             byLocality[st][loc] ||= {};
             byLocality[st][loc][status] = (byLocality[st][loc][status] || 0) + 1;
         });
+        // Active base ERRs: base rooms with at least one project being implemented (status active).
+        // Supported activities: planned activity lines (F1) in funded projects (contract signed: approved, active, completed).
+        const activeBaseRooms = new Set(projects
+            .filter(p => p.status === 'active' && rooms[String(p.err_id)]?.type === 'base')
+            .map(p => String(p.err_id)));
+        const fundedProjects = projects.filter(p => COMMITTED_STATUSES.includes(p.status));
+        const supportedActivities = fundedProjects.reduce((n, p) => n + asArray(p.planned_activities).length, 0);
         const sumCounts = (c: Record<string, number>) => Object.values(c).reduce((a, b) => a + b, 0);
 
         // 3) Planned budgets by activity and by expense type, kept apart per currency (no conversion)
@@ -183,6 +191,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         .sort((a, b) => b.total - a.total),
                 })).sort((a, b) => b.total - a.total),
             },
+            reach: { active_base_errs: activeBaseRooms.size, supported_activities: supportedActivities, funded_projects: fundedProjects.length },
             budgets,
             people: { ...people, reports: reports.length, projects_reported: new Set(reports.map(r => r.project_id)).size },
             generated_at: new Date().toISOString(),

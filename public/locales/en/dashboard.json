@@ -1,84 +1,78 @@
 {
-  "title": "Dashboard",
-  "scope": {
-    "all": "All states",
-    "states": "Your states",
-    "room": "Your ERR",
-    "locality": "Locality"
-  },
-  "updated": "Updated",
-  "print": "Print / Save as PDF",
-  "back": "Back to menu",
-  "loading": "Loading data...",
-  "error": "Couldn't load the dashboard. Please try again.",
-  "empty": "No data yet.",
-  "tiles": {
-    "projects": "Work plans submitted (F1)",
-    "active": "Projects being implemented",
-    "people": "Beneficiaries (persons)",
-    "remaining": "Grant funds remaining (USD)"
-  },
-  "funding": {
-    "title": "Grants by state",
-    "subtitle": "Open funding cycles, in US dollars. Only projects budgeted in USD are counted.",
-    "allocated": "Allocated to the state",
-    "committed": "Committed (Contract F3)",
-    "pending": "In screening and approval",
-    "remaining": "Remaining",
-    "over": "Over the allocation by"
-  },
-  "projects": {
-    "title": "Project stages in the F-System",
-    "byState": "Projects by state",
-    "count": "projects",
-    "subtitle": "Where every project is, from the Work Plan and Budget (F1) to the Program Report (F5).",
-    "showAll": "Show all {{count}} states",
-    "showFewer": "Show fewer states",
-    "byLocality": "Projects by locality",
-    "tapState": "Tap a state to see its localities"
-  },
-  "status": {
-    "pending": "Awaiting F2 decision",
-    "feedback": "Approved with reservations",
-    "screened": "Approved at F2",
-    "approved": "Contract (F3)",
-    "active": "Implementing",
-    "completed": "Completed",
-    "rejected": "Rejected",
-    "unknown": "Not set",
-    "draft": "Drafts"
-  },
-  "budgets": {
-    "title": "Planned budgets (F1)",
-    "subtitle": "From submitted work plans and budgets. Each currency shown separately, no conversion.",
-    "total": "Total cost",
-    "byActivity": "By planned activity",
-    "byExpense": "By expense item",
-    "other": "Other",
-    "none": "No budgets submitted yet."
-  },
-  "people": {
-    "title": "Beneficiaries",
-    "subtitle": "From submitted Program Reports (F5): number of beneficiaries and the additional breakdown.",
-    "individuals": "Persons",
-    "households": "Families",
-    "female": "Females",
-    "male": "Males",
-    "girls": "Females under 18",
-    "boys": "Males under 18",
-    "reports": "Program reports (F5)",
-    "none": "No program reports submitted yet.",
-    "disabilities": "Persons with disabilities"
-  },
-  "table": "Show numbers",
-  "stage": {
-    "pending": "F2 · no approval decision yet",
-    "feedback": "F2 · back with the ERR for clarification or changes",
-    "screened": "F2 · awaiting working group confirmation and the partner",
-    "approved": "F3 · contract signed, grant transfer",
-    "active": "F4 · spending and financial report",
-    "completed": "F5 · program report submitted",
-    "rejected": "F2 · rejected, reasons explained",
-    "draft": "F1 · work plan and budget not submitted yet"
-  }
+    "title": "Dashboard",
+    "scope": {
+        "all": "All states",
+        "states": "Your states",
+        "room": "Your ERR",
+        "locality": "Locality"
+    },
+    "updated": "Updated",
+    "print": "Print / Save as PDF",
+    "back": "Back to menu",
+    "loading": "Loading data...",
+    "error": "Couldn't load the dashboard. Please try again.",
+    "empty": "No data yet.",
+    "tiles": {
+        "projects": "Work plans submitted (F1)",
+        "active": "Active projects",
+        "activeBaseErrs": "Active base ERRs",
+        "supportedActivities": "Supported activities",
+        "people": "Beneficiaries (persons)",
+        "remaining": "Grant funds remaining (USD)"
+    },
+    "funding": {
+        "title": "Grants by state",
+        "subtitle": "Open funding cycles, in US dollars. Only projects budgeted in USD are counted.",
+        "allocated": "Allocated to the state",
+        "committed": "Committed (Contract F3)",
+        "pending": "In screening and approval",
+        "remaining": "Remaining",
+        "over": "Over the allocation by"
+    },
+    "projects": {
+        "title": "Project stages in the F-System",
+        "byState": "Projects by state",
+        "count": "projects",
+        "subtitle": "Where every project is, from the Work Plan and Budget (F1) to the Program Report (F5).",
+        "showAll": "Show all {{count}} states",
+        "showFewer": "Show fewer states",
+        "byLocality": "Projects by locality",
+        "tapState": "Tap a state to see its localities"
+    },
+    "status": {
+        "unknown": "Not set",
+        "draft": "Drafts"
+    },
+    "budgets": {
+        "title": "Planned budgets (F1)",
+        "subtitle": "From submitted work plans and budgets. Each currency shown separately, no conversion.",
+        "total": "Total cost",
+        "byActivity": "By planned activity",
+        "byExpense": "By expense item",
+        "other": "Other",
+        "none": "No budgets submitted yet."
+    },
+    "people": {
+        "title": "Beneficiaries",
+        "subtitle": "From submitted Program Reports (F5): number of beneficiaries and the additional breakdown.",
+        "individuals": "Persons",
+        "households": "Families",
+        "female": "Females",
+        "male": "Males",
+        "girls": "Females under 18",
+        "boys": "Males under 18",
+        "reports": "Program reports (F5)",
+        "none": "No program reports submitted yet.",
+        "disabilities": "Persons with disabilities"
+    },
+    "table": "Show numbers",
+    "stage": {
+        "draft": "F1 · work plan and budget not submitted yet",
+        "pending": "F2 · waiting for the approval decision",
+        "checkin": "F2 · back with the ERR for clarification or changes",
+        "waiting": "F3 · working-group confirmation, contract and transfer",
+        "active": "F4 · F5 · implementing and reporting",
+        "completed": "Project completed",
+        "suspended": "Rejected at F2 or stopped"
+    }
 }

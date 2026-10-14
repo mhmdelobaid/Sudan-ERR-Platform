@@ -70,17 +70,17 @@ export async function getAccessScope(db: any, userId: string): Promise<AccessSco
 }
 
 /** Room names for a list of room ids, so screens can say which room a project belongs to. */
-export async function getRoomNames(db: any, roomIds: string[]): Promise<Record<string, { name: string | null; name_ar: string | null; err_code: string | null; state: string | null; locality: string | null; locality_ar: string | null }>> {
+export async function getRoomNames(db: any, roomIds: string[]): Promise<Record<string, { name: string | null; name_ar: string | null; err_code: string | null; state: string | null; locality: string | null; locality_ar: string | null; type: string | null }>> {
     const ids = Array.from(new Set(roomIds.filter(id => /^[0-9a-f-]{36}$/i.test(id))));
     if (ids.length === 0) return {};
     const { data } = await db
         .from('emergency_rooms')
-        .select('id, name, name_ar, err_code, states ( state_name, locality, locality_ar )')
+        .select('id, name, name_ar, err_code, type, states ( state_name, locality, locality_ar )')
         .in('id', ids);
     const out: Record<string, any> = {};
     (data || []).forEach((r: any) => {
         out[String(r.id)] = { name: r.name, name_ar: r.name_ar, err_code: r.err_code, state: r.states?.state_name || null,
-            locality: r.states?.locality || null, locality_ar: r.states?.locality_ar || null };
+            locality: r.states?.locality || null, locality_ar: r.states?.locality_ar || null, type: r.type || null };
     });
     return out;
 }
