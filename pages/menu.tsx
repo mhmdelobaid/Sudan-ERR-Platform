@@ -6,7 +6,7 @@ import MessageBubble from '../components/ui/MessageBubble';
 import Button from '../components/ui/Button';
 import MenuCard from '../components/ui/MenuCard';
 import {
-    ClipboardDocumentCheckIcon, UserGroupIcon, FolderIcon, DocumentTextIcon, DocumentCheckIcon,
+    ClipboardDocumentCheckIcon, UserGroupIcon, UsersIcon, FolderIcon, DocumentTextIcon, DocumentCheckIcon,
     BanknotesIcon, PresentationChartLineIcon, ChartBarIcon, ChatBubbleLeftEllipsisIcon, ArrowRightStartOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import ReportingForm from '../components/forms/ReportForm/ReportingForm';
@@ -460,6 +460,11 @@ const Menu = () => {
                         {['lcc_wg', 'superadmin'].includes(userRole || '') && (
                             <MenuCard title={t('wgProjects')} description={t('cards.wgProjects')}
                                 icon={<UserGroupIcon className="w-6 h-6" />} onClick={() => router.push('/wg-projects')} />
+                        )}
+                        {/* User management: superadmin only */}
+                        {userRole === 'superadmin' && (
+                            <MenuCard title={t('userManagement')} description={t('cards.userManagement')}
+                                icon={<UsersIcon className="w-6 h-6" />} onClick={() => router.push('/user-management')} />
                         )}
                         {/* Everyone sees the dashboard at their own level (room, state, their states, or all for working groups) */}
                         {userRole !== null && (

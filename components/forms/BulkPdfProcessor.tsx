@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PrefilledForm from './PrefilledForm';
 import { supabase } from '../../services/supabaseClient';
+import { authFetch } from '../../services/authFetch';
 
 interface FormPreview {
   err_id: string;
@@ -72,7 +73,7 @@ const BulkPdfProcessor: React.FC<BulkPdfProcessorProps> = ({ project, onFormSubm
         .getPublicUrl(filePath);
 
       // Send URL to our API
-      const response = await fetch('/api/scan-pdf-form', {
+      const response = await authFetch('/api/scan-pdf-form', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,7 +3,7 @@
 //                                                                    F-2 result and are OK with it (-> partner)
 //                                   { action: 'comment', topic, body }
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getCaller, sendRpcError, withJsonErrors, lineNames, isUuid } from '../../../services/f2Api';
+import { getCaller, sendRpcError, withJsonErrors, lineNames, isUuid, localityAcks } from '../../../services/f2Api';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
     const caller = await getCaller(req, res);
@@ -15,7 +15,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         const { data, error } = await caller.client.rpc('wg_project', { p_project_id: id });
         if (error) return sendRpcError(res, error);
         const names = await lineNames(caller.client, data?.lines || []);
-        return res.status(200).json({ success: true, ...data, ...names });
+        const acks = await localityAcks(caller.client, [id]);
+        return res.status(200).json({ success: true, ...data, ...names, locality_ack: acks[id] || null });
     }
 
     if (req.method === 'POST') {

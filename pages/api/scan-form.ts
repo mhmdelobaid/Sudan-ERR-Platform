@@ -9,6 +9,7 @@ import path from 'path';
 import formidable from 'formidable';
 import { franc } from 'franc';
 import os from 'os';
+import { requireAppUser } from '../../services/requireAppUser';
 
 // Disable Next.js's default body parsing to allow for file uploads
 export const config = {
@@ -264,6 +265,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
+
+  // Signed-in, active app users only (this route calls paid AI services or writes reports)
+  if (!(await requireAppUser(req, res))) return;
 
   let filePath: string | null = null;
 

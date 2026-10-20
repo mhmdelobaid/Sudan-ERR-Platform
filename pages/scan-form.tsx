@@ -7,6 +7,7 @@ import FileUploader from "../components/uploads/FileUploader";
 import Button from "../components/ui/Button";
 import BulkPdfProcessor from "../components/forms/BulkPdfProcessor";
 import { supabase } from "../services/supabaseClient";
+import { authFetch } from '../services/authFetch';
 
 interface ScanFormProps {
   onReturnToMenu: () => void;
@@ -44,7 +45,7 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
     formData.append("language", i18n.language);
 
     try {
-      const response = await fetch("/api/scan-form", {
+      const response = await authFetch("/api/scan-form", {
         method: "POST",
         body: formData,
       });
@@ -147,7 +148,7 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
         .getPublicUrl(filePath);
 
       // Send URL to our API
-      const response = await fetch("/api/scan-single-pdf", {
+      const response = await authFetch("/api/scan-single-pdf", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
@@ -210,7 +211,7 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
     formData.append("file", bulkPdfFile);
 
     try {
-      const response = await fetch("/api/scan-pdf-form", {
+      const response = await authFetch("/api/scan-pdf-form", {
         method: "POST",
         body: formData,
       });

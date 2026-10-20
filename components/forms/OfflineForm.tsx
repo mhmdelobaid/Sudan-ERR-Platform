@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { addFormToSessionQueue } from '../../services/sessionUtils';
+import { authFetch } from '../../services/authFetch';
 
 interface OfflineFormProps {
   onClose: () => void;
@@ -81,7 +82,7 @@ const OfflineForm: React.FC<OfflineFormProps> = ({ onClose, onSubmitSuccess }) =
     if (navigator.onLine) {
       console.log('Submitting form online:', offlineData);
 
-      fetch('/api/offline-mode', {
+      authFetch('/api/offline-mode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(offlineData),

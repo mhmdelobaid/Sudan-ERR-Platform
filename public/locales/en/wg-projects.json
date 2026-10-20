@@ -159,5 +159,9 @@
     "feedbackPlaceholder": "Your feedback for the intermediate partner and the room",
     "sendFeedback": "Send feedback and confirm",
     "cancel": "Cancel"
+  },
+  "localityAck": {
+    "yes": "Locality acknowledged",
+    "no": "Locality didn't acknowledge"
   }
 }

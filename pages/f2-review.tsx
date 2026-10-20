@@ -28,6 +28,7 @@ interface QueueRow {
     quorum: number;
     i_voted: boolean;
     own_locality?: boolean;   // from the rep's own locality: they can't vote on it
+    locality_ack?: { acknowledged_at: string; acknowledged_by_name: string | null } | null;
     decision_outcome: Outcome | null;
     decided_at: string | null;
 }
@@ -100,6 +101,7 @@ interface Detail {
     quorum: number;
     can_vote: boolean;
     own_locality?: boolean;
+    locality_ack?: { acknowledged_at: string; acknowledged_by_name: string | null } | null;
     ballots: Ballot[];
     decision: null | {
         outcome: Outcome;
@@ -373,6 +375,9 @@ const F2Review: React.FC = () => {
                                                 <div>
                                                     <p className="font-bold text-gray-900 mb-0">{q.project_name || '—'}</p>
                                                     <p className="text-sm text-gray-600 mb-0">{roomName(q)} · {q.locality || '—'}</p>
+                                                    <p className={`text-xs mb-0 ${q.locality_ack ? 'text-emerald-700' : 'text-gray-500'}`}>
+                                                        {q.locality_ack ? `✓ ${t('localityAck.yes')}` : t('localityAck.no')}
+                                                    </p>
                                                 </div>
                                                 {q.decision_outcome && q.status !== 'pending' ? (
                                                     <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold ${OUTCOME_STYLES[q.decision_outcome]}`}>
@@ -426,6 +431,11 @@ const F2Review: React.FC = () => {
                                 <h2 className="text-lg font-bold mb-0">{detail.project.project_name || '—'}</h2>
                                 <p className="text-sm text-gray-600 mb-0">
                                     {roomName(detail.project)} · {detail.project.locality || '—'} · {t('card.version')} {detail.project.version}
+                                </p>
+                                <p className={`text-sm mt-1 mb-0 ${detail.locality_ack ? 'text-emerald-700' : 'text-gray-500'}`}>
+                                    {detail.locality_ack
+                                        ? `✓ ${t('localityAck.yesOn', { date: fmtDate(detail.locality_ack.acknowledged_at) })}`
+                                        : t('localityAck.no')}
                                 </p>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">

@@ -12,6 +12,7 @@ import {
 } from './sessionUtils';
 import { uploadImagesAndInsertRecord, ImageCategory } from './uploadImages';
 import { supabase } from './supabaseClient';
+import { authFetch } from './authFetch';
 
 async function uploadOfflineFormFile(file, errId) {
   try {
@@ -98,7 +99,7 @@ export const handleOnline = async () => {
         }
       }
 
-      const response = await fetch('/api/offline-mode', {
+      const response = await authFetch('/api/offline-mode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

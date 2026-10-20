@@ -1,7 +1,7 @@
 // GET  /api/f2/project?id=<uuid>  — one F-1 with its lines and every rep's ballot
 // POST /api/f2/project?id=<uuid>  — cast or update the caller's ballot { line_votes: [{key, verdict, note}], overall_note }
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getCaller, sendRpcError, withJsonErrors } from '../../../services/f2Api';
+import { getCaller, sendRpcError, withJsonErrors, localityAcks } from '../../../services/f2Api';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,7 +41,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         const expenseNames: Record<string, string> = {};
         (exps.data || []).forEach((e: any) => { expenseNames[e.id] = e.expense_name; });
 
-        return res.status(200).json({ success: true, ...data, activityNames, expenseNames });
+        const acks = await localityAcks(caller.client, [id]);
+        return res.status(200).json({ success: true, ...data, activityNames, expenseNames, locality_ack: acks[id] || null });
     }
 
     if (req.method === 'POST') {

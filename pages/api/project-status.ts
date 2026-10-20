@@ -3,6 +3,7 @@ import { newSupabase } from '../../services/newSupabaseClient';
 import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
 import { validateSession } from '../../services/auth';
 import { getAccessScope, getRoomNames } from '../../services/accessScope';
+import { localityAcks } from '../../services/f2Api';
 
 /**
  * Project status
@@ -134,9 +135,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             (conf || []).forEach((c: any) => { confirmations[c.project_id] = c; });
         }
 
+        // Locality acknowledgement ("تم الاطلاع") of each F1
+        const acks = await localityAcks(authenticatedClient, processedProjects.map((p: any) => p.id));
+
         return res.status(200).json({
             success: true,
-            projects: processedProjects.map((p: any) => ({ ...p, wg_confirmation: confirmations[p.id] || null }))
+            viewer_role: user.role,
+            projects: processedProjects.map((p: any) => ({ ...p, wg_confirmation: confirmations[p.id] || null, locality_ack: acks[p.id] || null }))
         });
     } catch (error) {
         console.error('Project status error:', error);

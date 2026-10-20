@@ -6,6 +6,7 @@ import CustomScanBubble from "../components/ui/CustomScanBubble";
 import Button from "../components/ui/Button";
 import CustomFormReview from "../components/forms/CustomFormReview";
 import { useRouter } from "next/router";
+import { authFetch } from '../services/authFetch';
 
 interface ScanCustomFormProps {
   project: any; // The selected project passed from the menu
@@ -52,7 +53,7 @@ const ScanCustomForm: React.FC<ScanCustomFormProps> = ({
     formData.append("projectId", project.id);  
 
     try {
-      const response = await fetch("/api/scan-custom-form", {
+      const response = await authFetch("/api/scan-custom-form", {
         method: "POST",
         body: formData,
       });

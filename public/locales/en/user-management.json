@@ -1,0 +1,94 @@
+{
+  "title": "User management",
+  "subtitle": "Every user: role, access scope and status. Superadmin only; every change is logged.",
+  "loading": "Loading...",
+  "notAllowed": "This page is for superadmins only.",
+  "backToMenu": "Back to menu",
+  "tiles": {
+    "all": "All users",
+    "allHint": "Registered on the platform",
+    "active": "Active",
+    "activeHint": "Can sign in now",
+    "pending": "Waiting for activation",
+    "pendingHint": "Registered, not activated yet",
+    "suspended": "Suspended",
+    "suspendedHint": "Can't sign in"
+  },
+  "search": "Search name, email or room",
+  "filter": {
+    "allRoles": "All roles",
+    "allStatuses": "All statuses",
+    "allStates": "All states"
+  },
+  "showing": "Showing {{shown}} of {{total}}",
+  "empty": "No users match this search.",
+  "col": {
+    "user": "User",
+    "role": "Role",
+    "scope": "Access scope",
+    "status": "Status",
+    "lastSignIn": "Last sign-in",
+    "actions": "Actions"
+  },
+  "role": {
+    "base_err": "Base ERR",
+    "locality_err": "Locality",
+    "state_err": "State",
+    "state_rep": "State rep (F2)",
+    "lcc_wg": "Working group",
+    "support": "Support",
+    "admin": "Admin",
+    "superadmin": "Superadmin",
+    "partner": "Partner (portal)"
+  },
+  "status": {
+    "active": "Active",
+    "pending": "Waiting for activation",
+    "suspended": "Suspended",
+    "deleted": "Deleted"
+  },
+  "scope": {
+    "allStates": "All states",
+    "portalOnly": "Partner portal only",
+    "none": "No states",
+    "noRoom": "No room"
+  },
+  "field": {
+    "name": "Name",
+    "role": "Role",
+    "status": "Status",
+    "state": "State",
+    "room_base": "Base ERR room",
+    "room_locality": "Locality room",
+    "room_state": "State room",
+    "room_any": "Room (the rep's locality)",
+    "allStates": "Sees all states"
+  },
+  "roomSearch": "Search room, locality or state",
+  "roomInactive": "not activated",
+  "repRoomNote": "Pick the room of the rep's locality: reps don't vote on F1s from their own locality.",
+  "selfNote": "You can't change your own role or status.",
+  "edit": "Edit",
+  "save": "Save",
+  "saving": "Saving...",
+  "cancel": "Cancel",
+  "activate": "Activate",
+  "suspend": "Suspend",
+  "you": "you",
+  "saved": "Changes saved.",
+  "activated": "Account activated.",
+  "suspendedMsg": "Account suspended.",
+  "errors": {
+    "server_error": "Something went wrong. Try again.",
+    "unauthorized": "Session expired. Sign in again.",
+    "only_superadmin": "This page is for superadmins only.",
+    "cannot_change_self": "You can't change your own role or status.",
+    "room_required": "This role needs a room.",
+    "room_type_mismatch": "The room type doesn't fit the role (base room for Base ERR, locality room for Locality, state room for State).",
+    "room_not_found": "Room not found.",
+    "user_not_found": "User not found.",
+    "invalid_role": "Invalid role.",
+    "invalid_status": "Invalid status.",
+    "invalid_changes": "Invalid change."
+  }
+}

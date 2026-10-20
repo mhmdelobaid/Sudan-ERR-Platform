@@ -2,6 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { requireAppUser } from '../../services/requireAppUser';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -27,6 +28,9 @@ export default async function handler(
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
+
+  // Signed-in, active app users only (this route calls paid AI services or writes reports)
+  if (!(await requireAppUser(req, res))) return;
 
   try {
     const { formData, expenses, file } = req.body;

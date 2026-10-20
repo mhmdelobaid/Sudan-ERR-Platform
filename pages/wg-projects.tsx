@@ -25,6 +25,7 @@ interface ListRow extends Core {
     state_ar: string | null; room_locality: string | null; room_locality_ar: string | null; lcc: Lcc | null; f2_outcome: string | null;
     groups: Group[]; i_am_program: boolean; lcc_status: LccStatus; needs_my_decision: boolean;
     f4_count: number; f5_count: number; comments_count: number;
+    locality_ack?: { acknowledged_at: string; acknowledged_by_name: string | null } | null;
 }
 interface Line {
     key: string; kind: 'activity' | 'expense'; activity_id?: string; location?: string; total: number;
@@ -43,6 +44,7 @@ interface Detail {
     lcc: Lcc | null;
     lcc_status: LccStatus;
     can_decide: boolean;
+    locality_ack?: { acknowledged_at: string; acknowledged_by_name: string | null } | null;
     f4: { id: number; report_date: string | null; total_grant: number | null; total_expenses: number | null; remainder: number | null; review_status: string | null; expense_count: number }[];
     f5: { id: string; report_date: string | null; reporting_person: string | null; positive_changes: string | null; lessons_learned: string | null;
           reach: { individuals: number; households: number; male: number; female: number; disabilities: number } }[];
@@ -325,6 +327,7 @@ const WgProjects: React.FC = () => {
                                                                         <div className="min-w-0">
                                                                             <p className="font-bold text-gray-900 mb-0 group-hover:underline">{r.project_name || '—'}</p>
                                                                             <p className="text-sm text-gray-600 mb-0">{roomName(r)}</p>
+                                                                            <p className={`text-xs mb-0 ${r.locality_ack ? 'text-emerald-700' : 'text-gray-500'}`}>{r.locality_ack ? `✓ ${t('localityAck.yes')}` : t('localityAck.no')}</p>
                                                                         </div>
                                                                         <StatusChip status={r.status} />
                                                                     </div>
@@ -403,6 +406,7 @@ const WgProjects: React.FC = () => {
                                 <div>
                                     <h2 className="text-lg font-bold mb-0">{detail.project.project_name || '—'}</h2>
                                     <p className="text-sm text-gray-600 mb-0">{roomName(detail.project)} · {detail.project.locality || '—'} · {detail.project.state || '—'} · {t('card.version')} {detail.project.version}</p>
+                                    <p className={`text-sm mt-1 mb-0 ${detail.locality_ack ? 'text-emerald-700' : 'text-gray-500'}`}>{detail.locality_ack ? `✓ ${t('localityAck.yes')}` : t('localityAck.no')}</p>
                                 </div>
                                 <StatusChip status={detail.project.status} />
                             </div>

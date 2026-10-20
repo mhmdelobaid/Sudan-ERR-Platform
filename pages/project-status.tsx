@@ -20,6 +20,8 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
     const [selectedProject, setSelectedProject] = useState(null);
     const [feedbackMap, setFeedbackMap] = useState({});
     const [isExpanding, setIsExpanding] = useState(false);
+    const [viewerRole, setViewerRole] = useState<string | null>(null);
+    const [ackBusy, setAckBusy] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchProjectStatuses = async () => {
@@ -47,6 +49,7 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                 const data = await res.json();
                 if (data.success) {
                     setProjects(data.projects);
+                    setViewerRole(data.viewer_role || null);
                     
                     // Pre-fetch feedback for all projects with feedback status
                     const feedbackProjects = data.projects.filter(p => p.status === 'feedback' || p.status === 'rejected');
@@ -134,6 +137,28 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
         }
     };
 
+    // Locality acknowledges an F1 from one of its rooms ("تم الاطلاع"). It doesn't block anything.
+    const acknowledgeProject = async (projectId: string) => {
+        setAckBusy(projectId);
+        try {
+            const { data: { session } } = await newSupabase.auth.getSession();
+            if (!session) throw new Error('No session found');
+            const res = await fetch('/api/locality-ack', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                body: JSON.stringify({ project_id: projectId }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.code || 'failed');
+            setProjects(prev => prev.map(p => (p.id === projectId ? { ...p, locality_ack: data.ack } : p)));
+        } catch (e) {
+            console.error('Locality acknowledgement failed:', e);
+            setError(t('locality.ackError'));
+        } finally {
+            setAckBusy(null);
+        }
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return '';
         return new Date(dateString).toLocaleString(i18n.language);
@@ -172,6 +197,20 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                         <strong>{t('status')}:</strong>{' '}
                                         <StatusChip status={project.status} />
                                     </p>
+                                    {/* Locality acknowledgement: a label for everyone, a button for the locality */}
+                                    {project.locality_ack ? (
+                                        <p className="text-sm text-emerald-800 mb-1">✓ {t('locality.acked', { date: formatDate(project.locality_ack.acknowledged_at) })}</p>
+                                    ) : ['pending', 'feedback', 'screened'].includes(project.status) && (
+                                        viewerRole === 'locality_err' ? (
+                                            <button type="button" disabled={ackBusy === project.id}
+                                                onClick={(e) => { e.stopPropagation(); acknowledgeProject(project.id); }}
+                                                className="my-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold px-3 py-1.5">
+                                                {ackBusy === project.id ? t('locality.acking') : `✓ ${t('locality.ack')}`}
+                                            </button>
+                                        ) : (
+                                            <p className="text-sm text-gray-500 mb-1">{t('locality.notYet')}</p>
+                                        )
+                                    )}
                                     {project.status === 'screened' && (
                                         project.wg_confirmation ? (
                                             <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 my-1 text-sm">

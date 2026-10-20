@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../ui/Button";
+import { authFetch } from '../../services/authFetch';
 
 interface ExpenseEntry {
   activity: string;
@@ -134,7 +135,7 @@ const CustomFormReview: React.FC<CustomFormReviewProps> = ({ data, onSubmit }) =
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/submit-custom-form", {
+      const response = await authFetch("/api/submit-custom-form", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -3,6 +3,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import i18n from '../../services/i18n'; // Import i18n for translations
+import { requireAppUser } from '../../services/requireAppUser';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
@@ -16,6 +17,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const errorMessage = i18n.t('errors.method_not_allowed', { lng: req.headers['accept-language'] || 'en' });
     return res.status(405).json({ error: errorMessage });
   }
+
+  // Signed-in, active app users only (this route calls paid AI services or writes reports)
+  if (!(await requireAppUser(req, res))) return;
 
   try {
     const {

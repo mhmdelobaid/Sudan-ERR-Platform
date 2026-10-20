@@ -43,6 +43,17 @@ const KNOWN_ERRORS: Record<string, number> = {
     // F-2
     only_state_reps_can_vote: 403,
     own_locality: 403,
+    // User management (superadmin only)
+    only_superadmin: 403,
+    cannot_change_self: 403,
+    invalid_role: 400,
+    invalid_status: 400,
+    invalid_changes: 400,
+    room_required: 400,
+    room_type_mismatch: 400,
+    room_not_found: 404,
+    // Locality acknowledgement
+    only_locality_acknowledges: 403,
     project_not_pending: 409,
     project_has_no_lines: 422,
     invalid_ballot: 400,
@@ -101,3 +112,14 @@ export async function lineNames(client: any, lines: any[]) {
 }
 
 export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID_RE.test(v);
+
+/** Locality acknowledgements ("تم الاطلاع") of the given F1s the caller may see, by project id. Never throws. */
+export async function localityAcks(client: any, ids: string[]): Promise<Record<string, { acknowledged_at: string; acknowledged_by_name: string | null }>> {
+    const out: Record<string, { acknowledged_at: string; acknowledged_by_name: string | null }> = {};
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    if (unique.length === 0) return out;
+    const { data, error } = await client.rpc('locality_acks', { p_project_ids: unique });
+    if (error) { console.error('locality_acks:', error.message); return out; }
+    (data || []).forEach((a: any) => { out[String(a.project_id)] = { acknowledged_at: a.acknowledged_at, acknowledged_by_name: a.acknowledged_by_name }; });
+    return out;
+}

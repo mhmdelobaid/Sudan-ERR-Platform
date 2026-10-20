@@ -2,7 +2,13 @@
   "projectStatusTitle": "Project Status",
   "project": "Project",
   "state": "State",
-  "locality": "Locality",
+  "locality": {
+    "ack": "Acknowledge",
+    "acking": "Saving...",
+    "acked": "The locality acknowledged this request on {{date}}",
+    "notYet": "The locality hasn't acknowledged this request yet",
+    "ackError": "Couldn't save the acknowledgement. Try again."
+  },
   "status": "Status",
   "submittedAt": "Submitted At",
   "pending": "Pending",

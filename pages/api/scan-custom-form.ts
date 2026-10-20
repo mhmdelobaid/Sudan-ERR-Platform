@@ -11,6 +11,7 @@ import fetch from 'node-fetch';
 import FormData from 'form-data';
 import os from 'os';
 import { uploadImages as uploadImages, ImageCategory } from '../../services/uploadImages';
+import { requireAppUser } from '../../services/requireAppUser';
 
 // At the top of the file with other constants
 const BUCKET_NAME = "images";  // This should already exist
@@ -360,6 +361,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
+
+  // Signed-in, active app users only (this route calls paid AI services or writes reports)
+  if (!(await requireAppUser(req, res))) return;
 
   let filePath: string | null = null;
 

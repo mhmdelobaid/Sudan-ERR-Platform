@@ -91,5 +91,10 @@
     "server_error": "Something went wrong. Please try again.",
     "own_locality": "You can't vote on an F1 from your own locality."
   },
-  "ownLocality": "This F1 is from your own locality, so you don't vote on it. Three reps from other localities decide."
+  "ownLocality": "This F1 is from your own locality, so you don't vote on it. Three reps from other localities decide.",
+  "localityAck": {
+    "yes": "Locality acknowledged",
+    "yesOn": "The locality acknowledged it on {{date}}",
+    "no": "Locality hasn't acknowledged yet (voting can go ahead)"
+  }
 }

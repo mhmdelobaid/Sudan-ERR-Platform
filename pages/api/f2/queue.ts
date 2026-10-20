@@ -1,6 +1,6 @@
 // GET /api/f2/queue — F-1s waiting for the reps' F-2 decision (plus ones already decided)
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getCaller, sendRpcError, withJsonErrors } from '../../../services/f2Api';
+import { getCaller, sendRpcError, withJsonErrors, localityAcks } from '../../../services/f2Api';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'GET') {
@@ -15,7 +15,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     // F1s from the rep's own locality: shown, but the rep can't vote on them
     const { data: own } = await caller.client.rpc('f2_own_locality_ids');
     const ownIds = new Set<string>((Array.isArray(own) ? own : []).map(String));
-    const projects = (data || []).map((p: any) => ({ ...p, own_locality: ownIds.has(String(p.id)) }));
+    const acks = await localityAcks(caller.client, (data || []).map((p: any) => String(p.id)));
+    const projects = (data || []).map((p: any) => ({ ...p, own_locality: ownIds.has(String(p.id)), locality_ack: acks[String(p.id)] || null }));
     return res.status(200).json({ success: true, projects });
 }
 
