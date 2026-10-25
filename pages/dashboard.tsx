@@ -8,6 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { newSupabase } from '../services/newSupabaseClient';
 import { RESPONSE_STATUSES, STATUS_STYLE, toResponseCounts } from '../services/responseStatus';
 
+// LCC (مجلس تنسيق العمل القاعدي) logo colours, used only for the band under the header
+const LCC_BAND = ['#F2CB04', '#F13005', '#FE4D01', '#303EBB', '#5B177C'];
+
 // Chart colours: ERR blue and orange, deepened to pass colour-blind and contrast checks on white
 const C = { blue: '#3B68B8', orange: '#D46A2C', track: '#E4EAF4', ink: '#1F2937', muted: '#6B7280', line: '#E5E7EB' };
 // Project statuses for the whole response (services/responseStatus.ts): Pending, Check-in, Waiting, Active,
@@ -215,7 +218,7 @@ export default function Dashboard() {
                 }
             `}</style>
 
-            <header className="bg-brand-blue text-white px-4 py-3 flex items-center gap-3 border-b-4 border-brand-orange">
+            <header className="bg-brand-blue text-white px-4 py-3 flex items-center gap-3">
                 <div className="bg-white rounded-full p-1 flex items-center justify-center shrink-0" style={{ width: 44, height: 44 }}>
                     <Image src="/brand/err-logo.png" alt="ERR" width={36} height={36} />
                 </div>
@@ -224,6 +227,10 @@ export default function Dashboard() {
                     {data && <div className="text-xs opacity-90 truncate">{scopeLabel}</div>}
                 </div>
             </header>
+            {/* LCC logo colours, in the logo's order (left to right whatever the language) */}
+            <div dir="ltr" aria-hidden="true" className="flex h-1.5">
+                {LCC_BAND.map(c => <span key={c} className="flex-1" style={{ backgroundColor: c }} />)}
+            </div>
 
             <main className="max-w-3xl mx-auto p-4">
                 <div className="no-print flex flex-wrap gap-2 mb-4">
