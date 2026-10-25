@@ -6,7 +6,7 @@ import MessageBubble from '../components/ui/MessageBubble';
 import Button from '../components/ui/Button';
 import MenuCard from '../components/ui/MenuCard';
 import {
-    ClipboardDocumentCheckIcon, UserGroupIcon, UsersIcon, FolderIcon, DocumentTextIcon, DocumentCheckIcon,
+    ClipboardDocumentCheckIcon, UserGroupIcon, UsersIcon, UserCircleIcon, FolderIcon, DocumentTextIcon, DocumentCheckIcon,
     BanknotesIcon, PresentationChartLineIcon, ChartBarIcon, ChatBubbleLeftEllipsisIcon, ArrowRightStartOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import ReportingForm from '../components/forms/ReportForm/ReportingForm';
@@ -24,6 +24,7 @@ import FundingCycleSelection from '../components/forms/NewProjectForm/FundingCyc
 import FinancialReportDrafts from '../components/forms/FinancialReportForm/FinancialReportDrafts';
 import ProgramReportDrafts from '../components/forms/ProgramReportForm/ProgramReportDrafts';
 import { newSupabase } from '../services/newSupabaseClient';
+import { signOutAndLock } from '../services/appLock';
 
 /**
  * Chat-style menu.
@@ -471,10 +472,14 @@ const Menu = () => {
                             <MenuCard title={t('dashboard')} description={t('cards.dashboard')}
                                 icon={<ChartBarIcon className="w-6 h-6" />} onClick={() => router.push('/dashboard')} />
                         )}
+                        {userRole !== null && (
+                            <MenuCard title={t('profile')} description={t('cards.profile')}
+                                icon={<UserCircleIcon className="w-6 h-6" />} onClick={() => router.push('/profile')} />
+                        )}
                         <MenuCard title={t('feedback')} description={t('cards.feedback')}
                             icon={<ChatBubbleLeftEllipsisIcon className="w-6 h-6" />} onClick={() => setCurrentMenu(CurrentMenu.FEEDBACK)} />
                         <MenuCard title={t('exitChat')} description={t('cards.exitChat')}
-                            icon={<ArrowRightStartOnRectangleIcon className="w-6 h-6 rtl:-scale-x-100" />} onClick={() => router.push('/login')} />
+                            icon={<ArrowRightStartOnRectangleIcon className="w-6 h-6 rtl:-scale-x-100" />} onClick={() => signOutAndLock()} />
                     </div>
                 </>
             )}

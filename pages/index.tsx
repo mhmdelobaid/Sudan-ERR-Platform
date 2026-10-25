@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { useTranslation } from 'react-i18next';
 import Calculator from '../components/calculator/Calculator';
 import MainApp from './MainApp';
+import { isUnlocked as wasUnlocked, setUnlocked, signOutAndLock } from '../services/appLock';
 
 /**
  * Index.tsx
@@ -17,25 +18,21 @@ const Home = () => {
 
   // Check if we're coming from login/offline screens
   useEffect(() => {
-    const fromInternalPage = sessionStorage.getItem('fromInternalPage') === 'true';
-    if (fromInternalPage) {
-      setIsUnlocked(true);
-      sessionStorage.removeItem('fromInternalPage');
-    } else {
-      const unlocked = sessionStorage.getItem('isUnlocked') === 'true';
-      setIsUnlocked(unlocked);
-    }
+    // Pages inside the app can only be reached after the calculator code, so the flag is enough.
+    sessionStorage.removeItem('fromInternalPage');
+    setIsUnlocked(wasUnlocked());
   }, []);
 
+  // Sign out for real: ends the session, clears the login from the phone, back to the calculator.
   const handleLogout = () => {
     setIsUnlocked(false);
-    sessionStorage.removeItem('isUnlocked');
+    signOutAndLock();
   };
 
   const handlePinEntry = (pin: string) => {
     if (doesEntryMatchHash(pin)) {
       setIsUnlocked(true);
-      sessionStorage.setItem('isUnlocked', 'true');
+      setUnlocked();
     } else {
       setIsLocked(true);
     }

@@ -5,7 +5,7 @@
   "chooseMainMenu": "Choose <strong>F1</strong> to submit your work plan and budget and follow it, <strong>F3</strong> for your project's contract, and <strong>F4</strong> and <strong>F5</strong> to write reports. Choose <strong>Feedback</strong> to share your experience.",
   "projects": "Projects",
   "reporting": "Reporting",
-  "exitChat": "Exit Chat",
+  "exitChat": "Log out",
   "projectsInstructions": "Please select an option to apply for a project or review project status.",
   "reportingInstructions": "Please select an option to report by filling a form or uploading a photo of a form.",
   "projectApplication": "Project Application",
@@ -44,11 +44,12 @@
     "projects": "Work plan and budget: apply or check its status",
     "dashboard": "Funding, projects and people reached",
     "feedback": "Tell us about your experience with the app",
-    "exitChat": "Log out of the app",
+    "exitChat": "Signs you out on this device and returns to the calculator",
     "f3": "Your project's contract (MOU) and transfer date",
     "f4": "Financial report and receipts",
     "f5": "Program report and people reached",
-    "userManagement": "All users, their roles and status"
+    "userManagement": "All users, their roles and status",
+    "profile": "Your name, password, language and devices"
   },
   "cardsTitle": {
     "f1": "F1 Planning & Budget",
@@ -57,5 +58,6 @@
     "f4": "F4 Financial report",
     "f5": "F5 Program report"
   },
-  "userManagement": "User management"
+  "userManagement": "User management",
+  "profile": "My account"
 }

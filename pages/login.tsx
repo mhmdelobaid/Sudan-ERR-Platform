@@ -50,6 +50,11 @@ const Login = () => {
         };
     }, []);
 
+    // Back from the "set new password" page
+    useEffect(() => {
+        if (router.isReady && router.query.password === 'updated') setSuccessMessage(t('passwordUpdated'));
+    }, [router.isReady, router.query.password, t]);
+
     useEffect(() => {
         const handleOnline = () => setIsOffline(false);
         const handleOffline = () => setIsOffline(true);
@@ -101,11 +106,6 @@ const Login = () => {
                 return;
             }
 
-            // Store the session
-            if (authData.session) {
-                localStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
-            }
-
             console.log('Auth successful, fetching user data...');
             // Fetch user's role and status from our users table
             const { data: userData, error: userError } = await newSupabase
@@ -123,8 +123,7 @@ const Login = () => {
             // Only active ERR, support and admin accounts may use the app (partners use the portal)
             const access = appAccess(userData);
             if (access !== 'ok') {
-                await newSupabase.auth.signOut();
-                localStorage.removeItem('supabase.auth.token');
+                await newSupabase.auth.signOut({ scope: 'local' });
                 setError(t(access === 'pending' ? 'accountPending' : 'noAccess'));
                 setIsLoading(false);
                 return;

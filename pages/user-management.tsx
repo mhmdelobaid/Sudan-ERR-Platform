@@ -1,10 +1,12 @@
 // User management (superadmin only): every user with role, access scope and status; change role, room,
-// status, name and visible states. The database refuses anyone who isn't a superadmin and logs every change.
+// status, name and visible states; import lists of people; activate them and send password links.
+// The database refuses anyone who isn't a superadmin and logs every change.
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
+import ImportPanel from '../components/userManagement/ImportPanel';
 
 type Status = 'pending' | 'active' | 'suspended' | 'deleted';
 interface UserRow {
@@ -12,6 +14,7 @@ interface UserRow {
     err_id: string | null; room_name: string | null; room_name_ar: string | null; room_type: string | null; err_code: string | null;
     locality: string | null; locality_ar: string | null; state: string | null; state_ar: string | null;
     can_see_all_states: boolean; visible_states: string[]; created_at: string | null; last_sign_in_at: string | null; is_me: boolean;
+    position?: string | null; imported_at?: string | null; last_link_at?: string | null; last_link_method?: 'email' | 'copy' | null; link_count?: number;
 }
 interface Room {
     id: string; name: string | null; name_ar: string | null; type: string | null; err_code: string | null; status: string | null;
@@ -70,6 +73,11 @@ const UserManagement: React.FC = () => {
     const [draft, setDraft] = useState<{ display_name: string; role: string; status: Status; err_id: string; can_see_all_states: boolean; visible_states: string[] } | null>(null);
     const [roomSearch, setRoomSearch] = useState('');
     const [busy, setBusy] = useState<string | null>(null);
+    const [showImport, setShowImport] = useState(false);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [bulk, setBulk] = useState<{ done: number; total: number } | null>(null);
+    const [copyBox, setCopyBox] = useState<{ name: string; link: string } | null>(null);
+    const [copied, setCopied] = useState('');
 
     useEffect(() => {
         (async () => {
@@ -100,22 +108,96 @@ const UserManagement: React.FC = () => {
     }, [router]);
     useEffect(() => { if (auth === 'ok') load(); }, [auth, load]);
 
+    // Ask the server for a password link: 'email' sends it, 'copy' returns it. Returns the error code, or '' when it worked.
+    const requestLink = async (user: UserRow, method: 'email' | 'copy'): Promise<{ code: string; link?: string }> => {
+        try {
+            const headers = await authHeaders();
+            if (!headers) return { code: 'unauthorized' };
+            const res = await fetch('/api/user-password-link', { method: 'POST', headers, body: JSON.stringify({ user_id: user.id, method }) });
+            const data = await res.json();
+            if (!res.ok || !data.success) return { code: data.code || 'server_error' };
+            return { code: '', link: data.link };
+        } catch {
+            return { code: 'server_error' };
+        }
+    };
+
+    const sendLink = async (user: UserRow, method: 'email' | 'copy') => {
+        setBusy(user.id); setMessage(null); setCopyBox(null); setCopied('');
+        const { code, link } = await requestLink(user, method);
+        if (code) setMessage({ kind: 'error', text: errorText(code) });
+        else if (method === 'copy' && link) setCopyBox({ name: user.display_name || user.email || '', link });
+        else setMessage({ kind: 'ok', text: t('link.emailed', { email: user.email }) });
+        await load();
+        setBusy(null);
+    };
+
     const save = async (user: UserRow, changes: Record<string, unknown>, okText: string) => {
-        setBusy(user.id); setMessage(null);
+        setBusy(user.id); setMessage(null); setCopyBox(null);
         try {
             const headers = await authHeaders();
             if (!headers) { router.push('/login'); return; }
             const res = await fetch('/api/user-management', { method: 'POST', headers, body: JSON.stringify({ user_id: user.id, changes }) });
             const data = await res.json();
             if (!res.ok || !data.success) throw new Error(data.code);
+            let text = okText;
+            let kind: 'ok' | 'error' = 'ok';
+            // First activation of someone who never signed in: email them the link to create their password.
+            if (changes.status === 'active' && user.status !== 'active' && !user.last_sign_in_at) {
+                const { code } = await requestLink(user, 'email');
+                if (code) { kind = 'error'; text = t('link.activatedNoEmail', { reason: errorText(code) }); }
+                else text = t('link.activatedAndEmailed', { email: user.email });
+            }
             await load();
             setEditing(null); setDraft(null);
-            setMessage({ kind: 'ok', text: okText });
+            setMessage({ kind, text });
         } catch (e: any) {
             setMessage({ kind: 'error', text: errorText(e?.message) });
         } finally {
             setBusy(null);
         }
+    };
+
+    // Activate the selected pending people one by one and email each their link. If the email limit is
+    // reached, keep activating but stop emailing; the admin copies those links or sends them later.
+    const activateSelected = async () => {
+        const list = users.filter(u => selected.has(u.id) && u.status !== 'active' && !u.is_me);
+        if (list.length === 0) return;
+        setMessage(null); setCopyBox(null);
+        setBulk({ done: 0, total: list.length });
+        let activated = 0, emailed = 0, emailStop = '';
+        const failed: string[] = [];
+        for (let i = 0; i < list.length; i++) {
+            const u = list[i];
+            try {
+                const headers = await authHeaders();
+                if (!headers) { router.push('/login'); return; }
+                const res = await fetch('/api/user-management', { method: 'POST', headers, body: JSON.stringify({ user_id: u.id, changes: { status: 'active' } }) });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.code);
+                activated++;
+                if (!u.last_sign_in_at && !emailStop) {
+                    const { code } = await requestLink(u, 'email');
+                    if (!code) emailed++;
+                    else if (code === 'email_rate_limit') emailStop = code;
+                }
+            } catch {
+                failed.push(u.display_name || u.email || u.id);
+            }
+            setBulk({ done: i + 1, total: list.length });
+        }
+        setBulk(null);
+        setSelected(new Set());
+        await load();
+        const parts = [t('bulk.result', { activated, emailed })];
+        if (emailStop) parts.push(t('bulk.emailLimit'));
+        if (failed.length) parts.push(t('bulk.failed', { names: failed.join(isAr ? '، ' : ', ') }));
+        setMessage({ kind: emailStop || failed.length ? 'error' : 'ok', text: parts.join(' ') });
+    };
+
+    const copyText = async (value: string, which: string) => {
+        try { await navigator.clipboard.writeText(value); setCopied(which); }
+        catch { setCopied('manual'); }
     };
 
     const openEdit = (u: UserRow) => {
@@ -147,13 +229,14 @@ const UserManagement: React.FC = () => {
         active: users.filter(u => u.status === 'active').length,
         pending: users.filter(u => u.status === 'pending').length,
         suspended: users.filter(u => u.status === 'suspended').length,
+        noSignIn: users.filter(u => u.status === 'active' && !u.last_sign_in_at).length,
     }), [users]);
     const roleCounts = useMemo(() => ROLES.map(r => ({ role: r, n: users.filter(u => u.role === r).length })).filter(x => x.n > 0), [users]);
     const shown = useMemo(() => {
         const q = search.trim().toLowerCase();
         return users.filter(u =>
             (!roleFilter || u.role === roleFilter) &&
-            (!statusFilter || u.status === statusFilter) &&
+            (!statusFilter || (statusFilter === 'nosignin' ? u.status === 'active' && !u.last_sign_in_at : u.status === statusFilter)) &&
             (!stateFilter || u.state === stateFilter || (SCOPED_STATES.includes(u.role) && (u.can_see_all_states || u.visible_states.includes(stateFilter)))) &&
             (!q || [u.display_name, u.email, u.room_name, u.room_name_ar, u.err_code, u.locality, u.locality_ar, u.state, u.state_ar]
                 .some(v => (v || '').toLowerCase().includes(q))));
@@ -170,6 +253,15 @@ const UserManagement: React.FC = () => {
         const place = [ar(u.locality, u.locality_ar), ar(u.state, u.state_ar)].filter(Boolean).join(' · ');
         return `${ar(u.room_name, u.room_name_ar)}${place ? ` — ${place}` : ''}`;
     };
+    // Where this person is with their password: signed in, link sent, or nothing yet.
+    const linkStatus = (u: UserRow) => {
+        if (u.last_sign_in_at || u.status !== 'active') return null;
+        if (u.last_link_at) return t(u.last_link_method === 'copy' ? 'link.copiedOn' : 'link.emailedOn', { date: fmtDate(u.last_link_at), count: u.link_count || 1 });
+        return t('link.none');
+    };
+    const selectable = (u: UserRow) => u.status !== 'active' && !u.is_me;
+    const toggle = (id: string) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+
     const roomsFor = (role: string) => {
         const need = ROOM_FOR[role];
         const q = roomSearch.trim().toLowerCase();
@@ -269,11 +361,17 @@ const UserManagement: React.FC = () => {
         <div className="flex flex-wrap gap-2">
             {u.status !== 'active' && (
                 <button type="button" disabled={busy === u.id} onClick={() => save(u, { status: 'active' }, t('activated'))}
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{t('activate')}</button>
+                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{busy === u.id ? t('saving') : t('activate')}</button>
             )}
             {u.status === 'active' && (
-                <button type="button" disabled={busy === u.id} onClick={() => save(u, { status: 'suspended' }, t('suspendedMsg'))}
-                    className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 disabled:opacity-50">{t('suspend')}</button>
+                <>
+                    <button type="button" disabled={busy === u.id} onClick={() => sendLink(u, 'email')}
+                        className="rounded-lg border border-brand-blue/50 bg-white px-3 py-1.5 text-xs font-semibold text-brand-blue disabled:opacity-50">{t('link.email')}</button>
+                    <button type="button" disabled={busy === u.id} onClick={() => sendLink(u, 'copy')}
+                        className="rounded-lg border border-brand-blue/50 bg-white px-3 py-1.5 text-xs font-semibold text-brand-blue disabled:opacity-50">{t('link.copy')}</button>
+                    <button type="button" disabled={busy === u.id} onClick={() => save(u, { status: 'suspended' }, t('suspendedMsg'))}
+                        className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 disabled:opacity-50">{t('suspend')}</button>
+                </>
             )}
         </div>
     );
@@ -282,10 +380,21 @@ const UserManagement: React.FC = () => {
         <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
             <div className="max-w-6xl mx-auto p-4 pb-16 space-y-4">
                 {langSwitch}
-                <header className="bg-white rounded-2xl shadow-md p-4">
-                    <h1 className="text-xl font-bold text-gray-900 mb-0">{t('title')}</h1>
-                    <p className="text-sm text-gray-600 mb-0">{t('subtitle')}</p>
+                <header className="bg-white rounded-2xl shadow-md p-4 flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-900 mb-0">{t('title')}</h1>
+                        <p className="text-sm text-gray-600 mb-0">{t('subtitle')}</p>
+                    </div>
+                    {!showImport && (
+                        <button type="button" onClick={() => { setShowImport(true); setMessage(null); }}
+                            className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white">{t('import.open')}</button>
+                    )}
                 </header>
+
+                {showImport && (
+                    <ImportPanel rooms={rooms} isAr={isAr} t={t} getHeaders={authHeaders}
+                        onClose={() => setShowImport(false)} onImported={() => { load(); setStatusFilter('pending'); }} />
+                )}
 
                 {message && (
                     <div role="status" className={`rounded-xl border p-3 text-sm ${message.kind === 'ok' ? 'bg-emerald-50 border-emerald-300 text-emerald-900' : 'bg-red-50 border-red-300 text-red-900'}`}>
@@ -293,12 +402,45 @@ const UserManagement: React.FC = () => {
                     </div>
                 )}
 
+                {copyBox && (
+                    <div className="rounded-xl border border-brand-blue/40 bg-blue-50 p-3 space-y-2 text-sm" role="status">
+                        <p className="font-semibold text-gray-900 mb-0">{t('link.copyTitle', { name: copyBox.name })}</p>
+                        <p className="text-xs text-gray-600 mb-0">{t('link.copyNote')}</p>
+                        <textarea readOnly dir="auto" className="w-full rounded-lg border border-gray-300 bg-white p-2 text-xs min-h-[90px]"
+                            value={t('link.message', { name: copyBox.name, link: copyBox.link })} onFocus={e => e.currentTarget.select()} />
+                        <div className="flex flex-wrap gap-2 items-center">
+                            <button type="button" onClick={() => copyText(t('link.message', { name: copyBox.name, link: copyBox.link }), 'message')}
+                                className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white">{t('link.copyMessage')}</button>
+                            <button type="button" onClick={() => copyText(copyBox.link, 'link')}
+                                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800">{t('link.copyLinkOnly')}</button>
+                            <button type="button" onClick={() => { setCopyBox(null); setCopied(''); }}
+                                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700">{t('import.close')}</button>
+                            {copied && <span className="text-xs text-emerald-800">{copied === 'manual' ? t('link.copyManual') : t('link.copied')}</span>}
+                        </div>
+                    </div>
+                )}
+
+                {(selected.size > 0 || bulk) && (
+                    <div className="sticky top-2 z-10 rounded-xl border border-emerald-300 bg-emerald-50 p-3 flex flex-wrap items-center justify-between gap-2 text-sm shadow">
+                        <span className="text-emerald-900">
+                            {bulk ? t('bulk.progress', { done: bulk.done, total: bulk.total }) : t('bulk.selected', { count: selected.size })}
+                        </span>
+                        {!bulk && (
+                            <div className="flex flex-wrap gap-2">
+                                <button type="button" onClick={() => setSelected(new Set())} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700">{t('bulk.clear')}</button>
+                                <button type="button" onClick={activateSelected} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white">{t('bulk.activate', { count: selected.size })}</button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Totals (each one filters the list) */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     <Tile label={t('tiles.all')} value={counts.all} hint={t('tiles.allHint')} active={!statusFilter} onClick={() => setStatusFilter('')} />
                     <Tile label={t('tiles.active')} value={counts.active} hint={t('tiles.activeHint')} active={statusFilter === 'active'} onClick={() => setStatusFilter('active')} />
                     <Tile label={t('tiles.pending')} value={counts.pending} hint={t('tiles.pendingHint')} active={statusFilter === 'pending'} onClick={() => setStatusFilter('pending')} />
                     <Tile label={t('tiles.suspended')} value={counts.suspended} hint={t('tiles.suspendedHint')} active={statusFilter === 'suspended'} onClick={() => setStatusFilter('suspended')} />
+                    <Tile label={t('tiles.noSignIn')} value={counts.noSignIn} hint={t('tiles.noSignInHint')} active={statusFilter === 'nosignin'} onClick={() => setStatusFilter('nosignin')} />
                 </div>
 
                 {/* Roles at a glance (each one filters the list) */}
@@ -321,6 +463,7 @@ const UserManagement: React.FC = () => {
                     <select className={input} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} aria-label={t('field.status')}>
                         <option value="">{t('filter.allStatuses')}</option>
                         {STATUSES.map(s => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
+                        <option value="nosignin">{t('tiles.noSignIn')}</option>
                     </select>
                     <select className={input} value={stateFilter} onChange={e => setStateFilter(e.target.value)} aria-label={t('field.state')}>
                         <option value="">{t('filter.allStates')}</option>
@@ -341,6 +484,13 @@ const UserManagement: React.FC = () => {
                             <table className="w-full text-sm">
                                 <thead className="bg-gray-50 text-gray-600 text-xs">
                                     <tr>
+                                        <th className="p-3 w-8">
+                                            {shown.some(selectable) && (
+                                                <input type="checkbox" aria-label={t('bulk.selectAll')}
+                                                    checked={shown.filter(selectable).every(u => selected.has(u.id))}
+                                                    onChange={e => setSelected(e.target.checked ? new Set([...Array.from(selected), ...shown.filter(selectable).map(u => u.id)]) : new Set())} />
+                                            )}
+                                        </th>
                                         <th className="p-3 text-start font-semibold">{t('col.user')}</th>
                                         <th className="p-3 text-start font-semibold">{t('col.role')}</th>
                                         <th className="p-3 text-start font-semibold">{t('col.scope')}</th>
@@ -354,12 +504,19 @@ const UserManagement: React.FC = () => {
                                         <React.Fragment key={u.id}>
                                             <tr className="align-top">
                                                 <td className="p-3">
+                                                    {selectable(u) && <input type="checkbox" aria-label={t('bulk.selectOne', { name: u.display_name || u.email })} checked={selected.has(u.id)} onChange={() => toggle(u.id)} />}
+                                                </td>
+                                                <td className="p-3">
                                                     <span className="block font-semibold text-gray-900">{u.display_name || '—'}{u.is_me && <span className="ms-1 text-xs text-gray-500">({t('you')})</span>}</span>
                                                     <span className="block text-xs text-gray-500" dir="ltr">{u.email || '—'}</span>
+                                                    {u.position && <span className="block text-xs text-gray-500">{t('import.listSays', { text: u.position })}</span>}
                                                 </td>
                                                 <td className="p-3 text-gray-800">{t(`role.${u.role}`, { defaultValue: u.role })}</td>
                                                 <td className="p-3 text-gray-700 max-w-xs">{scopeText(u)}</td>
-                                                <td className="p-3"><span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_CHIP[u.status] || STATUS_CHIP.deleted}`}>{t(`status.${u.status}`)}</span></td>
+                                                <td className="p-3">
+                                                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_CHIP[u.status] || STATUS_CHIP.deleted}`}>{t(`status.${u.status}`)}</span>
+                                                    {linkStatus(u) && <span className="block mt-1 text-xs text-gray-500">{linkStatus(u)}</span>}
+                                                </td>
                                                 <td className="p-3 text-gray-600 whitespace-nowrap">{fmtDate(u.last_sign_in_at)}</td>
                                                 <td className="p-3">
                                                     <div className="flex flex-wrap gap-2">
@@ -369,7 +526,7 @@ const UserManagement: React.FC = () => {
                                                     </div>
                                                 </td>
                                             </tr>
-                                            {editing === u.id && <tr><td colSpan={6} className="px-3 pb-3">{editor(u)}</td></tr>}
+                                            {editing === u.id && <tr><td colSpan={7} className="px-3 pb-3">{editor(u)}</td></tr>}
                                         </React.Fragment>
                                     ))}
                                 </tbody>
@@ -381,7 +538,8 @@ const UserManagement: React.FC = () => {
                             {shown.map(u => (
                                 <li key={u.id} className="bg-white rounded-2xl shadow-md p-4 space-y-2">
                                     <div className="flex items-start justify-between gap-2">
-                                        <div className="min-w-0">
+                                        {selectable(u) && <input type="checkbox" className="mt-1 shrink-0" aria-label={t('bulk.selectOne', { name: u.display_name || u.email })} checked={selected.has(u.id)} onChange={() => toggle(u.id)} />}
+                                        <div className="min-w-0 flex-1">
                                             <p className="font-bold text-gray-900 mb-0">{u.display_name || '—'}{u.is_me && <span className="ms-1 text-xs text-gray-500">({t('you')})</span>}</p>
                                             <p className="text-xs text-gray-500 mb-0 break-all" dir="ltr">{u.email || '—'}</p>
                                         </div>
@@ -389,7 +547,9 @@ const UserManagement: React.FC = () => {
                                     </div>
                                     <p className="text-sm text-gray-800 mb-0"><span className="text-gray-500">{t('col.role')}: </span>{t(`role.${u.role}`, { defaultValue: u.role })}</p>
                                     <p className="text-sm text-gray-700 mb-0"><span className="text-gray-500">{t('col.scope')}: </span>{scopeText(u)}</p>
+                                    {u.position && <p className="text-xs text-gray-500 mb-0">{t('import.listSays', { text: u.position })}</p>}
                                     <p className="text-xs text-gray-500 mb-0">{t('col.lastSignIn')}: {fmtDate(u.last_sign_in_at)}</p>
+                                    {linkStatus(u) && <p className="text-xs text-gray-500 mb-0">{linkStatus(u)}</p>}
                                     <div className="flex flex-wrap gap-2 pt-1">
                                         <button type="button" onClick={() => (editing === u.id ? (setEditing(null), setDraft(null)) : openEdit(u))}
                                             className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800">{t('edit')}</button>

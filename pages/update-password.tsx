@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
+import { isUnlocked } from '../services/appLock';
 
 const LogoImage = '/brand/err-logo.png';
 
@@ -15,15 +17,54 @@ const UpdatePassword = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    // 'checking' while the link is read, 'ready' when there is a session to set the password on, 'invalid' otherwise
+    const [linkState, setLinkState] = useState<'checking' | 'ready' | 'invalid' | 'saved'>('checking');
     
     const router = useRouter();
     const { t, i18n } = useTranslation('login');
+
+    // The page is opened from three kinds of link:
+    //  1. ?token_hash=...&type=recovery  — a link an admin copied, or the email template that uses {{ .TokenHash }}
+    //  2. #access_token=...              — the default Supabase email sent by the app's server
+    //  3. ?code=...                       — "Forgot password" asked in this same browser (the client handles it)
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            // Wait for the client to finish its own reading of the URL first.
+            await newSupabase.auth.getSession();
+            const url = new URL(window.location.href);
+            const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+            const tokenHash = url.searchParams.get('token_hash');
+            let failed = !!(hash.get('error_code') || url.searchParams.get('error_code'));
+
+            if (!failed && tokenHash) {
+                const { error: otpError } = await newSupabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+                failed = !!otpError;
+            } else if (!failed && hash.get('access_token') && hash.get('refresh_token')) {
+                const { error: sessionError } = await newSupabase.auth.setSession({
+                    access_token: hash.get('access_token') as string,
+                    refresh_token: hash.get('refresh_token') as string,
+                });
+                failed = !!sessionError;
+            }
+            // Keep tokens out of the address bar and browser history.
+            if (tokenHash || url.hash) window.history.replaceState(window.history.state, '', url.pathname);
+
+            const { data: { session } } = await newSupabase.auth.getSession();
+            if (!cancelled) setLinkState(!failed && session ? 'ready' : 'invalid');
+        })().catch(() => { if (!cancelled) setLinkState('invalid'); });
+        return () => { cancelled = true; };
+    }, []);
 
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         
         if (password !== confirmPassword) {
             setError(t('passwordsDoNotMatch'));
+            return;
+        }
+        if (password.length < 8) {
+            setError(t('passwordTooShort'));
             return;
         }
 
@@ -38,8 +79,11 @@ const UpdatePassword = () => {
             if (updateError) {
                 setError(t('passwordUpdateError'));
             } else {
-                // Redirect to login page after successful password update
-                router.push('/login');
+                // Sign out here and let them sign in with the new password
+                await newSupabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+                // Opened from inside the app: go to sign in. Opened from an email: the app needs the calculator code first.
+                if (isUnlocked()) router.push('/login?password=updated');
+                else setLinkState('saved');
             }
         } catch (err) {
             setError(t('unexpectedError'));
@@ -60,8 +104,19 @@ const UpdatePassword = () => {
                     priority
                 />
                 <h1 className="text-xl font-bold text-center">{t('updatePasswordTitle')}</h1>
+                {linkState === 'ready' && <p className="mt-2 text-center text-gray-600 max-w-xs">{t('updatePasswordHint')}</p>}
             </div>
 
+            {linkState === 'saved' && <p className="w-full max-w-xs text-center text-green-700">{t('passwordSavedOpenApp')}</p>}
+            {linkState === 'checking' && <p className="text-gray-600 text-center">{t('checkingLink')}</p>}
+            {linkState === 'invalid' && (
+                <div className="w-full max-w-xs space-y-4 text-center">
+                    <p className="text-gray-700">{t('linkInvalid')}</p>
+                    <Link href="/reset-password" className="block text-blue-600 hover:text-blue-800">{t('getNewLink')}</Link>
+                    <Link href="/login" className="block text-blue-600 hover:text-blue-800">{t('backToLogin')}</Link>
+                </div>
+            )}
+            {linkState === 'ready' && (
             <form onSubmit={handleUpdatePassword} className="flex flex-col space-y-4 w-full max-w-xs">
                 <div className="relative">
                     <Input
@@ -119,6 +174,7 @@ const UpdatePassword = () => {
                     disabled={isLoading}
                 />
             </form>
+            )}
         </div>
     );
 };

@@ -31,5 +31,12 @@
   "passwordUpdateError": "Failed to update password. Please try again.",
   "passwordsDoNotMatch": "Passwords do not match.",
   "backToLogin": "Back to Login",
-    "noAccess": "This account doesn't have access to this app. Contact your coordinator if you think this is a mistake."
+  "noAccess": "This account doesn't have access to this app. Contact your coordinator if you think this is a mistake.",
+  "updatePasswordHint": "Choose a new password (8 characters or more). Then sign in with your email and this password.",
+  "passwordTooShort": "The password needs at least 8 characters",
+  "checkingLink": "Checking the link...",
+  "linkInvalid": "This link has expired or was already used. Ask your admin for a new one, or request one by email.",
+  "getNewLink": "Request a new link by email",
+  "passwordUpdated": "Password saved. Sign in with it now.",
+  "passwordSavedOpenApp": "Password saved. Open the app, enter the calculator code, then sign in with your email and new password."
 }

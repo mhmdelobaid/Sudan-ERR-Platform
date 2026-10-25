@@ -1,0 +1,65 @@
+{
+  "loading": "Loading...",
+  "loadError": "We couldn't load your account. Check your connection and try again.",
+  "retry": "Try again",
+  "backToMenu": "Back to menu",
+  "error": "Something went wrong. Try again.",
+  "noName": "No name",
+  "edit": "Edit",
+  "save": "Save",
+  "saving": "Saving...",
+  "cancel": "Cancel",
+  "account": {
+    "title": "My account",
+    "email": "Email",
+    "since": "Account since",
+    "lastSignIn": "Last sign-in"
+  },
+  "name": {
+    "label": "Name",
+    "hint": "Reviewers and working groups see this name.",
+    "invalid": "The name must be 2 to 80 characters.",
+    "saved": "Name saved."
+  },
+  "access": {
+    "title": "My role and where I work",
+    "role": "Role",
+    "position": "Position",
+    "roomLabel": "Room",
+    "localityLabel": "Locality",
+    "stateLabel": "State",
+    "sees": "You see",
+    "room": "Your room's applications and reports",
+    "locality": "Rooms in {{locality}} locality",
+    "state": "Rooms in {{state}} state",
+    "stateRep": "{{state}} applications to review (except {{locality}} locality)",
+    "askAdmin": "To change your email, role or room, contact your admin."
+  },
+  "password": {
+    "title": "Change password",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "show": "Show passwords",
+    "hint": "8 characters or more. After the change, any other device signed in to your account is signed out.",
+    "submit": "Change password",
+    "fillAll": "Fill in every field.",
+    "tooShort": "The new password needs at least 8 characters.",
+    "mismatch": "The new password and its confirmation don't match.",
+    "same": "The new password must be different from the current one.",
+    "weak": "This password is weak or common. Choose a harder one.",
+    "wrongCurrent": "The current password isn't right.",
+    "tooManyTries": "Too many tries. Wait a little and try again.",
+    "saved": "Password changed, and any other device signed in to your account was signed out."
+  },
+  "language": {
+    "title": "Language"
+  },
+  "devices": {
+    "title": "Devices and log out",
+    "hint": "If your phone is lost or you signed in on someone else's device, sign out the other devices. This device stays signed in.",
+    "signOutOthers": "Sign out all other devices",
+    "done": "All other devices were signed out.",
+    "logOut": "Log out"
+  }
+}

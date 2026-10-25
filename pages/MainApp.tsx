@@ -43,12 +43,8 @@ const MainApp = ({ onLogout }) => {
     setNumPages(numPages);
   }
 
+  // Signs out and returns to the calculator (the parent does the sign-out)
   const handleLogout = () => {
-    // Clear both session storage items
-    sessionStorage.removeItem('isUnlocked');
-    sessionStorage.removeItem('fromInternalPage');
-    
-    // Call the onLogout prop to switch to Calculator
     onLogout();
   };
 

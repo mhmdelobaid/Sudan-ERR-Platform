@@ -52,6 +52,11 @@ const KNOWN_ERRORS: Record<string, number> = {
     room_required: 400,
     room_type_mismatch: 400,
     room_not_found: 404,
+    // Account import and password links (superadmin only)
+    invalid_rows: 400,
+    email_exists: 409,
+    login_not_found: 404,
+    user_not_active: 409,
     // Locality acknowledgement
     only_locality_acknowledges: 403,
     project_not_pending: 409,

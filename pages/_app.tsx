@@ -7,6 +7,7 @@ import { handleOnline } from '../services/handleOnline';
 import { appWithTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 import i18n from '../services/i18n'; // Import i18n initialization
+import LockGate from '../components/LockGate';
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
@@ -62,7 +63,9 @@ function MyApp({ Component, pageProps }) {
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       </Head>
-      <Component {...pageProps} />
+      <LockGate>
+        <Component {...pageProps} />
+      </LockGate>
     </>
   );
 }
