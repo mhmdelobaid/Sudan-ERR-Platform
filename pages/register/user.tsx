@@ -38,14 +38,13 @@ const UserRegistration = () => {
         const fetchRoomDetails = async () => {
             if (roomId) {
                 try {
-                    const { data, error } = await newSupabase
-                        .from('emergency_rooms')
-                        .select('id, name, name_ar, type')
-                        .eq('id', roomId)
-                        .single();
+                    // Only active state and locality rooms, name only (audit H4)
+                    const { data, error } = await newSupabase.rpc('public_room', { p_id: String(roomId) });
 
                     if (error) throw error;
-                    if (data) setSelectedRoom(data);
+                    const room = (data || [])[0];
+                    if (!room) throw new Error('room_not_found');
+                    setSelectedRoom(room as EmergencyRoom);
                 } catch (err) {
                     console.error('Error fetching room details:', err);
                     setError(t('roomFetchError'));

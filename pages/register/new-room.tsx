@@ -19,7 +19,7 @@ interface State {
 
 const NewRoom = () => {
     const [roomName, setRoomName] = useState('');
-    const [roomType, setRoomType] = useState<'state' | 'base'>('base');
+    const [roomType, setRoomType] = useState<'state' | 'locality'>('locality');
     const [states, setStates] = useState<State[]>([]);
     const [selectedState, setSelectedState] = useState('');
     const [selectedLocality, setSelectedLocality] = useState('');
@@ -84,16 +84,20 @@ const NewRoom = () => {
         setIsLoading(true);
 
         try {
-            const { error: roomError } = await newSupabase
-                .from('emergency_rooms')
-                .insert([{
-                    name: roomName,
-                    type: roomType,
-                    state_reference: selectedLocality, // Use the locality ID as state_reference
-                    status: 'inactive'
-                }]);
+            // Checked step: state or locality rooms only, no duplicates, limited per hour (audit H4).
+            // The room waits as inactive until an admin approves it.
+            const { error: roomError } = await newSupabase.rpc('public_propose_room', {
+                p_name: roomName,
+                p_type: roomType,
+                p_locality_id: selectedLocality,
+            });
 
-            if (roomError) throw roomError;
+            if (roomError) {
+                const code = ['room_exists', 'too_many_proposals', 'invalid_room_name', 'invalid_room_type', 'locality_not_found']
+                    .find(c => (roomError.message || '').includes(c));
+                setError(t(code ? `proposeErrors.${code}` : 'roomCreationError'));
+                return;
+            }
 
             setSuccess(true);
             setTimeout(() => {
@@ -150,12 +154,13 @@ const NewRoom = () => {
                     <select
                         className="w-full p-2 border rounded"
                         value={roomType}
-                        onChange={(e) => setRoomType(e.target.value as 'state' | 'base')}
+                        onChange={(e) => setRoomType(e.target.value as 'state' | 'locality')}
                         required
                     >
+                        <option value="locality">{t('localityErr')}</option>
                         <option value="state">{t('stateErr')}</option>
-                        <option value="base">{t('baseErr')}</option>
                     </select>
+                    <p className="text-xs text-gray-500 -mt-2 mb-0">{t('baseMembersNote')}</p>
 
                     <select
                         className="w-full p-2 border rounded"

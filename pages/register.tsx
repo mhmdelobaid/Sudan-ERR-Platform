@@ -12,7 +12,7 @@ interface EmergencyRoom {
     id: string;
     name: string;
     name_ar: string | null;
-    type: 'state' | 'base';
+    type: 'state' | 'locality';
 }
 
 interface State {
@@ -23,7 +23,7 @@ interface State {
 
 const Register = () => {
     const [emergencyRooms, setEmergencyRooms] = useState<EmergencyRoom[]>([]);
-    const [selectedType, setSelectedType] = useState<'state' | 'base' | ''>('');
+    const [selectedType, setSelectedType] = useState<'state' | 'locality' | ''>('');
     const [selectedErr, setSelectedErr] = useState('');
     const [states, setStates] = useState<State[]>([]);
     const [selectedState, setSelectedState] = useState('');
@@ -64,31 +64,13 @@ const Register = () => {
         if (selectedState && selectedType) {
             const fetchERRs = async () => {
                 try {
-                    // First get all localities for the selected state
-                    const { data: localities, error: localitiesError } = await newSupabase
-                        .from('states')
-                        .select('id')
-                        .eq('state_name', states.find(s => s.id === selectedState)?.state_name);
-
-                    if (localitiesError) throw localitiesError;
-
-                    if (!localities || localities.length === 0) {
-                        setEmergencyRooms([]);
-                        return;
-                    }
-
-                    // Then get all rooms that reference these localities
-                    const localityIds = localities.map(l => l.id);
-                    const { data, error } = await newSupabase
-                        .from('emergency_rooms')
-                        .select('id, name, name_ar, type')
-                        .eq('type', selectedType)
-                        .in('state_reference', localityIds)
-                        .eq('status', 'active')
-                        .order('name');
+                    // Before login only state and locality rooms are listed, with name only (audit H4).
+                    // Base ERR members are added from their locality's list.
+                    const stateName = states.find(s => s.id === selectedState)?.state_name;
+                    const { data, error } = await newSupabase.rpc('public_rooms', { p_state_name: stateName });
 
                     if (error) throw error;
-                    setEmergencyRooms(data || []);
+                    setEmergencyRooms(((data || []) as EmergencyRoom[]).filter(r => r.type === selectedType));
                 } catch (err) {
                     console.error('Error fetching ERRs:', err);
                     setError(t('errFetchError'));
@@ -157,12 +139,13 @@ const Register = () => {
                         <select
                             className="w-full p-2 border rounded"
                             value={selectedType}
-                            onChange={(e) => setSelectedType(e.target.value as 'state' | 'base')}
+                            onChange={(e) => setSelectedType(e.target.value as 'state' | 'locality')}
                         >
                             <option value="">{t('selectRoomType')}</option>
                             <option value="state">{t('stateErr')}</option>
-                            <option value="base">{t('baseErr')}</option>
+                            <option value="locality">{t('localityErr')}</option>
                         </select>
+                        <p className="text-xs text-gray-500 mt-1 mb-0">{t('baseMembersNote')}</p>
                     </div>
                 )}
 
