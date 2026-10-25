@@ -146,5 +146,12 @@
     "sdg": "Sudanese pound (SDG)",
     "hint": "Choose the currency your amounts are in. The grant balance only counts budgets in USD."
   },
-  "totalExpenses": "Total expenses"
+  "totalExpenses": "Total expenses",
+  "locked": {
+    "project_locked": "This project has passed screening (F2), so it can't be changed from the app. If something must change (such as the bank account), contact the working group or an admin.",
+    "status_change_not_allowed": "That status change isn't allowed.",
+    "status_not_allowed": "A new project must be a draft or sent for screening.",
+    "protected_field": "A field here can't be changed by you (funding, grant or contract). Those are set at a later step.",
+    "report_locked": "This report has been approved, so it can't be changed."
+  }
 }

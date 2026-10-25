@@ -1,5 +1,6 @@
 // pages/api/project-application.ts
 import { NextApiRequest, NextApiResponse } from 'next';
+import { EDITABLE_STATUSES, guardCode } from '../../services/projectGuard';
 import { newSupabase } from '../../services/newSupabaseClient';
 import { validateSession } from '../../services/auth';
 import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
@@ -170,7 +171,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     current_feedback_id: undefined,
                     emergency_room_id: toNullableUuid(formData.emergency_room_id),
                     donor_id: toNullableUuid(formData.donor_id),
-                    funding_status: formData.funding_status || 'unassigned',
+                    // Funding is assigned later by the portal, never by the form (audit C1)
+                    funding_status: id ? undefined : 'unassigned',
                     grant_call_id: null,
                     grant_call_state_allocation_id: null,
                     funding_cycle_id: toNullableUuid(formData.funding_cycle_id),
@@ -186,16 +188,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     // Get current project version
                     const { data: currentProject, error: versionError } = await authenticatedClient
                         .from('err_projects')
-                        .select('version, current_feedback_id')
+                        .select('version, current_feedback_id, status, created_by')
                         .eq('id', id)
                         .single();
 
-                    if (versionError) {
-                        console.error('Error fetching project version:', versionError);
-                        return res.status(500).json({
+                    if (versionError || !currentProject || currentProject.created_by !== user.err_id) {
+                        return res.status(404).json({
                             success: false,
-                            message: 'Error fetching project version',
-                            error: versionError.message
+                            code: 'not_found',
+                            message: 'Project not found'
+                        });
+                    }
+
+                    // Only a draft or an F-1 returned for changes can be sent again (audit C1)
+                    if (!EDITABLE_STATUSES.includes(currentProject.status)) {
+                        return res.status(409).json({
+                            success: false,
+                            code: 'project_locked',
+                            message: 'This project can no longer be changed'
                         });
                     }
 
@@ -229,6 +239,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         .single();
 
                     if (error) {
+                        const code = guardCode(error.message);
+                        if (code) return res.status(409).json({ success: false, code, message: 'This change is not allowed' });
                         console.error('Error updating project:', error);
                         return res.status(500).json({
                             success: false,
@@ -249,6 +261,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         .single();
 
                     if (error) {
+                        const code = guardCode(error.message);
+                        if (code) return res.status(409).json({ success: false, code, message: 'This change is not allowed' });
                         console.error('Error creating project:', error);
                         return res.status(500).json({
                             success: false,

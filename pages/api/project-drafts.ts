@@ -1,3 +1,4 @@
+import { stripProtected, guardCode } from '../../services/projectGuard';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
 import { validateSession } from '../../services/auth';
@@ -50,7 +51,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         if (req.method === 'POST') {
-            const { id, ...formData } = req.body;
+            const { id, ...rawData } = req.body;
+            // Status, funding and portal fields are never taken from the browser (audit C1)
+            const formData = stripProtected(rawData || {});
             
             // Only include fields that have values
             const cleanedData = Object.entries(formData).reduce((acc, [key, value]) => {
@@ -70,6 +73,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         .single();
 
                     if (checkError) throw checkError;
+
+                    // Only drafts and F-1s returned for changes can be saved as a draft (audit C1)
+                    if (!['draft', 'feedback'].includes(existingProject?.status)) {
+                        return res.status(409).json({ success: false, code: 'project_locked', message: 'This project can no longer be changed' });
+                    }
 
                     // If this is a project with feedback, update it directly
                     if (existingProject?.status === 'feedback') {
@@ -137,6 +145,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     draft: result
                 });
             } catch (error) {
+                const code = guardCode(error?.message);
+                if (code) return res.status(409).json({ success: false, code, message: 'This change is not allowed' });
                 console.error('Error saving draft:', error);
                 return res.status(500).json({
                     success: false,

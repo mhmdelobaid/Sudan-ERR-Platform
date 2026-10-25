@@ -494,8 +494,11 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
           onDraftSubmitted();
         }
       } else {
-        const errorData = await res.json();
-        alert(t('submissionFailed') + ': ' + (errorData.message || 'Unknown error'));
+        const errorData = await res.json().catch(() => ({}));
+        // A project that has passed F-2 can't be changed from the app (audit C1)
+        alert(errorData.code && t(`locked.${errorData.code}`, { defaultValue: '' })
+            ? t(`locked.${errorData.code}`)
+            : t('submissionFailed') + ': ' + (errorData.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error submitting project:', error);
@@ -974,7 +977,14 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
                                    credentials: 'include'
                                });
 
-                               if (!response.ok) throw new Error('Failed to save draft');
+                               if (!response.ok) {
+                                   const errorData = await response.json().catch(() => ({}));
+                                   if (errorData.code && t(`locked.${errorData.code}`, { defaultValue: '' })) {
+                                       alert(t(`locked.${errorData.code}`));
+                                       return;
+                                   }
+                                   throw new Error('Failed to save draft');
+                               }
                                
                                const data = await response.json();
                                if (data.success && data.draft) {
