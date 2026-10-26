@@ -2,7 +2,7 @@
 import { FC, ReactNode } from 'react';
 
 interface ButtonProps {
-    text: string;
+    text: ReactNode; // usually a string; the report project list passes two lines
     onClick?: (e: React.MouseEvent<HTMLButtonElement>) => any;
     type?: "button" | "submit" | "reset";
     disabled?: boolean;

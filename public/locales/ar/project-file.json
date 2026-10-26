@@ -47,7 +47,11 @@
     "activity": "نشاط",
     "item": "بند",
     "location": "المكان",
-    "qtyDuration": "الكمية {{q}} · المدة {{d}} يوم"
+    "qtyDuration": "الكمية {{q}} · المدة {{d}} يوم",
+    "days": "{{n}} يوم",
+    "programOfficer": "مسؤول البرنامج",
+    "financeOfficer": "المسؤول المالي",
+    "reportingOfficer": "مسؤول التقارير"
   },
   "f2": {
     "decision": "القرار",
@@ -125,7 +129,7 @@
     "households": "أسر",
     "female": "إناث",
     "male": "ذكور",
-    "children": "أقل من ١٨",
+    "children": "أقل من 18",
     "disabilities": "ذوو إعاقة",
     "total": "الإجمالي",
     "noActivities": "ما في أنشطة مسجّلة.",
@@ -143,5 +147,10 @@
   },
   "open": "ملف المشروع (F1–F5)",
   "title": "ملف المشروع (F1–F5)",
-  "printStep": "PDF {{step}}"
+  "printStep": "PDF {{step}}",
+  "payMethod": {
+    "cash": "نقدًا",
+    "bank transfer": "تحويل بنكي",
+    "mobile money": "محفظة موبايل"
+  }
 }

@@ -47,7 +47,11 @@
     "activity": "Activity",
     "item": "Item",
     "location": "Location",
-    "qtyDuration": "Quantity {{q}} · duration {{d}} days"
+    "qtyDuration": "Quantity {{q}} · duration {{d}} days",
+    "days": "{{n}} days",
+    "programOfficer": "Programme officer",
+    "financeOfficer": "Finance officer",
+    "reportingOfficer": "Reporting officer"
   },
   "f2": {
     "decision": "Decision",
@@ -143,5 +147,10 @@
   },
   "open": "Project file (F1–F5)",
   "title": "Project file (F1–F5)",
-  "printStep": "{{step}} PDF"
+  "printStep": "{{step}} PDF",
+  "payMethod": {
+    "cash": "Cash",
+    "bank transfer": "Bank transfer",
+    "mobile money": "Mobile money"
+  }
 }

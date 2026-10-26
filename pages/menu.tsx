@@ -524,9 +524,7 @@ const Menu = () => {
                         {projects.map((project: any) => (
                             <Button
                                 key={project.id}
-                                text={!project.is_own_room && project.room
-                                    ? `${project.project_objectives} — ${(i18n.language === 'ar' ? project.room.name_ar || project.room.name : project.room.name || project.room.name_ar) || project.room.err_code} (${project.locality})`
-                                    : `${project.project_objectives} (${project.locality})`}
+                                text={<ProjectChoice project={project} isAr={i18n.language === 'ar'} />}
                                 onClick={() => setSelectedProject(project)}
                                 className="w-full"
                             />
@@ -867,5 +865,26 @@ const Menu = () => {
         </ChatContainer>
     );
 };
+
+// One project in the report list: what the project does on the first line; the room (when it isn't the
+// user's own) and the locality, in the reader's language, on a smaller second line. Each part is isolated
+// so Arabic and English names don't swap places or break across lines (Yung, 26 Oct 2026).
+function ProjectChoice({ project, isAr }: { project: any; isAr: boolean }) {
+    const room = project.room;
+    const roomName = !project.is_own_room && room
+        ? ((isAr ? room.name_ar || room.name : room.name || room.name_ar) || room.err_code)
+        : null;
+    const locality = (isAr ? room?.locality_ar || room?.locality : room?.locality || room?.locality_ar) || project.locality;
+    return (
+        <span className="block w-full text-center">
+            <span className="block font-semibold leading-snug"><bdi>{project.project_objectives || '—'}</bdi></span>
+            {(roomName || locality) && (
+                <span className="block text-sm opacity-90 leading-snug mt-0.5">
+                    {roomName && <bdi>{roomName}</bdi>}{roomName && locality ? ' · ' : ''}{locality && <bdi>{locality}</bdi>}
+                </span>
+            )}
+        </span>
+    );
+}
 
 export default Menu;

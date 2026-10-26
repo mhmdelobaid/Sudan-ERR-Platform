@@ -84,8 +84,18 @@ const ProjectFile: React.FC = () => {
 
     const pick = (en?: string | null, ar?: string | null) => (isAr ? ar || en : en || ar) || '';
     const fmt = (n: Num) => { const v = num(n); return v === null || Number.isNaN(v) ? '—' : v.toLocaleString('en-US', { maximumFractionDigits: 2 }); };
+    // Dates use Latin digits in Arabic too, like every other number in the file
+    const dateLocale = isAr ? 'ar-SD-u-nu-latn' : 'en-GB';
     const fmtDate = (d: string | null | undefined) =>
-        d ? new Date(d).toLocaleDateString(isAr ? 'ar-SD' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+        d ? new Date(d).toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+    // Category and payment-method names are stored in English; show them in the reader's language
+    const tCat = (v: string | null | undefined) => (v ? i18n.t(v, { ns: 'projectApplication', defaultValue: v, nsSeparator: false, keySeparator: false }) : '—');
+    const tPay = (v: string | null | undefined) => (v ? t(`payMethod.${v.toLowerCase()}`, { defaultValue: v }) : '—');
+    // "30 days" → "30 يوم"; anything else is shown as typed
+    const fmtTimeframe = (v: string | null | undefined) => {
+        const m = (v || '').trim().match(/^(\d+)\s*(days?|يوم|أيام)$/i);
+        return m ? t('f1.days', { n: m[1] }) : text(v);
+    };
     const money = (n: Num) => `${fmt(n)} ${data?.project.currency || ''}`.trim();
     const text = (s: string | null | undefined) => (s && s.trim() ? s : '—');
 
@@ -120,10 +130,13 @@ const ProjectFile: React.FC = () => {
             const n = l.activity_id ? data?.activityNames?.[l.activity_id] : undefined;
             return n ? (isAr ? n.ar : n.en) : t('f1.activity');
         }
-        return (l.expense_id && data?.expenseNames?.[l.expense_id]) || l.description || t('f1.item');
+        const n = l.expense_id && data?.expenseNames?.[l.expense_id];
+        return (n && tCat(n)) || l.description || t('f1.item');
     };
-    const expenseName = (e: { expense?: string; description?: string }) =>
-        (e.expense && data?.expenseNames?.[e.expense]) || e.description || '—';
+    const expenseName = (e: { expense?: string; description?: string }) => {
+        const n = e.expense && data?.expenseNames?.[e.expense];
+        return (n && tCat(n)) || e.description || '—';
+    };
 
     if (error) {
         return (
@@ -140,7 +153,7 @@ const ProjectFile: React.FC = () => {
     const p = data.project;
     const room = pick(p.room_name, p.room_name_ar);
     const place = [pick(p.locality, p.locality_ar), pick(p.state, p.state_ar)].filter(Boolean).join(' · ');
-    const printedOn = new Date().toLocaleDateString(isAr ? 'ar-SD' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+    const printedOn = new Date().toLocaleDateString(dateLocale, { year: 'numeric', month: 'long', day: 'numeric' });
 
     // Header printed at the top of every step: LCC logo left, title in the middle, ERR logo right, LCC band under it
     const Header: React.FC<{ step?: Step }> = ({ step }) => (
@@ -150,8 +163,12 @@ const ProjectFile: React.FC = () => {
                 <img src="/brand/lcc-logo.png" alt="LCC" className="h-16 w-16 object-contain shrink-0" />
                 <div dir={isAr ? 'rtl' : 'ltr'} className="flex-1 min-w-0 text-center">
                     <p className="text-lg font-bold text-gray-900 mb-0">{step ? t(`steps.${step}`) : t('title')}</p>
-                    <p className="text-sm text-gray-700 mb-0 break-words">{p.project_name || '—'}{room ? ` · ${room}` : ''}</p>
-                    {place && <p className="text-xs text-gray-500 mb-0">{place}</p>}
+                    <p className="text-sm text-gray-700 mb-0 break-words"><bdi>{p.project_name || '—'}</bdi></p>
+                    {(room || place) && (
+                        <p className="text-xs text-gray-500 mb-0 break-words">
+                            {room && <bdi>{room}</bdi>}{room && place ? ' · ' : ''}{place && <bdi>{place}</bdi>}
+                        </p>
+                    )}
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/brand/err-logo.png" alt="ERR" className="h-16 w-14 object-contain shrink-0" />
@@ -165,7 +182,7 @@ const ProjectFile: React.FC = () => {
     const Field: React.FC<{ label: string; children: React.ReactNode; wide?: boolean }> = ({ label, children, wide }) => (
         <div className={wide ? 'sm:col-span-2' : ''}>
             <span className="block text-xs text-gray-500">{label}</span>
-            <span className="block text-sm text-gray-900 whitespace-pre-wrap break-words">{children}</span>
+            <span className="block text-sm text-gray-900 whitespace-pre-wrap break-words"><bdi>{children}</bdi></span>
         </div>
     );
     const th = 'border border-gray-300 bg-gray-50 px-2 py-1 text-start font-semibold';
@@ -196,12 +213,13 @@ const ProjectFile: React.FC = () => {
                 .project-file, .project-file * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 .pf-print-only { display: none; }
                 @media print {
-                    @page { size: A4; margin: 12mm; }
-                    .project-file { background: #fff !important; }
+                    @page { size: A4; margin: 0; } /* margin 0 = the browser prints no date, title or page address */
+                    .project-file { background: #fff !important; min-height: 0 !important; } /* no blank last page */
                     .pf-screen-only, .pf-no-print { display: none !important; }
                     .pf-print-only { display: block !important; }
                     .pf-empty { display: none !important; }
-                    .pf-page { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
+                    .pf-page { box-shadow: none !important; border-radius: 0 !important; padding: 12mm !important; }
+                    .project-file > div { padding: 0 !important; max-width: none !important; }
                     /* one step per file: everything except the step being printed is left out */
                     .project-file[data-print-step] .pf-page { display: none !important; }
                     .project-file[data-print-step="f1"] #f1, .project-file[data-print-step="f2"] #f2,
@@ -248,18 +266,19 @@ const ProjectFile: React.FC = () => {
                 <Section step="f1">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pf-keep">
                         <Field label={t('f1.projectName')}>{text(p.project_name)}</Field>
-                        <Field label={t('f1.room')}>{room || '—'}{p.room_code ? ` (${p.room_code})` : ''}</Field>
+                        <Field label={t('f1.room')}><bdi>{room || '—'}</bdi>{p.room_code ? <> <bdi dir="ltr">({p.room_code})</bdi></> : null}</Field>
                         <Field label={t('f1.place')}>{place || '—'}</Field>
                         <Field label={t('f1.submitted')}>{fmtDate(p.submitted_at || p.date)}</Field>
                         <Field label={t('f1.objectives')} wide>{text(p.project_objectives)}</Field>
                         <Field label={t('f1.beneficiaries')}>{text(p.intended_beneficiaries)}</Field>
                         <Field label={t('f1.estimated')}>{fmt(p.estimated_beneficiaries)}</Field>
-                        <Field label={t('f1.timeframe')}>{text(p.estimated_timeframe)}</Field>
+                        <Field label={t('f1.timeframe')}>{fmtTimeframe(p.estimated_timeframe)}</Field>
                         {p.grant_serial && <Field label={t('f1.serial')}><bdi dir="ltr">{p.grant_serial}</bdi></Field>}
-                        <Field label={t('f1.officers')} wide>
-                            {[[t('f1.program'), p.program_officer_name], [t('f1.finance'), p.finance_officer_name], [t('f1.reporting'), p.reporting_officer_name]]
-                                .map(([k, v]) => `${k}: ${v || '—'}`).join(isAr ? '، ' : ', ')}
-                        </Field>
+                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <Field label={t('f1.programOfficer')}>{text(p.program_officer_name)}</Field>
+                            <Field label={t('f1.financeOfficer')}>{text(p.finance_officer_name)}</Field>
+                            <Field label={t('f1.reportingOfficer')}>{text(p.reporting_officer_name)}</Field>
+                        </div>
                         {p.additional_support && <Field label={t('f1.support')} wide>{p.additional_support}</Field>}
                     </div>
 
@@ -279,7 +298,7 @@ const ProjectFile: React.FC = () => {
                                         <td className={td}>{i + 1}</td>
                                         <td className={td}>
                                             <span className="font-semibold">{lineName(l)}</span>
-                                            {l.location && <span className="block text-xs text-gray-500">{t('f1.location')}: {l.location}</span>}
+                                            {l.location && <span className="block text-xs text-gray-500">{t('f1.location')}: <bdi>{l.location}</bdi></span>}
                                             {l.kind === 'activity' && <span className="block text-xs text-gray-500">{t('f1.qtyDuration', { q: fmt(l.quantity), d: fmt(l.duration) })}</span>}
                                         </td>
                                         <td className={td}>
@@ -287,12 +306,13 @@ const ProjectFile: React.FC = () => {
                                                 <ul className="space-y-0.5">
                                                     {(l.expenses || []).map((e, j) => (
                                                         <li key={j} className="text-xs">
-                                                            {expenseName(e)}: <bdi>{fmt(e.frequency)} × {fmt(e.unitPrice ?? e.unit_price)} = {fmt(e.total ?? e.total_cost)}</bdi>
+                                                            <bdi>{expenseName(e)}</bdi>: <bdi dir="ltr">{fmt(e.frequency)} × {fmt(e.unitPrice ?? e.unit_price)} = {fmt(e.total ?? e.total_cost)}</bdi>
+                                                            {e.description && e.expense && <span className="block text-[11px] text-gray-500"><bdi>{e.description}</bdi></span>}
                                                         </li>
                                                     ))}
                                                 </ul>
                                             ) : (
-                                                <span className="text-xs"><bdi>{fmt(l.frequency)} × {fmt(l.unit_price)}</bdi></span>
+                                                <span className="text-xs"><bdi dir="ltr">{fmt(l.frequency)} × {fmt(l.unit_price)}</bdi></span>
                                             )}
                                         </td>
                                         <td className={tdNum}>{fmt(l.total)}</td>
@@ -357,7 +377,7 @@ const ProjectFile: React.FC = () => {
                                 <ul className="text-sm space-y-1">
                                     {data.f2.ballots.map((b, i) => (
                                         <li key={i}>
-                                            <span className="font-semibold">{b.voter_name || '—'}</span>
+                                            <span className="font-semibold"><bdi>{b.voter_name || '—'}</bdi></span>
                                             <span className="text-xs text-gray-500"> · {fmtDate(b.voted_at)}</span>
                                             {b.overall_note && <span className="block text-xs text-gray-700">“{b.overall_note}”</span>}
                                         </li>
@@ -369,7 +389,7 @@ const ProjectFile: React.FC = () => {
                                 {data.lcc ? (
                                     <p className="text-sm mb-0">
                                         {t(`f2.lcc.${data.lcc.decision}`, { defaultValue: data.lcc.decision })} · {fmtDate(data.lcc.decided_at)}
-                                        {data.lcc.decided_by_name ? ` · ${data.lcc.decided_by_name}` : ''}
+                                        {data.lcc.decided_by_name ? <> · <bdi>{data.lcc.decided_by_name}</bdi></> : null}
                                         {data.lcc.note && <span className="block text-xs text-gray-700">“{data.lcc.note}”</span>}
                                     </p>
                                 ) : (
@@ -425,9 +445,9 @@ const ProjectFile: React.FC = () => {
                                         {r.expenses.map((e, j) => (
                                             <tr key={j}>
                                                 <td className={`${td} whitespace-nowrap`}>{fmtDate(e.payment_date)}</td>
-                                                <td className={td}>{text(e.activity)}</td>
-                                                <td className={td}>{text(e.description)}</td>
-                                                <td className={td}>{text(e.payment_method)}</td>
+                                                <td className={td}><bdi>{tCat(e.activity)}</bdi></td>
+                                                <td className={td}><bdi>{text(e.description)}</bdi></td>
+                                                <td className={td}>{tPay(e.payment_method)}</td>
                                                 <td className={td}><bdi dir="ltr">{text(e.receipt_no)}</bdi></td>
                                                 <td className={tdNum}>{fmt(e.amount)}</td>
                                             </tr>
@@ -478,7 +498,7 @@ const ProjectFile: React.FC = () => {
                                     <tbody>
                                         {r.reach.map((x, j) => (
                                             <tr key={j}>
-                                                <td className={td}>{text(x.activity_name)}{x.location && <span className="block text-xs text-gray-500">{x.location}</span>}</td>
+                                                <td className={td}><bdi>{text(x.activity_name)}</bdi>{x.location && <span className="block text-xs text-gray-500"><bdi>{x.location}</bdi></span>}</td>
                                                 <td className={`${td} text-xs`}>{fmtDate(x.start_date)} – {fmtDate(x.end_date)}</td>
                                                 <td className={tdNum}>{fmt(x.individuals)}</td>
                                                 <td className={tdNum}>{fmt(x.households)}</td>
