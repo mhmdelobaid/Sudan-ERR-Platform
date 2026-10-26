@@ -1,6 +1,6 @@
 {
   "logoAlt": "Sudan Emergency Response Rooms Logo",
-  "selectRoomTitle": "Select Emergency Response Room",
+  "selectRoomTitle": "Select your Emergency Room",
   "selectRoomType": "Select Room Type",
   "stateErr": "State ERR",
   "baseErr": "Base ERR",
@@ -21,7 +21,7 @@
   "backToRoomSelection": "Back to Room Selection",
   "registrationError": "Registration failed. Please try again.",
   "roomFetchError": "Failed to fetch room details",
-  "newRoomTitle": "Create New Emergency Response Room",
+  "newRoomTitle": "Request a new Emergency Room",
   "roomNamePlaceholder": "Enter Room Name",
   "selectState": "Select State",
   "creating": "Creating...",
