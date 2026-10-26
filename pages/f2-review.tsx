@@ -440,7 +440,7 @@ const F2Review: React.FC = () => {
                                         ? `✓ ${t('localityAck.yesOn', { date: fmtDate(detail.locality_ack.acknowledged_at) })}`
                                         : t('localityAck.no')}
                                 </p>
-                                <ProjectFileLink projectId={detail.project.id} className="mt-2" />
+                                <ProjectFileLink projectId={detail.project.id} step="f2" className="mt-2" />
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                                 <div>

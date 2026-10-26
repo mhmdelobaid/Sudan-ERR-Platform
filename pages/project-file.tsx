@@ -1,6 +1,7 @@
 // Project file (ملف المشروع): every F step of one project — F1 plan and budget, F2 screening, F3 contract,
-// F4 financial reports, F5 programme reports — to read on screen and print or save as one PDF.
-// Each step prints on its own pages under a header with the LCC and ERR logos.
+// F4 financial reports, F5 programme reports — to read on screen. Each step has its own PDF button and
+// prints as a separate file under a header with the LCC and ERR logos (Yung, 26 Oct 2026).
+// /project-file?id=<id>&step=f3 opens the page at that step.
 // Bank details and phone numbers are never included (the database leaves them out).
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
@@ -62,6 +63,9 @@ const ProjectFile: React.FC = () => {
 
     const [data, setData] = useState<FileData | null>(null);
     const [error, setError] = useState<string | null>(null);
+    // The step being printed: only that step's section is in the PDF
+    const [printStep, setPrintStep] = useState<Step | null>(null);
+    const askedStep = typeof router.query.step === 'string' && (STEPS as string[]).includes(router.query.step) ? router.query.step as Step : null;
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -84,6 +88,24 @@ const ProjectFile: React.FC = () => {
         d ? new Date(d).toLocaleDateString(isAr ? 'ar-SD' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
     const money = (n: Num) => `${fmt(n)} ${data?.project.currency || ''}`.trim();
     const text = (s: string | null | undefined) => (s && s.trim() ? s : '—');
+
+    // Print one step as its own file. The browser uses the page title as the PDF's file name,
+    // so the title is set to e.g. "F3 - <project>" while printing, then put back (it's "Calculator" otherwise).
+    useEffect(() => {
+        if (!printStep) return;
+        const before = document.title;
+        const name = (data?.project.project_name || '').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80);
+        document.title = `${printStep.toUpperCase()}${name ? ` - ${name}` : ''}`;
+        const done = () => { document.title = before; setPrintStep(null); };
+        window.addEventListener('afterprint', done, { once: true });
+        const timer = window.setTimeout(() => window.print(), 50);
+        return () => { window.clearTimeout(timer); window.removeEventListener('afterprint', done); document.title = before; };
+    }, [printStep, data]);
+
+    // Opened with &step=f3: go straight to that step
+    useEffect(() => {
+        if (data && askedStep) document.getElementById(askedStep)?.scrollIntoView({ block: 'start' });
+    }, [data, askedStep]);
 
     const reached: Record<Step, boolean> = useMemo(() => ({
         f1: !!data,
@@ -153,14 +175,22 @@ const ProjectFile: React.FC = () => {
     const Section: React.FC<{ step: Step; children: React.ReactNode }> = ({ step, children }) => (
         <section id={step} className={`pf-page bg-white rounded-2xl shadow-md p-4 space-y-4 ${reached[step] ? '' : 'pf-empty'}`}>
             <div className="pf-print-only"><Header step={step} /></div>
-            <h2 className="pf-screen-only text-lg font-bold text-gray-900 mb-0">{t(`steps.${step}`)}</h2>
+            <div className="pf-screen-only flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-lg font-bold text-gray-900 mb-0">{t(`steps.${step}`)}</h2>
+                {reached[step] && (
+                    <button type="button" onClick={() => setPrintStep(step)}
+                        className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white">
+                        <span aria-hidden="true">⬇</span> {t('printStep', { step: step.toUpperCase() })}
+                    </button>
+                )}
+            </div>
             {reached[step] ? children : <p className="text-sm text-gray-500 mb-0">{t('notYet')}</p>}
             <p className="pf-print-only text-[10px] text-gray-500 mb-0">{t('footer', { date: printedOn })}</p>
         </section>
     );
 
     return (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100 project-file">
+        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100 project-file" data-print-step={printStep || undefined}>
             <Head><title>Calculator</title></Head>
             <style jsx global>{`
                 .project-file, .project-file * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -172,7 +202,13 @@ const ProjectFile: React.FC = () => {
                     .pf-print-only { display: block !important; }
                     .pf-empty { display: none !important; }
                     .pf-page { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
-                    .pf-page + .pf-page { break-before: page; page-break-before: always; }
+                    /* one step per file: everything except the step being printed is left out */
+                    .project-file[data-print-step] .pf-page { display: none !important; }
+                    .project-file[data-print-step="f1"] #f1, .project-file[data-print-step="f2"] #f2,
+                    .project-file[data-print-step="f3"] #f3, .project-file[data-print-step="f4"] #f4,
+                    .project-file[data-print-step="f5"] #f5 { display: block !important; }
+                    /* printed without a step button (browser menu): steps start on a new page */
+                    .project-file:not([data-print-step]) .pf-page + .pf-page { break-before: page; page-break-before: always; }
                     table, tr, .pf-keep { break-inside: avoid; page-break-inside: avoid; }
                 }
             `}</style>
@@ -181,8 +217,6 @@ const ProjectFile: React.FC = () => {
                 {/* Top bar (not printed) */}
                 <div className="pf-no-print flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={() => window.print()}
-                            className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white">{t('print')}</button>
                         <button type="button" onClick={() => router.back()}
                             className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800">{t('back')}</button>
                     </div>

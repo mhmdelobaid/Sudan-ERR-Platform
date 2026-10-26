@@ -1,9 +1,8 @@
 {
   "loading": "Loading...",
   "back": "Back",
-  "print": "Print / save PDF",
   "draft": "Draft",
-  "printHint": "The print button puts every step in one file, each step starting on a new page. Bank details and phone numbers are not included.",
+  "printHint": "Each step has its own PDF button and saves as a separate file. Bank details and phone numbers are not included.",
   "stepsNav": "Project steps",
   "notYet": "The project hasn't reached this step yet.",
   "notYetShort": "not yet",
@@ -143,5 +142,6 @@
     "invalid_project_id": "The project link isn't valid."
   },
   "open": "Project file (F1–F5)",
-  "title": "Project file (F1–F5)"
+  "title": "Project file (F1–F5)",
+  "printStep": "{{step}} PDF"
 }
