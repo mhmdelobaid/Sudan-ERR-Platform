@@ -47,5 +47,10 @@
     "invalid_room_name": "اسم الغرفة لازم يكون بين ٣ و١٢٠ حرف.",
     "invalid_room_type": "اختار غرفة ولاية أو غرفة محلية.",
     "locality_not_found": "اختار المحلية."
-  }
+  },
+  "localityHasNoRoom": "محلية {{locality}} لسه ما عندها غرفة في المنصة.",
+  "requestLocalityRoom": "اطلب إضافة غرفة المحلية",
+  "stateHasNoRoom": "الولاية دي لسه ما عندها غرفة في المنصة.",
+  "requestStateRoom": "اطلب إضافة غرفة الولاية",
+  "yourRoom": "غرفتك"
 }

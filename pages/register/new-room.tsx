@@ -31,6 +31,16 @@ const NewRoom = () => {
     const router = useRouter();
     const { t, i18n } = useTranslation('register');
 
+    // Filled in from the sign-up page (type, state and locality already chosen there)
+    const [prefillLocality, setPrefillLocality] = useState('');
+    useEffect(() => {
+        if (!router.isReady) return;
+        const { type, state, locality } = router.query;
+        if (type === 'state' || type === 'locality') setRoomType(type);
+        if (typeof state === 'string') setSelectedState(state);
+        if (typeof locality === 'string') setPrefillLocality(locality);
+    }, [router.isReady, router.query]);
+
     // Fetch unique states on component mount
     useEffect(() => {
         const fetchStates = async () => {
@@ -71,12 +81,13 @@ const NewRoom = () => {
                 }
 
                 setLocalities(data || []);
-                setSelectedLocality(''); // Reset locality selection
+                // Keep the locality chosen on the sign-up page, otherwise start empty
+                setSelectedLocality(prefillLocality && (data || []).some(l => l.id === prefillLocality) ? prefillLocality : '');
             }
         };
 
         fetchLocalities();
-    }, [selectedState, states]);
+    }, [selectedState, states, prefillLocality]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

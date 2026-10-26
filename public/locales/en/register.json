@@ -44,5 +44,10 @@
     "invalid_room_name": "The room name must be 3 to 120 characters.",
     "invalid_room_type": "Choose a state or locality room.",
     "locality_not_found": "Choose the locality."
-  }
+  },
+  "localityHasNoRoom": "{{locality}} locality doesn't have a room in the app yet.",
+  "requestLocalityRoom": "Request the locality room",
+  "stateHasNoRoom": "This state doesn't have a room in the app yet.",
+  "requestStateRoom": "Request the state room",
+  "yourRoom": "Your room"
 }
