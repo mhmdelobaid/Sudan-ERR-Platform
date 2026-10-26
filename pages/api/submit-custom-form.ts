@@ -32,13 +32,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fileUrl,
     } = req.body;
 
-    console.log('[INFO] Received form submission:', req.body);
-
     const err_report_id = `${err_id || 'UNKNOWN'}-${Date.now()}`;
 
     // Calculate total expenses
     const total_expenses = expenses.reduce((acc: number, exp: any) => acc + (parseFloat(exp.amount) || 0), 0);
-    console.log('[INFO] Calculated total expenses:', total_expenses);
 
     // Insert summary data into the Custom Forms Summary table
     const summaryData = {
@@ -60,8 +57,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       files: fileUrl || null, 
     };
 
-    console.log('[INFO] Summary data to insert:', summaryData);
-
     const { error: summaryError } = await supabase.from('MAG F4 Summary').insert([summaryData]);
 
     if (summaryError) {
@@ -70,15 +65,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error(errorMessage);
     }
 
-    console.log('[SUCCESS] Summary data inserted successfully.');
-
     // Insert expense items into MAG F4 Expenses table
     for (const expense of expenses) {
       const { activity, description, payment_date, seller, payment_method, receipt_no, amount } = expense;
 
       // Relax validation for optional fields: payment_date, payment_method, and receipt_no
       if (!(activity && description && amount && seller)) {
-        console.warn('[WARN] Skipping expense entry due to missing required fields:', expense);
+        console.warn('[WARN] Skipping an expense entry with missing required fields');
         continue;
       }
 
@@ -94,8 +87,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         expense_amount: parseFloat(amount) || 0,
       };
 
-      console.log('[INFO] Expense data to insert:', expenseData);
-
       const { error: expenseError } = await supabase.from('MAG F4 Expenses').insert([expenseData]);
 
       if (expenseError) {
@@ -104,11 +95,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         throw new Error(errorMessage);
       }
 
-      console.log('[SUCCESS] Expense data inserted successfully:', expenseData);
     }
 
     const successMessage = i18n.t('messages.form_submission_success', { lng: req.headers['accept-language'] || 'en' });
-    console.log('[SUCCESS] Form submission completed successfully.');
     res.status(200).json({ message: successMessage });
   } catch (error: any) {
     console.error('[ERROR] Unexpected error during form submission:', error.message);

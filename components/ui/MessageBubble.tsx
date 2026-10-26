@@ -1,5 +1,17 @@
 // components/MessageBubble.tsx
-import { FC, ReactNode, useEffect, useState } from 'react';
+import { FC, Fragment, ReactNode, useEffect, useState } from 'react';
+
+/**
+ * Show a message as plain text. The only markup understood is <strong>…</strong> (used in the
+ * translation files for bold words); anything else is shown as text, never as HTML (audit L1).
+ */
+export function renderSimpleText(text: string): ReactNode {
+    const parts = text.split(/(<strong>[\s\S]*?<\/strong>)/g);
+    return parts.map((part, i) => {
+        const m = part.match(/^<strong>([\s\S]*?)<\/strong>$/);
+        return m ? <strong key={i}>{m[1]}</strong> : <Fragment key={i}>{part}</Fragment>;
+    });
+}
 
 interface MessageBubbleProps {
     text?: string;
@@ -26,8 +38,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({ text, isOutgoing = false, times
                     {children ? (
                         children
                     ) : (
-                        // Render HTML safely if 'text' contains HTML tags
-                        <span dangerouslySetInnerHTML={{ __html: text || '' }} />
+                        <span>{renderSimpleText(text || '')}</span>
                     )}
                 </div>
                 {clientTimestamp && (

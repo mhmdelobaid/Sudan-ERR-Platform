@@ -79,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } = expense;
 
       if (!(activity && description && payment_date && seller && receipt_no && amount)) {
-        console.warn('Skipping incomplete expense entry:', expense);
+        console.warn('Skipping an incomplete expense entry');
         continue;
       }
 

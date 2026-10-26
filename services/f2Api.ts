@@ -2,6 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { newSupabase } from './newSupabaseClient';
 import { createAuthenticatedClient } from './createAuthenticatedClient';
+import { appAccess } from './appAccess';
 
 /** Resolve the caller from the Bearer token and return a client that runs as them (RLS + auth.uid()). */
 export async function getCaller(req: NextApiRequest, res: NextApiResponse) {
@@ -17,7 +18,20 @@ export async function getCaller(req: NextApiRequest, res: NextApiResponse) {
         res.status(401).json({ success: false, code: 'unauthorized' });
         return null;
     }
-    return { user, client: createAuthenticatedClient(accessToken) };
+    const client = createAuthenticatedClient(accessToken);
+    // A valid login isn't enough: the app account must still exist and be active (audit M1).
+    // A suspended, deleted or not-yet-activated account is refused here, even with a token that hasn't expired.
+    const { data: appUser, error: userError } = await client
+        .from('users')
+        .select('id, role, status, err_id')
+        .eq('id', user.id)
+        .maybeSingle();
+    if (userError) throw userError;
+    if (appAccess(appUser) !== 'ok') {
+        res.status(403).json({ success: false, code: 'not_active' });
+        return null;
+    }
+    return { user, client, appUser: appUser! };
   } catch (err: any) {
     // e.g. Supabase unreachable — answer with JSON so the page can show a message, not Next's HTML error page.
     console.error('F-2 auth check failed:', err?.message);

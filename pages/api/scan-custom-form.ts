@@ -88,7 +88,6 @@ async function parseForm(req: NextApiRequest): Promise<{ filePath: string; fileN
         return;
       }
 
-      console.log("File parsed successfully:", file.originalFilename);
       resolve({
         filePath: file.filepath,
         fileName: file.originalFilename || "uploaded_image",

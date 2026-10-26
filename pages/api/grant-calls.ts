@@ -52,7 +52,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 });
             }
 
-            console.log('User state data:', JSON.stringify(userStateData, null, 2));
             
             // Extract user state with proper error handling
             let userState;
@@ -87,7 +86,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 });
             }
 
-            console.log('Latest decisions:', JSON.stringify(latestDecisions, null, 2));
 
             // Group by grant_call_id and get the max decision_no for each
             const maxDecisionsByGrantCall = latestDecisions.reduce((acc, item) => {
@@ -130,10 +128,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 });
             }
 
-            console.log('Grant calls count:', grantCalls.length);
-            console.log('Max decisions:', maxDecisionsByGrantCall);
-            console.log('Sample grant call:', JSON.stringify(grantCalls[0], null, 2));
-            console.log('Grant calls query result:', JSON.stringify(grantCalls, null, 2));
 
             // Filter to only include allocations with the latest decision_no for each grant call
             const filteredGrantCalls = grantCalls.filter(call => {
@@ -143,7 +137,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const maxDecision = maxDecisionsByGrantCall[grantCallId];
                     return call.decision_no === maxDecision;
                 } catch (error) {
-                    console.error('Error filtering grant call:', error, call);
+                    console.error('Error filtering grant call:', (error as any)?.message, call?.id);
                     return false;
                 }
             });
@@ -155,7 +149,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const donor = grantCall && grantCall.donors ? grantCall.donors : null;
                     
                     if (!grantCall) {
-                        console.error('Missing grant call data:', call);
+                        console.error('Missing grant call data:', call?.id);
                         return null;
                     }
                     
@@ -171,13 +165,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         end_date: grantCall.end_date
                     };
                 } catch (error) {
-                    console.error('Error formatting grant call:', error, call);
+                    console.error('Error formatting grant call:', (error as any)?.message, call?.id);
                     return null;
                 }
             }).filter(Boolean);
 
-            console.log('Filtered grant calls count:', filteredGrantCalls.length);
-            console.log('Formatted grant calls:', JSON.stringify(formattedGrantCalls, null, 2));
 
             return res.status(200).json({
                 success: true,

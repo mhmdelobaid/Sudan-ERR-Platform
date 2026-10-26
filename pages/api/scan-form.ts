@@ -50,7 +50,6 @@ async function parseForm(req: NextApiRequest): Promise<{ filePath: string }> {
         reject(err);
         return;
       }
-      console.log('Files received:', files);
       const file = files.file[0] as formidable.File;
       if (!file) {
         reject(new Error('No file uploaded'));
@@ -84,7 +83,6 @@ async function googleVisionOCR(imageBuffer: Buffer): Promise<string> {
   });
   const detections = result.textAnnotations;
   const ocrText = detections && detections.length ? detections[0].description!.trim() : 'Not found';
-  console.log('Google Vision OCR Output:', ocrText);
   return ocrText;
 }
 

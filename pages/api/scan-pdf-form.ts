@@ -116,15 +116,12 @@ async function processText(text: string): Promise<any> {
       throw new Error('Empty response from OpenAI');
     }
 
-    // Log the raw response for debugging
-    console.log('Raw OpenAI response:', content);
-
     try {
       // Validate JSON before parsing
       const parsed = JSON.parse(content);
       return parsed;
     } catch (parseError) {
-      console.error('JSON Parse Error. Content:', content);
+      console.error('JSON Parse Error in the OpenAI response (content not logged)');
       throw new Error(`Failed to parse OpenAI response as JSON: ${parseError.message}`);
     }
   } catch (error) {
