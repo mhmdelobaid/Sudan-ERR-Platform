@@ -6,6 +6,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import ProjectFileLink from '../components/ui/ProjectFileLink';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
 import StatusChip from '../components/ui/StatusChip';
@@ -407,6 +408,7 @@ const WgProjects: React.FC = () => {
                                     <h2 className="text-lg font-bold mb-0">{detail.project.project_name || '—'}</h2>
                                     <p className="text-sm text-gray-600 mb-0">{roomName(detail.project)} · {detail.project.locality || '—'} · {detail.project.state || '—'} · {t('card.version')} {detail.project.version}</p>
                                     <p className={`text-sm mt-1 mb-0 ${detail.locality_ack ? 'text-emerald-700' : 'text-gray-500'}`}>{detail.locality_ack ? `✓ ${t('localityAck.yes')}` : t('localityAck.no')}</p>
+                                    <ProjectFileLink projectId={detail.project.id} className="mt-2" />
                                 </div>
                                 <StatusChip status={detail.project.status} />
                             </div>

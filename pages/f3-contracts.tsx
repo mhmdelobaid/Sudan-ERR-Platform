@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import ProjectFileLink from '../components/ui/ProjectFileLink';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
 
@@ -78,6 +79,7 @@ const F3Contracts: React.FC = () => {
                                     <div className="min-w-0">
                                         <p className="font-bold text-gray-900 mb-0">{c.project_name || c.project_objectives || '—'}</p>
                                         <p className="text-sm text-gray-600 mb-0"><bdi>{roomName(c)}</bdi> · <bdi>{c.locality || '—'}</bdi> · <bdi>{c.state || '—'}</bdi></p>
+                                        <ProjectFileLink projectId={c.project_id} className="mt-2" />
                                     </div>
                                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${c.has_mou ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'}`}>
                                         {c.has_mou ? t('state.ready') : c.status === 'screened' ? t('state.portalReview') : t('state.preparing')}

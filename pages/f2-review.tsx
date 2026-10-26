@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import ProjectFileLink from '../components/ui/ProjectFileLink';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
 
@@ -437,6 +438,7 @@ const F2Review: React.FC = () => {
                                         ? `✓ ${t('localityAck.yesOn', { date: fmtDate(detail.locality_ack.acknowledged_at) })}`
                                         : t('localityAck.no')}
                                 </p>
+                                <ProjectFileLink projectId={detail.project.id} className="mt-2" />
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                                 <div>

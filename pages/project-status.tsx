@@ -1,6 +1,7 @@
 //pages/project-status.tsx
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import ProjectFileLink from '../components/ui/ProjectFileLink';
 import MessageBubble from '../components/ui/MessageBubble';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
@@ -197,6 +198,7 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                         <strong>{t('status')}:</strong>{' '}
                                         <StatusChip status={project.status} />
                                     </p>
+                                    <ProjectFileLink projectId={project.id} className="my-1" />
                                     {/* Locality acknowledgement: a label for everyone, a button for the locality */}
                                     {project.locality_ack ? (
                                         <p className="text-sm text-emerald-800 mb-1">✓ {t('locality.acked', { date: formatDate(project.locality_ack.acknowledged_at) })}</p>
