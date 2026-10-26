@@ -6,5 +6,7 @@
   "backToApp": "Back to App",
   "download": "Download PDF",
   "logout": "Log Out",
-  "lccWebsite": "Visit LCC Website"
+  "lccWebsite": "Visit LCC Website",
+  "languageSelect": "Choose language",
+  "appLocked": "The app is locked. Please contact support."
 }

@@ -15,6 +15,7 @@ try {
 }
 
 const nextConfig = {
+    poweredByHeader: false, // don't announce "Next.js" in every response
     i18n: {
         ...i18n,
         defaultLocale: 'ar',
@@ -35,6 +36,21 @@ const nextConfig = {
     },
     async headers() {
         return [
+            // Basic browser protections on every page and API route (audit M2, 26 Oct 2026).
+            // The CSP only covers framing, plugins, <base> and form targets: it doesn't restrict
+            // scripts or styles, so Next.js inline scripts and Google Fonts keep working.
+            {
+                source: '/:path*',
+                headers: [
+                    { key: 'X-Frame-Options', value: 'DENY' },
+                    { key: 'X-Content-Type-Options', value: 'nosniff' },
+                    { key: 'Referrer-Policy', value: 'same-origin' },
+                    { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+                    { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()' },
+                    { key: 'Content-Security-Policy', value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'" },
+                    { key: 'X-DNS-Prefetch-Control', value: 'off' }
+                ]
+            },
             {
                 source: '/sw.js',
                 headers: [

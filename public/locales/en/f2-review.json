@@ -36,7 +36,9 @@
   "quorum": {
     "title": "Committee quorum",
     "progress": "{{count}} of {{quorum}} votes",
-    "help": "Each line goes with the majority (at least 2 of {{quorum}} reps); the project is rejected if two or more reps reject it. The decision is made once everyone has voted; you can change your vote until then."
+    "help": "Each line goes with the majority (at least 2 of {{quorum}} reps); the project is rejected if two or more reps reject it. The decision is made once everyone has voted; you can change your vote until then.",
+    "notCounted": "not counted",
+    "notCountedHelp": "This vote no longer counts: the rep has moved to the F1's own locality or another state, or their account is no longer active."
   },
   "lines": {
     "title": "F1 budget lines",

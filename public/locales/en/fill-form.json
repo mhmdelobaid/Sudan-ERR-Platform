@@ -77,5 +77,8 @@
     "returnToMenu": "Return to Menu",
     "noDrafts": "No saved drafts found"
   },
-  "categoriesError": "Couldn't load the expense types. Check your connection and try again."
+  "categoriesError": "Couldn't load the expense types. Check your connection and try again.",
+  "enterBankingDetails": "Enter your bank details",
+  "bankingDetails": "Bank details",
+  "removeExpense": "Remove this expense"
 }

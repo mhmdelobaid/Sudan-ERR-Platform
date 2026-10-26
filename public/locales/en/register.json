@@ -49,5 +49,8 @@
   "requestLocalityRoom": "Request the locality room",
   "stateHasNoRoom": "This state doesn't have a room in the app yet.",
   "requestStateRoom": "Request the state room",
-  "yourRoom": "Your room"
+  "yourRoom": "Your room",
+  "registerTitle": "Create a new account",
+  "selectErrType": "Choose the emergency room type",
+  "selectErr": "Choose the emergency room"
 }

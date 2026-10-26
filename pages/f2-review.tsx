@@ -64,6 +64,7 @@ interface Ballot {
     voter_id: string;
     voter_name: string | null;
     is_me: boolean;
+    counts?: boolean; // false when the rep has since moved to the F1's locality or state, or is no longer active
     line_votes: LineVote[];
     overall_note: string | null;
     updated_at: string;
@@ -100,6 +101,7 @@ interface Detail {
     };
     lines: Line[];
     quorum: number;
+    votes_count?: number;
     can_vote: boolean;
     own_locality?: boolean;
     locality_ack?: { acknowledged_at: string; acknowledged_by_name: string | null } | null;
@@ -493,15 +495,23 @@ const F2Review: React.FC = () => {
                         {/* Quorum */}
                         <section className="bg-white rounded-2xl shadow-md p-4 space-y-2">
                             <h3 className="font-bold mb-0">{t('quorum.title')}</h3>
-                            <QuorumBar count={detail.ballots.length} quorum={detail.quorum} />
+                            <QuorumBar count={detail.votes_count ?? detail.ballots.filter(b => b.counts !== false).length} quorum={detail.quorum} />
                             {detail.ballots.length > 0 && (
                                 <ul className="flex flex-wrap gap-2">
                                     {detail.ballots.map(b => (
-                                        <li key={b.voter_id} className={`rounded-full px-3 py-1 text-xs ${b.is_me ? 'bg-primaryGreen text-white' : 'bg-gray-100 text-gray-700'}`}>
+                                        <li key={b.voter_id}
+                                            title={b.counts === false ? t('quorum.notCountedHelp') : undefined}
+                                            className={`rounded-full px-3 py-1 text-xs ${b.counts === false
+                                                ? 'bg-gray-50 text-gray-400 border border-dashed border-gray-300'
+                                                : b.is_me ? 'bg-primaryGreen text-white' : 'bg-gray-100 text-gray-700'}`}>
                                             {b.voter_name || '—'}
+                                            {b.counts === false && <span className="ms-1">({t('quorum.notCounted')})</span>}
                                         </li>
                                     ))}
                                 </ul>
+                            )}
+                            {detail.ballots.some(b => b.counts === false) && (
+                                <p className="text-xs text-gray-500 mb-0">{t('quorum.notCountedHelp')}</p>
                             )}
                             {detail.can_vote && <p className="text-xs text-gray-500 mb-0">{t('quorum.help', { quorum: detail.quorum })}</p>}
                             {!detail.can_vote && detail.project.status === 'pending' && (
@@ -516,6 +526,7 @@ const F2Review: React.FC = () => {
                             <h3 className="font-bold px-1 mb-0">{t('lines.title')}</h3>
                             {detail.lines.map((l, idx) => {
                                 const others = detail.ballots
+                                    .filter(b => b.counts !== false)
                                     .filter(b => !b.is_me || !detail.can_vote) // while voting, your own vote is the buttons below
                                     .map(b => ({ name: b.voter_name, v: b.line_votes.find(x => x.key === l.key) }))
                                     .filter(x => x.v);

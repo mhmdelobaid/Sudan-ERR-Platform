@@ -70,7 +70,14 @@
       "label": "Expenses",
       "selectExpense": "Select expense type",
       "description": "Description",
-      "add": "Add Expense"
+      "add": "Add Expense",
+      "remove": "Remove expense",
+      "amount": "Amount"
+    },
+    "remove": "Remove activity",
+    "quantity": {
+      "label": "Quantity",
+      "placeholder": "Enter the quantity"
     }
   },
   "enterPhoneNumber": "Enter your phone number",
@@ -153,5 +160,7 @@
     "status_not_allowed": "A new project must be a draft or sent for screening.",
     "protected_field": "A field here can't be changed by you (funding, grant or contract). Those are set at a later step.",
     "report_locked": "This report has been approved, so it can't be changed."
-  }
+  },
+  "Womens Activities": "Women's activities",
+  "Childrens Activities": "Children's activities"
 }

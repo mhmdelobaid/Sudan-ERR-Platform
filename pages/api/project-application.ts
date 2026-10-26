@@ -209,8 +209,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         });
                     }
 
-                    // Update version if this is a resubmission after feedback
-                    if (currentProject.current_feedback_id) {
+                    // A returned F-1 (feedback, or saved as a draft after it was returned) gets the next version
+                    // when it is sent again. Editing an F-1 that is already pending again keeps its version,
+                    // otherwise the guard refuses the change (found in the return-for-changes test, 26 Oct).
+                    if (currentProject.current_feedback_id && currentProject.status !== 'pending') {
                         (allowedData as any).version = (currentProject.version || 1) + 1;
                         
                         // Update feedback status

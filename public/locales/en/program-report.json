@@ -20,7 +20,8 @@
       "male_count": "Number of Males",
       "female_count": "Number of Females",
       "under18_male": "Males Under 18",
-      "under18_female": "Females Under 18"
+      "under18_female": "Females Under 18",
+      "activity_label": "Activity {{number}}"
     },
     "files": {
       "title": "Uploaded Files",
@@ -56,7 +57,8 @@
     "maleCount": "Number of Males",
     "femaleCount": "Number of Females",
     "under18Male": "Males Under 18",
-    "under18Female": "Females Under 18"
+    "under18Female": "Females Under 18",
+    "activity_label": "Activity {{number}}"
   },
   "submit": "Submit Report",
   "submitAnother": "Submit Another Report",
@@ -84,4 +86,4 @@
     "activitiesCount": "Number of Activities",
     "saveDraft": "Save Draft"
   }
-} 
+}

@@ -32,7 +32,13 @@
     "additional_training_needs": "احتياجات التدريب الإضافية",
     "financial_summary": "الملخص المالي",
     "additional_questions": "أسئلة إضافية",
-    "receipt_upload": "تحميل الإيصال"
+    "receipt_upload": "تحميل الإيصال",
+    "total_expenses": "إجمالي المصروفات",
+    "remainder": "المتبقي",
+    "excess_expenses_q": "كيف غطّيتوا المصروفات الزايدة؟",
+    "surplus_use_q": "حتصرفوا الفائض في شنو؟",
+    "lessons_learned_q": "الدروس المستفادة في تخطيط الميزانية",
+    "training_needs_q": "احتياجات تدريب إضافية"
   },
   "button_text": {
     "submit": "إرسال",
