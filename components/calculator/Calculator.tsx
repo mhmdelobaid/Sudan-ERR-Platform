@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { calculate } from '../../services/calc';
 
 interface CalculatorProps {
   onPinEntry: (pin: string) => void;
@@ -25,9 +26,8 @@ const Calculator: React.FC<CalculatorProps> = ({ onPinEntry }) => {
         onPinEntry(input + '=');
       }
       
-      // Perform normal calculation regardless
-      const evalResult = eval(input);
-      setResult(evalResult.toString());
+      // Perform normal calculation regardless (own parser: numbers and + - * / only, never eval)
+      setResult(calculate(input).toString());
     } catch (error) {
       setResult('Error');
     }
