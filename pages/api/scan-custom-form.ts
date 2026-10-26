@@ -12,6 +12,7 @@ import FormData from 'form-data';
 import os from 'os';
 import { uploadImages as uploadImages, ImageCategory } from '../../services/uploadImages';
 import { requireAppUser } from '../../services/requireAppUser';
+import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
 
 // At the top of the file with other constants
 const BUCKET_NAME = "images";  // This should already exist
@@ -97,21 +98,27 @@ async function parseForm(req: NextApiRequest): Promise<{ filePath: string; fileN
   });
 }
 
-// Fetch project metadata from Supabase
-async function fetchProjectMetadata(projectId: string) {
-  console.log('Fetching metadata for project:', projectId);
-  const { data, error } = await supabase
+// The few project fields the scan needs, read as the signed-in user (security audit C2):
+// the access rules decide whether they may see this project, and bank details, phone numbers
+// and other fields are never read, returned or logged.
+const SCAN_PROJECT_FIELDS = 'id, project_name, project_objectives, intended_beneficiaries, planned_activities, expenses, err_id';
+
+class NotFound extends Error {}
+
+async function fetchProjectMetadata(projectId: string, token: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(projectId)) throw new NotFound('invalid_project_id');
+  const db = createAuthenticatedClient(token);
+  const { data, error } = await db
     .from('err_projects')
-    .select('*')
+    .select(SCAN_PROJECT_FIELDS)
     .eq('id', projectId)
-    .single();
+    .maybeSingle();
 
   if (error) {
-    console.error('Error fetching project metadata:', error.message);
+    console.error('scan-custom-form: project read failed:', error.message);
     throw new Error('Failed to fetch project metadata');
   }
-
-  console.log('Project metadata retrieved:', data);
+  if (!data) throw new NotFound('not_found');
   return data;
 }
 
@@ -200,7 +207,6 @@ async function googleVisionOCR(imageBuffer: Buffer): Promise<string> {
   }
 
   const reconstructedText = reconstructTextWithLayout(fullTextAnnotation);
-  console.log('Grouped OCR Output:', reconstructedText);
   return reconstructedText;
 }
 
@@ -230,7 +236,7 @@ function getPromptForLanguage(language: string, cleanedText: string, projectMeta
     // Safely extract project details with fallback for missing fields
     const projectObjectives = projectMetadata?.project_objectives || "Not provided";
     const beneficiaries = projectMetadata?.intended_beneficiaries || "Not provided";
-    const errId = projectMetadata?.err || "Not provided";
+    const errId = projectMetadata?.err_id || "Not provided";
     const activities = Array.isArray(projectMetadata?.planned_activities)
       ? projectMetadata.planned_activities
           .map((a: any) => `${a.selectedOption || "Unknown"} at ${a.placeOfOperation || "Unknown location"}`)
@@ -288,7 +294,6 @@ async function classifyWithChatGPT(language: string, ocrText: string, projectMet
   .trim(); 
   const prompt = getPromptForLanguage(language, cleanedText, projectMetadata, calculatedFields);
 
-  console.log('Prompt sent to OpenAI:', prompt);
 
   const response = await openai.chat.completions.create({
     model: 'gpt-3.5-turbo',
@@ -298,14 +303,12 @@ async function classifyWithChatGPT(language: string, ocrText: string, projectMet
   });
 
   const openAIOutput = response.choices[0]?.message?.content || '{}';
-  console.log('OpenAI Response (raw):', openAIOutput);
 
   let parsedOutput;
   try {
     parsedOutput = JSON.parse(openAIOutput);
   } catch (error) {
     console.error('Error parsing OpenAI response as JSON:', error);
-    console.error('Raw OpenAI Response:', openAIOutput);
 
     // Return raw response for debugging or throw an error
     throw new Error('Invalid JSON response from OpenAI.');
@@ -363,7 +366,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Signed-in, active app users only (this route calls paid AI services or writes reports)
-  if (!(await requireAppUser(req, res))) return;
+  const caller = await requireAppUser(req, res);
+  if (!caller) return;
 
   let filePath: string | null = null;
 
@@ -375,7 +379,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error('Project ID is required');
     }
 
-    const projectMetadata = await fetchProjectMetadata(projectId);
+    const projectMetadata = await fetchProjectMetadata(projectId, caller.token);
 
     // Read the file into a buffer before preprocessing
     // const fileBuffer = fs.readFileSync(filePath);
@@ -385,7 +389,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const detectedLanguage = detectLanguage(ocrText);
 
     // Perform initial calculations for totalGrantReceived
-    const totalGrantReceived = projectMetadata.expenses.reduce((sum: number, expense: any) => {
+    const totalGrantReceived = (Array.isArray(projectMetadata.expenses) ? projectMetadata.expenses : []).reduce((sum: number, expense: any) => {
       const frequency = parseFloat(expense.frequency) || 0;
       const unitPrice = parseFloat(expense.unitPrice) || 0;
       return sum + (unitPrice * frequency);
@@ -415,7 +419,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Include ERR ID from metadata if not present
     if (!structuredData.err_id || structuredData.err_id === "غير متوفر" || structuredData.err_id === "Not available") {
-      structuredData.err_id = projectMetadata.err || "Not available";
+      structuredData.err_id = projectMetadata.err_id || "Not available";
     }
 
     // Define activities for use in expenses
@@ -454,11 +458,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error: any) {
+    if (error instanceof NotFound) {
+      return res.status(404).json({ error: 'Project not found', code: error.message });
+    }
     console.error('Error processing scan:', error.message);
-    res.status(500).json({
-      error: `Processing error: ${error.message || 'Unknown error'}`,
-      details: error.stack,
-    });
+    res.status(500).json({ error: 'Processing error. Try again.' });
   } finally {
     // Clean up: Delete the temporary file
     if (filePath && fs.existsSync(filePath)) {

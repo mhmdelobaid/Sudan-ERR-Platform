@@ -9,6 +9,7 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 // Initialize PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+const PDF_OPTIONS = { isEvalSupported: false };
 
 const MainApp = ({ onLogout }) => {
   const router = useRouter();
@@ -125,6 +126,8 @@ const MainApp = ({ onLogout }) => {
           <div className="flex-1 w-full overflow-auto bg-gray-100 flex justify-center">
             <Document
               file="/guides/user-guide.pdf"
+              // Never run code embedded in a PDF (pdf.js advisory GHSA-wgrm-67xf-hhpq / CVE-2024-4367)
+              options={PDF_OPTIONS}
               onLoadSuccess={onDocumentLoadSuccess}
               className="max-w-full"
             >
