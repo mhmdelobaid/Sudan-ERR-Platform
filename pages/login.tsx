@@ -130,8 +130,14 @@ const Login = () => {
                 return;
             }
 
-            // Successful login
-            router.push('/menu');
+            // Successful login. A room officer who hasn't saved a signature yet is asked for it first
+            // (they can choose "Later"); everyone else goes to the menu.
+            let next = '/menu';
+            try {
+                const { data: me } = await newSupabase.rpc('me_profile');
+                if (me?.officer_position && !me?.has_signature) next = '/add-signature';
+            } catch { /* the menu is always fine */ }
+            router.push(next);
 
         } catch (error) {
             console.error('Login error:', error);

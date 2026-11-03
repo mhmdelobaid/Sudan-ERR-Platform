@@ -59,5 +59,15 @@
     "not_active": "Your account is not active.",
     "unauthorized": "Your session has expired. Please log in again.",
     "server_error": "Something went wrong. Please try again."
+  },
+  "welcome": {
+    "title": "Add your signature",
+    "intro": "You sign your room's documents as {{position}}. Draw your signature once here, and you'll sign each F1, F3, F4 and F5 with one tap.",
+    "drawHere": "Draw your signature here",
+    "where": "It is saved in your account. You can draw it again any time in My account.",
+    "save": "Save my signature",
+    "saving": "Saving...",
+    "later": "Later",
+    "saved": "Your signature is saved."
   }
 }
