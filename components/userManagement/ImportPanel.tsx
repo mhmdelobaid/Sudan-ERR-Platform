@@ -6,6 +6,7 @@ import type { TFunction } from 'i18next';
 import {
     IMPORT_ROLES, IMPORT_ROOM_FOR, ImportRole, ImportRoom, guessRole, matchRoom, parseList, roomLabel, templateCsv,
 } from '../../services/accountImport';
+import Icon from '../ui/Icon';
 
 interface Draft {
     key: number;
@@ -208,7 +209,7 @@ const ImportPanel: React.FC<Props> = ({ rooms, isAr, t, getHeaders, onClose, onI
                     <h2 className="text-lg font-bold text-gray-900 mb-0">{t('import.title')}</h2>
                     <p className="text-sm text-gray-600 mb-0">{t('import.subtitle')}</p>
                 </div>
-                <button type="button" onClick={onClose} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700">
+                <button type="button" onClick={onClose} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 inline-flex items-center justify-center gap-1.5"><Icon name="close" size={18} />
                     {phase === 'done' ? t('import.close') : t('cancel')}
                 </button>
             </div>
@@ -218,7 +219,7 @@ const ImportPanel: React.FC<Props> = ({ rooms, isAr, t, getHeaders, onClose, onI
             {phase === 'input' && (
                 <div className="space-y-3">
                     <ol className="list-decimal ps-5 text-sm text-gray-700 space-y-1">
-                        <li>{t('import.step1')} <button type="button" onClick={downloadTemplate} className="text-brand-blue font-semibold underline">{t('import.template')}</button></li>
+                        <li>{t('import.step1')} <button type="button" onClick={downloadTemplate} className="text-brand-blue font-semibold underline inline-flex items-center justify-center gap-1.5"><Icon name="download" size={20} />{t('import.template')}</button></li>
                         <li>{t('import.step2')}</li>
                         <li>{t('import.step3')}</li>
                     </ol>
@@ -227,10 +228,10 @@ const ImportPanel: React.FC<Props> = ({ rooms, isAr, t, getHeaders, onClose, onI
                     <div className="flex flex-wrap items-center gap-2">
                         <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" className="hidden"
                             onChange={e => { const f = e.target.files?.[0]; if (f) readFile(f); e.target.value = ''; }} />
-                        <button type="button" onClick={() => fileRef.current?.click()} className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800">
+                        <button type="button" onClick={() => fileRef.current?.click()} className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 inline-flex items-center justify-center gap-1.5"><Icon name="upload_file" size={18} />
                             {t('import.chooseFile')}
                         </button>
-                        <button type="button" disabled={!text.trim()} onClick={startReview} className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                        <button type="button" disabled={!text.trim()} onClick={startReview} className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5"><Icon name="fact_check" size={18} />
                             {t('import.check')}
                         </button>
                     </div>
@@ -321,7 +322,7 @@ const ImportPanel: React.FC<Props> = ({ rooms, isAr, t, getHeaders, onClose, onI
                                     </div>
                                     <div className="md:pt-1">
                                         {phase === 'review' && (
-                                            <button type="button" onClick={() => removeRow(r.key)} className="text-xs font-semibold text-gray-600 underline">{t('import.skipRow')}</button>
+                                            <button type="button" onClick={() => removeRow(r.key)} className="text-xs font-semibold text-gray-600 underline inline-flex items-center justify-center gap-1.5"><Icon name="skip_next" size={16} />{t('import.skipRow')}</button>
                                         )}
                                         {r.result === 'created' && <span className="text-xs font-semibold text-emerald-800">{t('import.rowCreated')}</span>}
                                     </div>
@@ -335,9 +336,9 @@ const ImportPanel: React.FC<Props> = ({ rooms, isAr, t, getHeaders, onClose, onI
                             {needFix.length > 0 && ready.length > 0 && <p className="text-xs text-gray-600 mb-0">{t('import.partialNote', { count: needFix.length })}</p>}
                             {!confirming ? (
                                 <div className="flex flex-wrap gap-2 justify-end">
-                                    <button type="button" onClick={() => { setPhase('input'); setRows([]); }} className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700">{t('import.back')}</button>
+                                    <button type="button" onClick={() => { setPhase('input'); setRows([]); }} className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 inline-flex items-center justify-center gap-1.5"><Icon name="arrow_back" size={18} />{t('import.back')}</button>
                                     <button type="button" disabled={checking || ready.length === 0} onClick={() => setConfirming(true)}
-                                        className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                                        className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5"><Icon name="group_add" size={18} />
                                         {t('import.importN', { count: ready.length })}
                                     </button>
                                 </div>
@@ -345,8 +346,8 @@ const ImportPanel: React.FC<Props> = ({ rooms, isAr, t, getHeaders, onClose, onI
                                 <div className="rounded-xl border border-brand-blue/40 bg-blue-50 p-3 space-y-2 text-sm">
                                     <p className="mb-0">{t('import.confirm', { count: ready.length })}</p>
                                     <div className="flex flex-wrap gap-2 justify-end">
-                                        <button type="button" onClick={() => setConfirming(false)} className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700">{t('cancel')}</button>
-                                        <button type="button" onClick={runImport} className="rounded-lg bg-brand-blue px-4 py-2 font-semibold text-white">{t('import.yesImport')}</button>
+                                        <button type="button" onClick={() => setConfirming(false)} className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 inline-flex items-center justify-center gap-1.5"><Icon name="close" size={20} />{t('cancel')}</button>
+                                        <button type="button" onClick={runImport} className="rounded-lg bg-brand-blue px-4 py-2 font-semibold text-white inline-flex items-center justify-center gap-1.5"><Icon name="group_add" size={20} />{t('import.yesImport')}</button>
                                     </div>
                                 </div>
                             )}

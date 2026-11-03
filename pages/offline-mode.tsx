@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { getSessionQueue, clearSessionQueue, getSubmittedQueue } from '../services/sessionUtils';
 import dynamic from 'next/dynamic';
+import Icon from '../components/ui/Icon';
 
 const OfflineMode: React.FC = () => {
   const { t, i18n } = useTranslation('offlineMode');
@@ -95,13 +96,13 @@ const OfflineMode: React.FC = () => {
         <h1 className="text-2xl font-semibold text-black mb-4">{t('instructions_title')}</h1>
         <ul className="text-lg text-gray-700 space-y-2">
           <li>
-            <span role="img" aria-label="form">📝</span> {t('instructions_step_1')}
+            <Icon name="edit_note" size={20} className="inline-block align-text-bottom" /> {t('instructions_step_1')}
           </li>
           <li>
-            <span role="img" aria-label="fields">✅</span> {t('instructions_step_2')}
+            <Icon name="check_circle" size={20} className="inline-block align-text-bottom" /> {t('instructions_step_2')}
           </li>
           <li>
-            <span role="img" aria-label="upload">📤</span> {t('instructions_step_3')}
+            <Icon name="upload" size={20} className="inline-block align-text-bottom" /> {t('instructions_step_3')}
           </li>
         </ul>
       </div>
@@ -152,8 +153,8 @@ const OfflineMode: React.FC = () => {
             </ul>
             <button
               onClick={handleClearSubmitted}
-              className="mt-6 w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold shadow-lg transition-all"
-            >
+              className="mt-6 w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold shadow-lg transition-all inline-flex items-center justify-center gap-1.5"
+            ><Icon name="delete_sweep" size={20} />
               {t('clear_list_button')}
             </button>
           </div>
@@ -170,15 +171,15 @@ const OfflineMode: React.FC = () => {
 
       <button
         onClick={handleOpenModal}
-        className="bg-primaryGreen hover:bg-primaryGreenHover text-white font-medium py-2 px-6 rounded shadow mb-4"
-      >
+        className="bg-primaryGreen hover:bg-primaryGreenHover text-white font-medium py-2 px-6 rounded shadow mb-4 inline-flex items-center justify-center gap-1.5"
+      ><Icon name="edit_note" size={20} />
         {t('open_form_button')}
       </button>
 
       <button
         onClick={handleReturnToHome}
-        className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded shadow mb-4"
-      >
+        className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded shadow mb-4 inline-flex items-center justify-center gap-1.5"
+      ><Icon name="arrow_back" size={20} />
         {t('return_home_button')}
       </button>
 

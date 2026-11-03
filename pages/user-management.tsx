@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
 import ImportPanel from '../components/userManagement/ImportPanel';
+import Icon from '../components/ui/Icon';
 
 type Status = 'pending' | 'active' | 'suspended' | 'deleted';
 interface UserRow {
@@ -285,7 +286,7 @@ const UserManagement: React.FC = () => {
         return (
             <div dir={isAr ? 'rtl' : 'ltr'} className="text-start max-w-xl mx-auto p-6 space-y-4">
                 <div className="bg-white rounded-2xl shadow-md p-4 text-gray-700">{t('notAllowed')}</div>
-                <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
             </div>
         );
     }
@@ -361,9 +362,9 @@ const UserManagement: React.FC = () => {
             )}
 
             <div className="flex flex-wrap gap-2 justify-end">
-                <button type="button" onClick={() => { setEditing(null); setDraft(null); }} className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700">{t('cancel')}</button>
+                <button type="button" onClick={() => { setEditing(null); setDraft(null); }} className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 inline-flex items-center justify-center gap-1.5"><Icon name="close" size={20} />{t('cancel')}</button>
                 <button type="button" disabled={busy === u.id || (ROOM_FOR[draft.role] !== null && !draft.err_id)} onClick={() => saveEdit(u)}
-                    className="rounded-lg bg-brand-blue px-4 py-2 font-semibold text-white disabled:opacity-50">{busy === u.id ? t('saving') : t('save')}</button>
+                    className="rounded-lg bg-brand-blue px-4 py-2 font-semibold text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5"><Icon name="save" size={20} />{busy === u.id ? t('saving') : t('save')}</button>
             </div>
         </div>
     );
@@ -372,16 +373,16 @@ const UserManagement: React.FC = () => {
         <div className="flex flex-wrap gap-2">
             {u.status !== 'active' && (
                 <button type="button" disabled={busy === u.id} onClick={() => save(u, { status: 'active' }, t('activated'))}
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{busy === u.id ? t('saving') : t('activate')}</button>
+                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5"><Icon name="how_to_reg" size={16} />{busy === u.id ? t('saving') : t('activate')}</button>
             )}
             {u.status === 'active' && (
                 <>
                     <button type="button" disabled={busy === u.id} onClick={() => sendLink(u, 'email')}
-                        className="rounded-lg border border-brand-blue/50 bg-white px-3 py-1.5 text-xs font-semibold text-brand-blue disabled:opacity-50">{t('link.email')}</button>
+                        className="rounded-lg border border-brand-blue/50 bg-white px-3 py-1.5 text-xs font-semibold text-brand-blue disabled:opacity-50 inline-flex items-center justify-center gap-1.5"><Icon name="mail" size={16} />{t('link.email')}</button>
                     <button type="button" disabled={busy === u.id} onClick={() => sendLink(u, 'copy')}
-                        className="rounded-lg border border-brand-blue/50 bg-white px-3 py-1.5 text-xs font-semibold text-brand-blue disabled:opacity-50">{t('link.copy')}</button>
+                        className="rounded-lg border border-brand-blue/50 bg-white px-3 py-1.5 text-xs font-semibold text-brand-blue disabled:opacity-50 inline-flex items-center justify-center gap-1.5"><Icon name="content_copy" size={16} />{t('link.copy')}</button>
                     <button type="button" disabled={busy === u.id} onClick={() => save(u, { status: 'suspended' }, t('suspendedMsg'))}
-                        className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 disabled:opacity-50">{t('suspend')}</button>
+                        className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 disabled:opacity-50 inline-flex items-center justify-center gap-1.5"><Icon name="block" size={16} />{t('suspend')}</button>
                 </>
             )}
         </div>
@@ -398,7 +399,7 @@ const UserManagement: React.FC = () => {
                     </div>
                     {!showImport && (
                         <button type="button" onClick={() => { setShowImport(true); setMessage(null); }}
-                            className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white">{t('import.open')}</button>
+                            className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white inline-flex items-center justify-center gap-1.5"><Icon name="group_add" size={18} />{t('import.open')}</button>
                     )}
                 </header>
 
@@ -421,11 +422,11 @@ const UserManagement: React.FC = () => {
                             value={t('link.message', { name: copyBox.name, link: copyBox.link })} onFocus={e => e.currentTarget.select()} />
                         <div className="flex flex-wrap gap-2 items-center">
                             <button type="button" onClick={() => copyText(t('link.message', { name: copyBox.name, link: copyBox.link }), 'message')}
-                                className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white">{t('link.copyMessage')}</button>
+                                className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white inline-flex items-center justify-center gap-1.5"><Icon name="content_copy" size={16} />{t('link.copyMessage')}</button>
                             <button type="button" onClick={() => copyText(copyBox.link, 'link')}
-                                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800">{t('link.copyLinkOnly')}</button>
+                                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 inline-flex items-center justify-center gap-1.5"><Icon name="content_copy" size={16} />{t('link.copyLinkOnly')}</button>
                             <button type="button" onClick={() => { setCopyBox(null); setCopied(''); }}
-                                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700">{t('import.close')}</button>
+                                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 inline-flex items-center justify-center gap-1.5"><Icon name="close" size={16} />{t('import.close')}</button>
                             {copied && <span className="text-xs text-emerald-800">{copied === 'manual' ? t('link.copyManual') : t('link.copied')}</span>}
                         </div>
                     </div>
@@ -438,8 +439,8 @@ const UserManagement: React.FC = () => {
                         </span>
                         {!bulk && (
                             <div className="flex flex-wrap gap-2">
-                                <button type="button" onClick={() => setSelected(new Set())} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700">{t('bulk.clear')}</button>
-                                <button type="button" onClick={activateSelected} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white">{t('bulk.activate', { count: selected.size })}</button>
+                                <button type="button" onClick={() => setSelected(new Set())} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 inline-flex items-center justify-center gap-1.5"><Icon name="deselect" size={16} />{t('bulk.clear')}</button>
+                                <button type="button" onClick={activateSelected} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white inline-flex items-center justify-center gap-1.5"><Icon name="how_to_reg" size={16} />{t('bulk.activate', { count: selected.size })}</button>
                             </div>
                         )}
                     </div>
@@ -533,7 +534,7 @@ const UserManagement: React.FC = () => {
                                                 <td className="p-3">
                                                     <div className="flex flex-wrap gap-2">
                                                         <button type="button" onClick={() => (editing === u.id ? (setEditing(null), setDraft(null)) : openEdit(u))}
-                                                            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800">{t('edit')}</button>
+                                                            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 inline-flex items-center justify-center gap-1.5"><Icon name="edit" size={16} />{t('edit')}</button>
                                                         {quickActions(u)}
                                                     </div>
                                                 </td>
@@ -565,7 +566,7 @@ const UserManagement: React.FC = () => {
                                     {linkStatus(u) && <p className="text-xs text-gray-500 mb-0">{linkStatus(u)}</p>}
                                     <div className="flex flex-wrap gap-2 pt-1">
                                         <button type="button" onClick={() => (editing === u.id ? (setEditing(null), setDraft(null)) : openEdit(u))}
-                                            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800">{t('edit')}</button>
+                                            className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 inline-flex items-center justify-center gap-1.5"><Icon name="edit" size={16} />{t('edit')}</button>
                                         {quickActions(u)}
                                     </div>
                                     {editing === u.id && editor(u)}
@@ -575,7 +576,7 @@ const UserManagement: React.FC = () => {
                     </>
                 )}
 
-                <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
             </div>
         </div>
     );

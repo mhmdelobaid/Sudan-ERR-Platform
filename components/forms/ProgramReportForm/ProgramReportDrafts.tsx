@@ -64,7 +64,7 @@ const ProgramReportDrafts: React.FC<ProgramReportDraftsProps> = ({
     return (
         <FormBubble>
             <div className="space-y-4">
-                <Button 
+                <Button icon="add" 
                     text={tMenu('program.newReport')}
                     onClick={onNewReport}
                     className="w-full"
@@ -89,11 +89,11 @@ const ProgramReportDrafts: React.FC<ProgramReportDraftsProps> = ({
                                         {tProgram('drafts.activitiesCount')}: {draft.err_program_reach?.length || 0}
                                     </p>
                                     <div className="flex space-x-2 mt-2">
-                                        <Button 
+                                        <Button icon="edit_note" 
                                             text={tProgram('drafts.continue')}
                                             onClick={() => onEditDraft(draft.id)}
                                         />
-                                        <Button 
+                                        <Button icon="delete" 
                                             text={tProgram('drafts.delete')}
                                             onClick={() => handleDeleteDraft(draft)}
                                             variant="danger"

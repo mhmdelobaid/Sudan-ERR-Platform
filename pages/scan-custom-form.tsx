@@ -7,6 +7,7 @@ import Button from "../components/ui/Button";
 import CustomFormReview from "../components/forms/CustomFormReview";
 import { useRouter } from "next/router";
 import { authFetch } from '../services/authFetch';
+import Icon from '../components/ui/Icon';
 
 interface ScanCustomFormProps {
   project: any; // The selected project passed from the menu
@@ -103,9 +104,9 @@ const ScanCustomForm: React.FC<ScanCustomFormProps> = ({
               {file && <span className="text-gray-600">{file.name}</span>}
               <button
                 onClick={handleUpload}
-                className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all"
+                className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all inline-flex items-center justify-center gap-1.5"
                 disabled={!file || isLoading}
-              >
+              ><Icon name="document_scanner" size={20} />
                 {isLoading ? t("processing") : t("upload_and_scan")}
               </button>
             </div>
@@ -150,7 +151,7 @@ const ScanCustomForm: React.FC<ScanCustomFormProps> = ({
       {formSubmitted && (
         <>
           <div className="flex justify-center space-x-4 mt-4">
-            <Button
+            <Button icon="add"
               text={t("submitAnother")}
               onClick={() => {
                 setFormSubmitted(false);
@@ -163,7 +164,7 @@ const ScanCustomForm: React.FC<ScanCustomFormProps> = ({
                 setShowReviewForm(false);
               }}
             />
-            <Button text={t("returnToMenu")} onClick={onReturnToMenu} />
+            <Button icon="arrow_back" text={t("returnToMenu")} onClick={onReturnToMenu} />
           </div>
         </>
       )}

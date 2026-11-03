@@ -84,8 +84,8 @@ const FeedbackForm = ({ onReturnToMenu }: FeedbackFormProps) => {
                     </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                    <Button text={t('tickets.buttons.another')} onClick={reset} className="w-full" />
-                    <Button text={t('buttons.returnToMenu')} onClick={onReturnToMenu} className="w-full" />
+                    <Button icon="add" text={t('tickets.buttons.another')} onClick={reset} className="w-full" />
+                    <Button icon="arrow_back" text={t('buttons.returnToMenu')} onClick={onReturnToMenu} className="w-full" />
                 </div>
             </div>
         );
@@ -186,13 +186,13 @@ const FeedbackForm = ({ onReturnToMenu }: FeedbackFormProps) => {
             {error && <p className="text-red-600 text-sm" role="alert">{error}</p>}
 
             <div className="flex flex-col gap-2">
-                <Button
+                <Button icon="send"
                     type="submit"
                     text={isSubmitting ? t('tickets.buttons.submitting') : t('tickets.buttons.submit')}
                     disabled={isSubmitting || !valid}
                     className="w-full"
                 />
-                <Button text={t('buttons.returnToMenu')} onClick={onReturnToMenu} className="w-full" />
+                <Button icon="arrow_back" text={t('buttons.returnToMenu')} onClick={onReturnToMenu} className="w-full" />
             </div>
         </form>
     );

@@ -224,7 +224,7 @@ const Register = () => {
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 
                 {/* Continue Button */}
-                <Button
+                <Button icon="arrow_forward"
                     text={t('continueWithSelected')}
                     onClick={handleContinue}
                     disabled={!selectedErr}

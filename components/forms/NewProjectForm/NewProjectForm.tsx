@@ -7,6 +7,7 @@ import FormBubble from '../../ui/FormBubble';
 import NewProjectActivities from './NewProjectActivities';
 import { newSupabase } from '../../../services/newSupabaseClient';
 import { useRouter } from 'next/router';
+import Icon from '../../ui/Icon';
 
 /**
  * F1 Form
@@ -95,14 +96,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ isOpen, onConfirm, onCanc
         <div className="flex justify-end space-x-4">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
-          >
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 inline-flex items-center justify-center gap-1.5"
+          ><Icon name="edit" size={20} />
             {t('confirmDialog.review')}
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-primaryGreen text-white rounded hover:bg-primaryGreen-dark"
-          >
+            className="px-4 py-2 bg-primaryGreen text-white rounded hover:bg-primaryGreen-dark inline-flex items-center justify-center gap-1.5"
+          ><Icon name="check" size={20} />
             {t('confirmDialog.confirm')}
           </button>
         </div>
@@ -533,7 +534,7 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
          <div className="bg-white p-4 rounded-lg">
            <p className="text-black-bold text-base mb-4">{t('formSubmitted')}</p>
            <div className="flex justify-center">
-             <Button text={t('returnToMenu')} onClick={onReturnToMenu} />
+             <Button icon="arrow_back" text={t('returnToMenu')} onClick={onReturnToMenu} />
            </div>
          </div>
        ) : (
@@ -925,7 +926,7 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
                        </div>
                      )}
                      <div className="flex space-x-4">
-                       <Button
+                       <Button icon="save"
                          type="button"
                          text={!dirty ? t('drafts.saved') : t('actions.saveDraft')}
                          onClick={async () => {
@@ -1005,7 +1006,7 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
                          disabled={isSubmitting || isLoading || !dirty}
                          className={!dirty ? 'opacity-50 cursor-not-allowed' : ''}
                        />
-                       <Button
+                       <Button icon="send"
                          type="submit"
                          text={t('actions.submit')}
                          disabled={isSubmitting || isLoading}

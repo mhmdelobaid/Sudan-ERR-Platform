@@ -206,7 +206,7 @@ const NewRoom = () => {
                     {error && <p className="text-red-500 text-sm">{error}</p>}
 
                     <div className="flex flex-col space-y-2">
-                        <Button
+                        <Button icon="add_home"
                             text={isLoading ? t('creating') : t('createRoom')}
                             type="submit"
                             disabled={isLoading}

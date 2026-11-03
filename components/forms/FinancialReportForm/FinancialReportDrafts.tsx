@@ -68,7 +68,7 @@ const FinancialReportDrafts: React.FC<FinancialReportDraftsProps> = ({
     return (
         <FormBubble>
             <div className="space-y-4">
-                <Button 
+                <Button icon="add" 
                     text={tMenu('financial.newReport')}
                     onClick={onNewReport}
                     className="w-full"
@@ -95,11 +95,11 @@ const FinancialReportDrafts: React.FC<FinancialReportDraftsProps> = ({
                                         {tFinancial('drafts.totalGrant')}: {draft.total_grant}
                                     </p>
                                     <div className="flex space-x-2 mt-2">
-                                        <Button 
+                                        <Button icon="edit_note" 
                                             text={tFinancial('drafts.continue')}
                                             onClick={() => handleEditDraft(draft)}
                                         />
-                                        <Button 
+                                        <Button icon="delete" 
                                             text={tFinancial('drafts.delete')}
                                             onClick={() => handleDeleteDraft(draft)}
                                             variant="danger"

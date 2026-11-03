@@ -1,5 +1,6 @@
 // components/Button.tsx
 import { FC, ReactNode } from 'react';
+import Icon, { IconName } from './Icon';
 
 interface ButtonProps {
     text: ReactNode; // usually a string; the report project list passes two lines
@@ -7,7 +8,7 @@ interface ButtonProps {
     type?: "button" | "submit" | "reset";
     disabled?: boolean;
     className?: string;
-    icon?: ReactNode;
+    icon?: IconName | ReactNode; // an icon name (Material Symbols) or any element
     variant?: 'primary' | 'danger';
 }
 
@@ -35,7 +36,7 @@ const Button: FC<ButtonProps> = ({
                 disabled ? "opacity-50 cursor-not-allowed" : ""
             } ${className || ""}`}
         >
-            {icon}
+            {typeof icon === 'string' ? <Icon name={icon as IconName} size={20} /> : icon}
             {text}
         </button>
     );

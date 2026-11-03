@@ -1,10 +1,10 @@
 import { useId, useRef, useState } from 'react';
 import { Field, ErrorMessage, useFormikContext } from 'formik';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Trash2, Check } from "lucide-react";
 import { UploadChooser, reportUploadType } from './upload/UploadChooserReceipts';
 import { UploadChooserSupporting } from './upload/UploadChooserSupporting';
 import { FileWithProgress } from './upload/UploadInterfaces';
+import Icon from '../../ui/Icon';
 
 export interface ActivityOption {
     id: string,
@@ -158,7 +158,7 @@ const ExpenseCard = ({ expense, index, arrayHelpers, categories, projectId, repo
                             onClick={() => setIsCollapsed(true)}
                         >
                             <div className="flex content-center">
-                              <Check/>
+                              <Icon name="check" size={22} />
                             </div>
                         </button>
 
@@ -167,7 +167,7 @@ const ExpenseCard = ({ expense, index, arrayHelpers, categories, projectId, repo
                             onClick={() => arrayHelpers.remove(index)}
                         >
                             <div className="flex content-center text-red-500">
-                                <Trash2/>
+                                <Icon name="delete" size={22} />
                             </div>
                         </button>
 
@@ -191,7 +191,7 @@ const ExpenseCard = ({ expense, index, arrayHelpers, categories, projectId, repo
                         className="font-bold text-blue-500"
                         onClick={() => setIsCollapsed(false)}
                     >
-                       <Pencil/>
+                       <Icon name="edit" size={22} />
                     </button>
                 </div>
             )}

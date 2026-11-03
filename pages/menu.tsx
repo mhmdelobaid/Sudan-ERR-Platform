@@ -5,11 +5,6 @@ import ChatContainer from '../components/ui/ChatContainer';
 import MessageBubble from '../components/ui/MessageBubble';
 import Button from '../components/ui/Button';
 import MenuCard from '../components/ui/MenuCard';
-import {
-    ClipboardDocumentCheckIcon, UserGroupIcon, UsersIcon, UserCircleIcon, FolderIcon, DocumentTextIcon, DocumentCheckIcon,
-    BanknotesIcon, PresentationChartLineIcon, ChartBarIcon, ChatBubbleLeftEllipsisIcon, ArrowRightStartOnRectangleIcon,
-    PencilSquareIcon,
-} from '@heroicons/react/24/outline';
 import ReportingForm from '../components/forms/ReportForm/ReportingForm';
 import ScanForm from './scan-form';
 import ScanCustomForm from './scan-custom-form'; // Import the new component
@@ -27,6 +22,7 @@ import ProgramReportDrafts from '../components/forms/ProgramReportForm/ProgramRe
 import { newSupabase } from '../services/newSupabaseClient';
 import { signOutAndLock } from '../services/appLock';
 import { fetchMySignatures } from '../components/signatures/signApi';
+import Icon from '../components/ui/Icon';
 
 /**
  * Chat-style menu.
@@ -452,51 +448,51 @@ const Menu = () => {
                         {/* Rooms (and admins): F1, F3, F4, F5. Reps and working groups don't run a room. */}
                         {isRoomUser && (
                             <MenuCard title={t('cardsTitle.f1')} description={t('cards.projects')}
-                                icon={<FolderIcon className="w-6 h-6" />} onClick={() => handleMenuSelection(CurrentMenu.PROJECTS)} />
+                                icon={<Icon name="folder" size={26} />} onClick={() => handleMenuSelection(CurrentMenu.PROJECTS)} />
                         )}
                         {/* F2 screening: reps vote; admins can open it read-only */}
                         {['state_rep', 'admin', 'superadmin'].includes(userRole || '') && (
                             <MenuCard title={t('cardsTitle.f2')} description={t('cards.f2Review')}
-                                icon={<ClipboardDocumentCheckIcon className="w-6 h-6" />} onClick={() => router.push('/f2-review')} />
+                                icon={<Icon name="how_to_vote" size={26} />} onClick={() => router.push('/f2-review')} />
                         )}
                         {/* Room officers: documents waiting for my signature (F1, F3, F4, F5) */}
                         {isRoomUser && signatureInfo?.position && (
                             <MenuCard title={t('cardsTitle.signatures')} description={t('cards.signatures')} badge={signatureInfo.waiting}
-                                icon={<PencilSquareIcon className="w-6 h-6" />} onClick={() => router.push('/signatures')} />
+                                icon={<Icon name="signature" size={26} />} onClick={() => router.push('/signatures')} />
                         )}
                         {isRoomUser && (
                             <>
                                 <MenuCard title={t('cardsTitle.f3')} description={t('cards.f3')}
-                                    icon={<DocumentCheckIcon className="w-6 h-6" />} onClick={() => router.push('/f3-contracts')} />
+                                    icon={<Icon name="contract" size={26} />} onClick={() => router.push('/f3-contracts')} />
                                 <MenuCard title={t('cardsTitle.f4')} description={t('cards.f4')}
-                                    icon={<BanknotesIcon className="w-6 h-6" />} onClick={() => handleMenuSelection(CurrentMenu.REPORTING, 'f4')} />
+                                    icon={<Icon name="payments" size={26} />} onClick={() => handleMenuSelection(CurrentMenu.REPORTING, 'f4')} />
                                 <MenuCard title={t('cardsTitle.f5')} description={t('cards.f5')}
-                                    icon={<PresentationChartLineIcon className="w-6 h-6" />} onClick={() => handleMenuSelection(CurrentMenu.REPORTING, 'f5')} />
+                                    icon={<Icon name="assignment" size={26} />} onClick={() => handleMenuSelection(CurrentMenu.REPORTING, 'f5')} />
                             </>
                         )}
                         {/* Project Working Group (LCC level): the projects a member's group runs */}
                         {['lcc_wg', 'superadmin'].includes(userRole || '') && (
                             <MenuCard title={t('wgProjects')} description={t('cards.wgProjects')}
-                                icon={<UserGroupIcon className="w-6 h-6" />} onClick={() => router.push('/wg-projects')} />
+                                icon={<Icon name="groups" size={26} />} onClick={() => router.push('/wg-projects')} />
                         )}
                         {/* User management: superadmin only */}
                         {userRole === 'superadmin' && (
                             <MenuCard title={t('userManagement')} description={t('cards.userManagement')}
-                                icon={<UsersIcon className="w-6 h-6" />} onClick={() => router.push('/user-management')} />
+                                icon={<Icon name="manage_accounts" size={26} />} onClick={() => router.push('/user-management')} />
                         )}
                         {/* Everyone sees the dashboard at their own level (room, state, their states, or all for working groups) */}
                         {userRole !== null && (
                             <MenuCard title={t('dashboard')} description={t('cards.dashboard')}
-                                icon={<ChartBarIcon className="w-6 h-6" />} onClick={() => router.push('/dashboard')} />
+                                icon={<Icon name="bar_chart" size={26} />} onClick={() => router.push('/dashboard')} />
                         )}
                         {userRole !== null && (
                             <MenuCard title={t('profile')} description={t('cards.profile')}
-                                icon={<UserCircleIcon className="w-6 h-6" />} onClick={() => router.push('/profile')} />
+                                icon={<Icon name="account_circle" size={26} />} onClick={() => router.push('/profile')} />
                         )}
                         <MenuCard title={t('feedback')} description={t('cards.feedback')}
-                            icon={<ChatBubbleLeftEllipsisIcon className="w-6 h-6" />} onClick={() => setCurrentMenu(CurrentMenu.FEEDBACK)} />
+                            icon={<Icon name="forum" size={26} />} onClick={() => setCurrentMenu(CurrentMenu.FEEDBACK)} />
                         <MenuCard title={t('exitChat')} description={t('cards.exitChat')}
-                            icon={<ArrowRightStartOnRectangleIcon className="w-6 h-6 rtl:-scale-x-100" />} onClick={() => signOutAndLock()} />
+                            icon={<Icon name="logout" size={26} />} onClick={() => signOutAndLock()} />
                     </div>
                 </>
             )}
@@ -510,17 +506,17 @@ const Menu = () => {
                         fullWidth
                     />
                     <div className="grid grid-cols-1 space-y-2">
-                        <Button
+                        <Button icon="note_add"
                             text={t('projectApplication')}
                             onClick={() => handleWorkflowSelection(Workflow.PROJECT_APPLICATION)}
                             className="w-full"
                         />
-                        <Button
+                        <Button icon="fact_check"
                             text={t('projectStatus')}
                             onClick={() => handleWorkflowSelection(Workflow.PROJECT_STATUS)}
                             className="w-full"
                         />
-                        <Button
+                        <Button icon="arrow_back"
                             text={t('returnToMainMenu')}
                             onClick={() => handleMenuSelection(CurrentMenu.MAIN)}
                             className="w-full"
@@ -546,7 +542,7 @@ const Menu = () => {
                                 className="w-full"
                             />
                         ))}
-                        <Button text={t('returnToMainMenu')} onClick={() => handleMenuSelection(CurrentMenu.MAIN)} className="w-full" />
+                        <Button icon="arrow_back" text={t('returnToMainMenu')} onClick={() => handleMenuSelection(CurrentMenu.MAIN)} className="w-full" />
                     </div>
                 </>
             )}
@@ -559,7 +555,7 @@ const Menu = () => {
                         {/* F4 card: financial report only; F5 card: program report only; otherwise both */}
                         {reportKind !== 'f5' && (
                             <>
-                                <Button
+                                <Button icon="edit_document"
                                     text={t('reportFillForm')}
                                     onClick={() => {
                                         resetFormStates();
@@ -568,7 +564,7 @@ const Menu = () => {
                                     }}
                                     className="w-full"
                                 />
-                                <Button
+                                <Button icon="document_scanner"
                                     text={t('reportScanForm')}
                                     onClick={() => {
                                         resetFormStates();
@@ -579,7 +575,7 @@ const Menu = () => {
                             </>
                         )}
                         {reportKind !== 'f4' && (
-                            <Button
+                            <Button icon="assignment"
                                 text={t('reportProgramForm')}
                                 onClick={() => {
                                     resetFormStates();
@@ -588,7 +584,7 @@ const Menu = () => {
                                 className="w-full"
                             />
                         )}
-                        <Button
+                        <Button icon="drafts"
                             text={t('viewDrafts')}
                             onClick={() => {
                                 resetFormStates();
@@ -597,7 +593,7 @@ const Menu = () => {
                             }}
                             className="w-full"
                         />
-                        <Button
+                        <Button icon="swap_horiz"
                             text={t('selectDifferentProject')}
                             onClick={() => {
                                 resetFormStates();
@@ -605,7 +601,7 @@ const Menu = () => {
                             }}
                             className="w-full"
                         />
-                        <Button
+                        <Button icon="arrow_back"
                             text={t('returnToMainMenu')}
                             onClick={() => handleMenuSelection(CurrentMenu.MAIN)}
                             className="w-full"
@@ -617,7 +613,7 @@ const Menu = () => {
             {/* While a report form, the scanner or the drafts list is open: one way back to the report types */}
             {currentMenu === CurrentMenu.REPORTING && selectedProject && reportWorkflowOpen && (
                 <div className="mb-2">
-                    <Button text={t('backToReportTypes')} onClick={() => resetFormStates()} className="w-full" />
+                    <Button icon="arrow_back" text={t('backToReportTypes')} onClick={() => resetFormStates()} className="w-full" />
                 </div>
             )}
 

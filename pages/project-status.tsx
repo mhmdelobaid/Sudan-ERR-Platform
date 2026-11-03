@@ -5,8 +5,8 @@ import ProjectFileLink from '../components/ui/ProjectFileLink';
 import MessageBubble from '../components/ui/MessageBubble';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import StatusChip from '../components/ui/StatusChip';
+import Icon from '../components/ui/Icon';
 
 interface ProjectStatusProps {
     onReturnToMenu: () => void;
@@ -201,13 +201,13 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                     <ProjectFileLink projectId={project.id} className="my-1" />
                                     {/* Locality acknowledgement: a label for everyone, a button for the locality */}
                                     {project.locality_ack ? (
-                                        <p className="text-sm text-emerald-800 mb-1">✓ {t('locality.acked', { date: formatDate(project.locality_ack.acknowledged_at) })}</p>
+                                        <p className="text-sm text-emerald-800 mb-1"><Icon name="check_circle" size={16} className="inline-block align-text-bottom me-1" />{t('locality.acked', { date: formatDate(project.locality_ack.acknowledged_at) })}</p>
                                     ) : ['pending', 'feedback', 'screened'].includes(project.status) && (
                                         viewerRole === 'locality_err' ? (
                                             <button type="button" disabled={ackBusy === project.id}
                                                 onClick={(e) => { e.stopPropagation(); acknowledgeProject(project.id); }}
-                                                className="my-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold px-3 py-1.5">
-                                                {ackBusy === project.id ? t('locality.acking') : `✓ ${t('locality.ack')}`}
+                                                className="my-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold px-3 py-1.5 inline-flex items-center justify-center gap-1.5"><Icon name="task_alt" size={18} />
+                                                {ackBusy === project.id ? t('locality.acking') : ` ${t('locality.ack')}`}
                                             </button>
                                         ) : (
                                             <p className="text-sm text-gray-500 mb-1">{t('locality.notYet')}</p>
@@ -216,7 +216,7 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                     {project.status === 'screened' && (
                                         project.wg_confirmation ? (
                                             <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 my-1 text-sm">
-                                                <p className="mb-0 text-emerald-900">✓ {t('wg.confirmed', { date: formatDate(project.wg_confirmation.decided_at) })}</p>
+                                                <p className="mb-0 text-emerald-900"><Icon name="check_circle" size={16} className="inline-block align-text-bottom me-1" />{t('wg.confirmed', { date: formatDate(project.wg_confirmation.decided_at) })}</p>
                                                 {project.wg_confirmation.note && (
                                                     <p className="mb-0 mt-1 whitespace-pre-line text-gray-800"><strong>{t('wg.note')}:</strong> {project.wg_confirmation.note}</p>
                                                 )}
@@ -244,9 +244,9 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                 </div>
                                 <div className="flex items-center text-gray-500">
                                     {selectedProject?.id === project.id ? (
-                                        <ChevronUpIcon className="h-5 w-5" />
+                                        <Icon name="keyboard_arrow_up" size={20} />
                                     ) : (
-                                        <ChevronDownIcon className="h-5 w-5" />
+                                        <Icon name="keyboard_arrow_down" size={20} />
                                     )}
                                 </div>
                             </div>
@@ -342,7 +342,7 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
                                                 </p>
                                             )}
                                             <div className="mt-2">
-                                                <Button
+                                                <Button icon="edit"
                                                     text={t('feedback.editProject')}
                                                     onClick={() => handleEditProject(project.id)}
                                                     className="w-full"
@@ -360,7 +360,7 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
             )}
 
             {/* Return to Menu Button */}
-            <Button text={t('returnToMenu')} onClick={onReturnToMenu} />
+            <Button icon="arrow_back" text={t('returnToMenu')} onClick={onReturnToMenu} />
         </div>
     );
 };

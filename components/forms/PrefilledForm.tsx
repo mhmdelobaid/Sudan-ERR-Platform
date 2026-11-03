@@ -7,9 +7,9 @@ import Button from "../ui/Button";
 import { v4 as uuidv4 } from 'uuid';
 import { cleanFormData } from '../../utils/numberFormatting';
 import { newSupabase } from '../../services/newSupabaseClient';
-import { Pencil, Trash2, Check } from "lucide-react";
 import { UploadChooserSupporting, reportUploadType } from '../forms/ReportForm/upload/UploadChooserSupporting';
 import { FileWithProgress } from '../forms/ReportForm/upload/UploadInterfaces';
+import Icon from '../ui/Icon';
 
 interface ExpenseEntry {
   id?: string;  // Make it optional since some existing data might not have it
@@ -464,14 +464,14 @@ const PrefilledForm: React.FC<PrefilledFormProps> = ({ data, onFormSubmit, proje
                       className="text-blue-600 hover:text-blue-800 p-1"
                       title={t("buttons.collapse")}
                     >
-                      <Check />
+                      <Icon name="check" size={22} />
                     </button>
                     <button
                       onClick={() => removeExpense(index)}
                       className="text-red-600 hover:text-red-800 p-1"
                       title={t("buttons.remove_expense")}
                     >
-                      <Trash2 />
+                      <Icon name="delete" size={22} />
                     </button>
                   </div>
                 </div>
@@ -568,14 +568,14 @@ const PrefilledForm: React.FC<PrefilledFormProps> = ({ data, onFormSubmit, proje
                   <p><span className="font-bold">{t('activity')}:&nbsp;</span>{expense.activity}</p>
                   <p><span className="font-bold">{t('amount')}:&nbsp;</span>{expense.amount}</p>
                   {fileUploads[index]?.uploadedUrl && (
-                    <p><span className="font-bold">{t('receipt')}:&nbsp;</span>✓</p>
+                    <p><span className="font-bold">{t('receipt')}:&nbsp;</span><Icon name="check_circle" size={18} className="inline-block align-text-bottom text-emerald-600" /></p>
                   )}
                 </div>
                 <button
                   onClick={() => toggleExpenseCollapse(index)}
                   className="text-blue-600 hover:text-blue-800"
                 >
-                  <Pencil />
+                  <Icon name="edit" size={22} />
                 </button>
               </div>
             )}
@@ -587,7 +587,7 @@ const PrefilledForm: React.FC<PrefilledFormProps> = ({ data, onFormSubmit, proje
           type="button"
           onClick={addNewExpense}
           className="w-full mt-4 py-2 px-4 bg-green-100 text-primaryGreen rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center gap-2"
-        >
+        ><Icon name="add" size={20} />
           <span>+</span> {t("buttons.add_expense")}
         </button>
       </div>
@@ -715,13 +715,13 @@ const PrefilledForm: React.FC<PrefilledFormProps> = ({ data, onFormSubmit, proje
       )}
 
       <div className="flex justify-between gap-4 mt-6">
-        <Button
+        <Button icon="save"
             onClick={() => handleSaveDraft(formData)}
             disabled={isSubmitting}
             text={t("saveDraft")}
             className="w-full bg-gray-100 hover:bg-gray-200"
         />
-        <Button
+        <Button icon="send"
             onClick={async (e) => {
                 e.preventDefault();
                 await handleFormSubmit(formData);

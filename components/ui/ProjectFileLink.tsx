@@ -2,13 +2,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import Icon from './Icon';
 
 export default function ProjectFileLink({ projectId, step, className = '' }: { projectId: string; step?: 'f1' | 'f2' | 'f3' | 'f4' | 'f5'; className?: string }) {
     const { t } = useTranslation('projectFile');
     return (
         <Link href={`/project-file?id=${encodeURIComponent(projectId)}${step ? `&step=${step}` : ''}`} onClick={e => e.stopPropagation()}
             className={`inline-flex items-center gap-1 rounded-lg border border-brand-blue/50 bg-white px-3 py-1.5 text-xs font-semibold text-brand-blue hover:bg-blue-50 ${className}`}>
-            <span aria-hidden="true">📄</span> {t('open')}
+            <Icon name="description" size={16} />{t('open')}
         </Link>
     );
 }

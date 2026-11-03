@@ -7,6 +7,7 @@ import SignaturePad, { SignaturePadHandle } from '../ui/SignaturePad';
 import ProjectFileLink from '../ui/ProjectFileLink';
 import { newSupabase } from '../../services/newSupabaseClient';
 import { DocType, errorCode, saveMySignature, signDocument } from './signApi';
+import Icon from '../ui/Icon';
 
 interface Props {
     docType: DocType;
@@ -106,7 +107,7 @@ const SignConfirm: React.FC<Props> = ({ docType, docId, projectId, title, summar
                     <div>
                         <div className="flex items-center justify-between mb-1 gap-2">
                             <span className="text-sm font-semibold text-gray-900">{t('confirm.drawFirst')}</span>
-                            <button type="button" onClick={() => padRef.current?.clear()} className="shrink-0 text-sm text-blue-600 hover:underline">{t('confirm.clear')}</button>
+                            <button type="button" onClick={() => padRef.current?.clear()} className="shrink-0 text-sm text-blue-600 hover:underline inline-flex items-center justify-center gap-1.5"><Icon name="ink_eraser" size={18} />{t('confirm.clear')}</button>
                         </div>
                         <SignaturePad ref={padRef} onChange={setPadEmpty} ariaLabel={t('confirm.drawFirst')} />
                     </div>
@@ -117,10 +118,10 @@ const SignConfirm: React.FC<Props> = ({ docType, docId, projectId, title, summar
 
                 <div className="flex gap-2">
                     <button onClick={submit} disabled={!canSubmit}
-                        className="flex-1 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white disabled:opacity-40 hover:bg-blue-700">
+                        className="flex-1 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white disabled:opacity-40 hover:bg-blue-700 inline-flex items-center justify-center gap-1.5"><Icon name="signature" size={20} />
                         {busy ? t('confirm.sending') : t('confirm.button')}
                     </button>
-                    <button onClick={onClose} disabled={busy} className="flex-1 rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-800">
+                    <button onClick={onClose} disabled={busy} className="flex-1 rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-800 inline-flex items-center justify-center gap-1.5"><Icon name="close" size={20} />
                         {t('confirm.cancel')}
                     </button>
                 </div>

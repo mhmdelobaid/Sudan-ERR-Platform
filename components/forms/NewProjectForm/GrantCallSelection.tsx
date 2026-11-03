@@ -102,7 +102,7 @@ const GrantCallSelection: React.FC<GrantCallSelectionProps> = ({
                         {t('errors.fetchGrantCallsError')}: {error}
                     </div>
                 </MessageBubble>
-                <Button text={t('returnToMenu')} onClick={onReturnToMenu} />
+                <Button icon="arrow_back" text={t('returnToMenu')} onClick={onReturnToMenu} />
             </FormBubble>
         );
     }
@@ -135,7 +135,7 @@ const GrantCallSelection: React.FC<GrantCallSelectionProps> = ({
                                     <p><strong>{t('grantCalls.period')}:</strong> {formatDate(grantCall.start_date)} - {formatDate(grantCall.end_date)}</p>
                                 </div>
                                 <div className="mt-4">
-                                    <Button
+                                    <Button icon="check"
                                         text={t('grantCalls.selectCall')}
                                         onClick={() => onSelectGrantCall(grantCall)}
                                         className="w-full"
@@ -146,7 +146,7 @@ const GrantCallSelection: React.FC<GrantCallSelectionProps> = ({
                     </div>
                 )}
 
-                <Button
+                <Button icon="arrow_back"
                     text={t('returnToMenu')}
                     onClick={onReturnToMenu}
                     className="w-full mt-4"

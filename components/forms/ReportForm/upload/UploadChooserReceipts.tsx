@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Upload as UploadIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { UploadedList } from "./UploadedList";
 import { FileWithProgress } from "./UploadInterfaces";
 import { v4 as uuidv4 } from 'uuid';
+import Icon from '../../../ui/Icon';
 
 export enum reportUploadType {
   RECEIPT,
@@ -78,7 +78,7 @@ const UploadBox: React.FC<UploadBoxProps> = ({ onFileChange, uploadType }) => {
         htmlFor="file-upload"
         className="flex items-center justify-center p-4 border rounded-md cursor-pointer hover:bg-gray-50"
       >
-        <UploadIcon className="mr-2" />
+        <Icon name="upload" size={22} className="me-2" />
         {uploadType === reportUploadType.RECEIPT ? (
           <span>{t("chooseReceiptFiles")}</span>
         ) : (

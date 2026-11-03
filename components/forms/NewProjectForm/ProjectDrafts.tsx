@@ -83,7 +83,7 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
                     </MessageBubble>
                 )}
 
-                <Button 
+                <Button icon="note_add" 
                     text={t('drafts.newProject')}
                     onClick={onNewProject}
                     className="w-full"
@@ -108,12 +108,12 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
                                     {t('drafts.lastModified')}: {new Date(draft.last_modified).toLocaleString()}
                                 </p>
                                 <div className="flex space-x-2 mt-2">
-                                    <Button 
+                                    <Button icon="edit_note" 
                                         text={t('drafts.continue')}
                                         onClick={() => onEditDraft(draft.id)}
                                         disabled={isLoading}
                                     />
-                                    <Button 
+                                    <Button icon="delete" 
                                         text={t('drafts.delete')}
                                         onClick={() => handleDeleteDraft(draft.id)}
                                         variant="danger"
@@ -125,7 +125,7 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
                     </div>
                 )}
 
-                <Button
+                <Button icon="arrow_back"
                     text={t('returnToMenu')}
                     onClick={onReturnToMenu}
                     className="w-full mt-4"

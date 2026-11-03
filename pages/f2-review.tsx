@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import ProjectFileLink from '../components/ui/ProjectFileLink';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
+import Icon, { IconName } from '../components/ui/Icon';
 
 type Verdict = 'approve' | 'conditional' | 'reject';
 type Outcome = 'approved' | 'conditional' | 'rejected';
@@ -117,10 +118,10 @@ interface Detail {
     expenseNames: Record<string, string>;
 }
 
-const VERDICT_STYLES: Record<Verdict, { on: string; off: string; chip: string; icon: string }> = {
-    approve: { on: 'bg-emerald-600 text-white border-emerald-600', off: 'border-emerald-600 text-emerald-700 hover:bg-emerald-50', chip: 'bg-emerald-100 text-emerald-800', icon: '✓' },
-    conditional: { on: 'bg-amber-500 text-white border-amber-500', off: 'border-amber-500 text-amber-700 hover:bg-amber-50', chip: 'bg-amber-100 text-amber-800', icon: '!' },
-    reject: { on: 'bg-red-600 text-white border-red-600', off: 'border-red-600 text-red-700 hover:bg-red-50', chip: 'bg-red-100 text-red-800', icon: '✕' },
+const VERDICT_STYLES: Record<Verdict, { on: string; off: string; chip: string; icon: IconName }> = {
+    approve: { on: 'bg-emerald-600 text-white border-emerald-600', off: 'border-emerald-600 text-emerald-700 hover:bg-emerald-50', chip: 'bg-emerald-100 text-emerald-800', icon: 'check' },
+    conditional: { on: 'bg-amber-500 text-white border-amber-500', off: 'border-amber-500 text-amber-700 hover:bg-amber-50', chip: 'bg-amber-100 text-amber-800', icon: 'priority_high' },
+    reject: { on: 'bg-red-600 text-white border-red-600', off: 'border-red-600 text-red-700 hover:bg-red-50', chip: 'bg-red-100 text-red-800', icon: 'close' },
 };
 
 const OUTCOME_STYLES: Record<Outcome, string> = {
@@ -282,7 +283,7 @@ const F2Review: React.FC = () => {
 
     const VoteChip: React.FC<{ verdict: Verdict; label?: string }> = ({ verdict, label }) => (
         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${VERDICT_STYLES[verdict].chip}`}>
-            <span aria-hidden>{VERDICT_STYLES[verdict].icon}</span>{label || t(`verdict.${verdict}`)}
+            <Icon name={VERDICT_STYLES[verdict].icon} size={18} />{label || t(`verdict.${verdict}`)}
         </span>
     );
 
@@ -312,7 +313,7 @@ const F2Review: React.FC = () => {
         return (
             <div dir={isAr ? 'rtl' : 'ltr'} className="text-start max-w-xl mx-auto p-6 space-y-4">
                 <div className="bg-white rounded-2xl shadow-md p-4 text-gray-700">{t('notAllowed')}</div>
-                <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
             </div>
         );
     }
@@ -379,7 +380,7 @@ const F2Review: React.FC = () => {
                                                     <p className="font-bold text-gray-900 mb-0">{q.project_name || '—'}</p>
                                                     <p className="text-sm text-gray-600 mb-0">{roomName(q)} · {q.locality || '—'}</p>
                                                     <p className={`text-xs mb-0 ${q.locality_ack ? 'text-emerald-700' : 'text-gray-500'}`}>
-                                                        {q.locality_ack ? `✓ ${t('localityAck.yes')}` : t('localityAck.no')}
+                                                        {q.locality_ack ? <><Icon name="check_circle" size={16} className="inline-block align-text-bottom me-1" />{t('localityAck.yes')}</> : t('localityAck.no')}
                                                     </p>
                                                 </div>
                                                 {q.decision_outcome && q.status !== 'pending' ? (
@@ -419,7 +420,7 @@ const F2Review: React.FC = () => {
                             </ul>
                         )}
 
-                        <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                        <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
                     </>
                 )}
 
@@ -437,7 +438,7 @@ const F2Review: React.FC = () => {
                                 </p>
                                 <p className={`text-sm mt-1 mb-0 ${detail.locality_ack ? 'text-emerald-700' : 'text-gray-500'}`}>
                                     {detail.locality_ack
-                                        ? `✓ ${t('localityAck.yesOn', { date: fmtDate(detail.locality_ack.acknowledged_at) })}`
+                                        ? <><Icon name="check_circle" size={16} className="inline-block align-text-bottom me-1" />{t('localityAck.yesOn', { date: fmtDate(detail.locality_ack.acknowledged_at) })}</>
                                         : t('localityAck.no')}
                                 </p>
                                 <ProjectFileLink projectId={detail.project.id} step="f2" className="mt-2" />
@@ -625,7 +626,7 @@ const F2Review: React.FC = () => {
                                                             onClick={() => setVerdict(l.key, v)}
                                                             className={`rounded-lg border-2 py-2 text-sm font-semibold transition ${mine?.verdict === v ? VERDICT_STYLES[v].on : `bg-white ${VERDICT_STYLES[v].off}`}`}
                                                         >
-                                                            <span aria-hidden className="me-1">{VERDICT_STYLES[v].icon}</span>{t(`verdict.${v}`)}
+                                                            <Icon name={VERDICT_STYLES[v].icon} size={18} className="inline-block align-text-bottom me-1" />{t(`verdict.${v}`)}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -662,7 +663,7 @@ const F2Review: React.FC = () => {
                             </section>
                         )}
 
-                        <Button text={t('backToList')} onClick={closeProject} className="w-full" />
+                        <Button icon="arrow_back" text={t('backToList')} onClick={closeProject} className="w-full" />
 
                         {/* Sticky submit bar */}
                         {detail.can_vote && (
@@ -673,7 +674,7 @@ const F2Review: React.FC = () => {
                                             {t('missing', { done: doneCount, total: detail.lines.length })}
                                         </p>
                                     )}
-                                    <Button
+                                    <Button icon="how_to_vote"
                                         text={submitting ? t('submitting') : iHaveVoted ? t('update') : t('submit')}
                                         onClick={submitBallot}
                                         disabled={!ballotComplete || submitting}

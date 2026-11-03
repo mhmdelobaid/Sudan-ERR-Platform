@@ -9,6 +9,7 @@ import ProjectFileLink from '../components/ui/ProjectFileLink';
 import Button from '../components/ui/Button';
 import SignConfirm from '../components/signatures/SignConfirm';
 import { newSupabase } from '../services/newSupabaseClient';
+import Icon from '../components/ui/Icon';
 
 type Position = 'program' | 'finance';
 interface Signature { name: string; signed_at: string; image: string }
@@ -99,8 +100,8 @@ const F3Contracts: React.FC = () => {
                 ) : c.can_sign === position ? (
                     <button
                         onClick={() => openSign(c, position)}
-                        className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                    >
+                        className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 inline-flex items-center justify-center gap-1.5"
+                    ><Icon name="signature" size={18} />
                         {t('sign.button')}
                     </button>
                 ) : null}
@@ -192,7 +193,7 @@ const F3Contracts: React.FC = () => {
                     </ul>
                 )}
 
-                <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
             </div>
 
             {signing && signing.contract.mou_id && (

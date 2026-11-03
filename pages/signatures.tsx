@@ -9,6 +9,7 @@ import Button from '../components/ui/Button';
 import ProjectFileLink from '../components/ui/ProjectFileLink';
 import SignConfirm from '../components/signatures/SignConfirm';
 import { DocType, errorCode, fetchMySignatures } from '../components/signatures/signApi';
+import Icon from '../components/ui/Icon';
 
 interface QueueItem {
     doc_type: DocType; doc_id: string; project_id: string | null; project_name: string | null;
@@ -69,7 +70,7 @@ const SignaturesPage: React.FC = () => {
                     {me && me.officer_position && !me.has_signature && (
                         <p className="text-xs text-gray-600 mb-0">
                             {t('noSavedSignature')}{' '}
-                            <button type="button" className="font-semibold text-blue-700 underline" onClick={() => router.push('/profile')}>{t('goToProfile')}</button>
+                            <button type="button" className="font-semibold text-blue-700 underline inline-flex items-center justify-center gap-1.5" onClick={() => router.push('/profile')}><Icon name="account_circle" size={16} />{t('goToProfile')}</button>
                         </p>
                     )}
                 </header>
@@ -99,7 +100,7 @@ const SignaturesPage: React.FC = () => {
                                                     <p className="text-sm text-gray-600 mb-0"><bdi>{roomName(it)}</bdi></p>
                                                 </div>
                                                 <button onClick={() => { setNotice(null); setSigning(it); }}
-                                                    className="shrink-0 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                                                    className="shrink-0 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 inline-flex items-center justify-center gap-1.5"><Icon name="signature" size={18} />
                                                     {t('sign')}
                                                 </button>
                                             </div>
@@ -139,7 +140,7 @@ const SignaturesPage: React.FC = () => {
                     </section>
                 )}
 
-                <Button text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
             </div>
 
             {signing && (

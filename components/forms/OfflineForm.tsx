@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { addFormToSessionQueue } from '../../services/sessionUtils';
 import { authFetch } from '../../services/authFetch';
+import Icon from '../ui/Icon';
 
 interface OfflineFormProps {
   onClose: () => void;
@@ -209,8 +210,8 @@ const OfflineForm: React.FC<OfflineFormProps> = ({ onClose, onSubmitSuccess }) =
           <button
             type="button"
             onClick={addExpenseCard}
-            className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all mb-2"
-          >
+            className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all mb-2 inline-flex items-center justify-center gap-1.5"
+          ><Icon name="add" size={20} />
             {t('add_expense')}
           </button>
           <input
@@ -270,14 +271,14 @@ const OfflineForm: React.FC<OfflineFormProps> = ({ onClose, onSubmitSuccess }) =
             <button
               type="button"
               onClick={onClose}
-              className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all"
-            >
+              className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all inline-flex items-center justify-center gap-1.5"
+            ><Icon name="close" size={20} />
               {t('close')}
             </button>
             <button
               type="submit"
-              className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all"
-            >
+              className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all inline-flex items-center justify-center gap-1.5"
+            ><Icon name="send" size={20} />
               {t('submit')}
             </button>
           </div>

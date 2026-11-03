@@ -1,6 +1,7 @@
 //components.DynamicActivityForm.tsx
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import Icon from '../ui/Icon';
 
 interface DynamicActivityFormProps {
   title: string;
@@ -157,9 +158,9 @@ const DynamicActivityForm: React.FC<DynamicActivityFormProps> = ({
           {/* Remove Row Button */}
           <button
             type="button"
-            className="bg-red-500 text-white px-4 py-2 rounded ml-2"
+            className="bg-red-500 text-white px-4 py-2 rounded ml-2 inline-flex items-center justify-center gap-1.5"
             onClick={() => handleRemoveRow(index)}
-          >
+          ><Icon name="delete" size={20} />
             {t('remove')}
           </button>
         </div>
@@ -168,9 +169,9 @@ const DynamicActivityForm: React.FC<DynamicActivityFormProps> = ({
       {/* Add Row Button */}
       <button
         type="button"
-        className="bg-primaryGreen text-white px-4 py-2 rounded"
+        className="bg-primaryGreen text-white px-4 py-2 rounded inline-flex items-center justify-center gap-1.5"
         onClick={handleAddRow}
-      >
+      ><Icon name="add" size={20} />
         {t('addRow')}
       </button>
     </div>

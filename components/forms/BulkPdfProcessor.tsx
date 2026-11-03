@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import PrefilledForm from './PrefilledForm';
 import { supabase } from '../../services/supabaseClient';
 import { authFetch } from '../../services/authFetch';
+import Icon from '../ui/Icon';
 
 interface FormPreview {
   err_id: string;
@@ -187,8 +188,8 @@ const BulkPdfProcessor: React.FC<BulkPdfProcessorProps> = ({ project, onFormSubm
           <button
             onClick={handleUpload}
             disabled={!file || isProcessing}
-            className="bg-primaryGreen text-white py-2 px-4 rounded-lg disabled:opacity-50"
-          >
+            className="bg-primaryGreen text-white py-2 px-4 rounded-lg disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+          ><Icon name="document_scanner" size={20} />
             {isProcessing ? t('processing') : t('upload_and_scan')}
           </button>
         </div>
@@ -201,8 +202,8 @@ const BulkPdfProcessor: React.FC<BulkPdfProcessorProps> = ({ project, onFormSubm
             <h2 className="text-xl font-bold">{t('multiple_forms.title')}</h2>
             <button
               onClick={selectAllForms}
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
+              className="bg-blue-500 text-white px-4 py-2 rounded inline-flex items-center justify-center gap-1.5"
+            ><Icon name="select_all" size={20} />
               {t('multiple_forms.select_all')}
             </button>
           </div>
@@ -234,8 +235,8 @@ const BulkPdfProcessor: React.FC<BulkPdfProcessorProps> = ({ project, onFormSubm
           <button
             onClick={processSelectedForms}
             disabled={!detectedForms.some(form => form.selected)}
-            className="w-full bg-primaryGreen text-white py-2 px-4 rounded disabled:opacity-50"
-          >
+            className="w-full bg-primaryGreen text-white py-2 px-4 rounded disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+          ><Icon name="play_arrow" size={20} />
             {t('multiple_forms.process_selected')}
           </button>
         </div>

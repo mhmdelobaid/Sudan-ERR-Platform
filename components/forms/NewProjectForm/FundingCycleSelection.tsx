@@ -81,7 +81,7 @@ const FundingCycleSelection: React.FC<FundingCycleSelectionProps> = ({ onReturnT
                 <MessageBubble>
                     <div className="text-red-600">{t('errors.fetchGrantCallsError')}: {error}</div>
                 </MessageBubble>
-                <Button text={t('returnToMenu')} onClick={onReturnToMenu} />
+                <Button icon="arrow_back" text={t('returnToMenu')} onClick={onReturnToMenu} />
             </FormBubble>
         );
     }
@@ -120,11 +120,11 @@ const FundingCycleSelection: React.FC<FundingCycleSelectionProps> = ({ onReturnT
                         </div>
                     ))}
                     <div className="mt-2">
-                        <Button text={t('grantCalls.selectCall')} onClick={onReturnToMenu} className="w-full" />
+                        <Button icon="check" text={t('grantCalls.selectCall')} onClick={onReturnToMenu} className="w-full" />
                     </div>
                 </div>
 
-                <Button text={t('returnToMenu')} onClick={onReturnToMenu} className="w-full mt-4" />
+                <Button icon="arrow_back" text={t('returnToMenu')} onClick={onReturnToMenu} className="w-full mt-4" />
             </div>
         </FormBubble>
     );

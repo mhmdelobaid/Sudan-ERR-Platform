@@ -8,6 +8,7 @@ import Button from "../components/ui/Button";
 import BulkPdfProcessor from "../components/forms/BulkPdfProcessor";
 import { supabase } from "../services/supabaseClient";
 import { authFetch } from '../services/authFetch';
+import Icon from '../components/ui/Icon';
 
 interface ScanFormProps {
   onReturnToMenu: () => void;
@@ -88,7 +89,7 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
             <div>
                 <p>{t("form_success")}</p>
                 <div className="flex space-x-4 mt-2">
-                    <Button
+                    <Button icon="document_scanner"
                         text={t("scan_another_form")}
                         onClick={() => {
                             setFile(null);
@@ -99,7 +100,7 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
                             }
                         }}
                     />
-                    <Button
+                    <Button icon="arrow_back"
                         text={t("return_to_menu")}
                         onClick={onReturnToMenu}
                     />
@@ -252,24 +253,24 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
             
             <div className="flex gap-1 rounded-xl bg-gray-100 border border-gray-200 p-1" role="tablist">
               <button
-                className={`w-full rounded-lg py-2.5 text-sm font-medium leading-5 
+                className={`inline-flex items-center justify-center gap-1.5 w-full rounded-lg py-2.5 text-sm font-medium leading-5 
                   ${uploadType === 'image' ? 'bg-white text-brand-blue font-semibold shadow' : 'text-gray-700 hover:bg-white/70'}`}
                 onClick={() => setUploadType('image')}
-              >
+              ><Icon name="image" size={18} />
                 {t("upload_image")}
               </button>
               <button
-                className={`w-full rounded-lg py-2.5 text-sm font-medium leading-5
+                className={`inline-flex items-center justify-center gap-1.5 w-full rounded-lg py-2.5 text-sm font-medium leading-5
                   ${uploadType === 'pdf' ? 'bg-white text-brand-blue font-semibold shadow' : 'text-gray-700 hover:bg-white/70'}`}
                 onClick={() => setUploadType('pdf')}
-              >
+              ><Icon name="picture_as_pdf" size={18} />
                 {t("upload_pdf")}
               </button>
               <button
-                className={`w-full rounded-lg py-2.5 text-sm font-medium leading-5
+                className={`inline-flex items-center justify-center gap-1.5 w-full rounded-lg py-2.5 text-sm font-medium leading-5
                   ${uploadType === 'bulk-pdf' ? 'bg-white text-brand-blue font-semibold shadow' : 'text-gray-700 hover:bg-white/70'}`}
                 onClick={() => setUploadType('bulk-pdf')}
-              >
+              ><Icon name="library_add" size={18} />
                 {t("upload_bulk_pdf")}
               </button>
             </div>
@@ -289,9 +290,9 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
                   {file && <span className="text-gray-600">{file.name}</span>}
                   <button
                     onClick={handleUpload}
-                    className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all"
+                    className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all inline-flex items-center justify-center gap-1.5"
                     disabled={!file || isLoading}
-                  >
+                  ><Icon name="document_scanner" size={20} />
                     {isLoading ? t("processing") : t("upload_and_scan")}
                   </button>
                 </div>
@@ -309,9 +310,9 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
                   {pdfFile && <span className="text-gray-600">{pdfFile.name}</span>}
                   <button
                     onClick={handlePdfUpload}
-                    className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all"
+                    className="bg-primaryGreen text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all inline-flex items-center justify-center gap-1.5"
                     disabled={!pdfFile || pdfProcessing}
-                  >
+                  ><Icon name="document_scanner" size={20} />
                     {pdfProcessing ? t("processing") : t("upload_and_scan")}
                   </button>
                 </div>

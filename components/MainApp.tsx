@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
+import Icon from './ui/Icon';
 
 // Initialize PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
@@ -59,16 +60,16 @@ const MainApp = ({ onLogout }) => {
         <h1 className="text-2xl font-bold text-black">{t('welcomeMessage')}</h1>
       </div>
       <div className="flex flex-col space-y-4 w-full max-w-sm">
-        <Button text={t('login')} onClick={handleLogin} />
-        <Button text={t('offlineMode')} onClick={handleOfflineMode} />
-        <Button 
+        <Button icon="login" text={t('login')} onClick={handleLogin} />
+        <Button icon="cloud_off" text={t('offlineMode')} onClick={handleOfflineMode} />
+        <Button icon="menu_book" 
           text={t('downloadGuide')}
           onClick={handleDownload}
         />
         <button 
           onClick={handleLogout}
-          className="w-full py-2 px-4 rounded bg-red-600 hover:bg-red-700 text-white font-medium"
-        >
+          className="w-full py-2 px-4 rounded bg-red-600 hover:bg-red-700 text-white font-medium inline-flex items-center justify-center gap-1.5"
+        ><Icon name="logout" size={20} />
           {t('logout')}
         </button>
         <div className="flex justify-center space-x-4 mt-4">
@@ -89,30 +90,24 @@ const MainApp = ({ onLogout }) => {
               onClick={() => setShowPDFModal(false)}
               className="flex items-center text-gray-700"
             >
-              <svg className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <Icon name="arrow_back" size={24} className="me-2" />
               {t('backToApp')}
             </button>
             <div className="flex items-center space-x-4">
               <button 
                 onClick={() => setScale(prev => Math.max(0.5, prev - 0.1))}
                 className="text-gray-700"
-              >
-                -
-              </button>
+              ><Icon name="zoom_out" size={24} title="−" /></button>
               <button 
                 onClick={() => setScale(prev => Math.min(2, prev + 0.1))}
                 className="text-gray-700"
-              >
-                +
-              </button>
+              ><Icon name="zoom_in" size={24} title="+" /></button>
               <a 
                 href="/guides/user-guide.pdf"
                 download="user-guide.pdf"
-                className="text-blue-500"
+                className="text-blue-500 inline-flex items-center gap-1"
               >
-                {t('download')}
+                <Icon name="download" size={20} />{t('download')}
               </a>
             </div>
           </div>
@@ -135,20 +130,16 @@ const MainApp = ({ onLogout }) => {
               <button 
                 onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
                 disabled={pageNumber <= 1}
-                className="text-gray-700 disabled:opacity-50"
-              >
-                Previous
-              </button>
+                className="text-gray-700 disabled:opacity-50 inline-flex items-center gap-1"
+              ><Icon name="chevron_left" size={22} />Previous</button>
               <span>
                 Page {pageNumber} of {numPages}
               </span>
               <button 
                 onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
                 disabled={pageNumber >= numPages}
-                className="text-gray-700 disabled:opacity-50"
-              >
-                Next
-              </button>
+                className="text-gray-700 disabled:opacity-50 inline-flex items-center gap-1"
+              >Next<Icon name="chevron_right" size={22} /></button>
             </div>
           )}
         </div>

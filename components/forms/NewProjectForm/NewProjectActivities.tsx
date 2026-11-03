@@ -2,7 +2,7 @@ import React from "react";
 import { Field, FieldArray } from "formik";
 import { useTranslation } from "react-i18next";
 import Button from "../../ui/Button";
-import { PlusCircleIcon, MinusCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
+import Icon from '../../ui/Icon';
 
 const NewProjectActivities = ({ optionsActivities, optionsExpenses }) => {
   const { t } = useTranslation('projectApplication');
@@ -20,7 +20,7 @@ const NewProjectActivities = ({ optionsActivities, optionsExpenses }) => {
               <Button
                 text=""
                 onClick={() => remove(index)}
-                icon={<TrashIcon className="w-5 h-5" />}
+                icon="delete"
                 variant="danger"
                 className="absolute top-3 right-3 !p-2 !m-0"
               />
@@ -179,13 +179,13 @@ const NewProjectActivities = ({ optionsActivities, optionsExpenses }) => {
                                 unitPrice: '',
                                 total: ''
                               })}
-                              icon={<PlusCircleIcon className="w-5 h-5" />}
+                              icon="add_circle"
                               className="text-sm"
                             />
                             <Button
                               text=""
                               onClick={() => removeExpense(expenseIndex)}
-                              icon={<MinusCircleIcon className="w-5 h-5" />}
+                              icon="do_not_disturb_on"
                               variant="danger"
                               className="text-sm"
                             />
@@ -202,7 +202,7 @@ const NewProjectActivities = ({ optionsActivities, optionsExpenses }) => {
                             unitPrice: '',
                             total: ''
                           })}
-                          icon={<PlusCircleIcon className="w-5 h-5" />}
+                          icon="add_circle"
                           className="text-sm"
                         />
                       )}
@@ -212,7 +212,7 @@ const NewProjectActivities = ({ optionsActivities, optionsExpenses }) => {
               </div>
             </div>
           ))}
-          <Button
+          <Button icon="add"
             text={t('activities.add')}
             onClick={() => push({ 
               selectedActivity: '', 

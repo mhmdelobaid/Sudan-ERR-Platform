@@ -298,7 +298,7 @@ const CustomFormReview: React.FC<CustomFormReviewProps> = ({ data, onSubmit }) =
 
       {/* Submit Button */}
       <div className="mt-6">
-        <Button
+        <Button icon="send"
           text={
             formSubmitted
               ? t("buttons.submitted")

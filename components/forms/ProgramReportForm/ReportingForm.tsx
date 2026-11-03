@@ -6,12 +6,12 @@ import Button from '../../ui/Button';
 import getInitialValues from './values/values';
 import { createValidationScheme } from './values/validation';
 import Project from '../NewProjectForm/Project';
-import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import UploadChooserSupporting from './upload/UploadChooserSupporting';
 import UploadedList from './upload/UploadedList';
 import { FileWithProgress, UploadedFile } from './upload/UploadInterfaces';
 import { createOnSubmit } from './upload/onSubmit';
 import { newSupabase } from '../../../services/newSupabaseClient';
+import Icon from '../../ui/Icon';
 
 interface ReportingFormProps {
     project: Project;
@@ -140,8 +140,8 @@ const ProgramReportForm: React.FC<ReportingFormProps> = ({
                 <div className="prose flex flex-col">
                     <p className="mb-4">{t('formSuccess')}</p>
                     <div className="flex justify-between">
-                        <Button text={t('submitAnother')} onClick={onSubmitAnotherForm} />
-                        <Button text={t('returnToMenu')} onClick={onReturnToMenu} />
+                        <Button icon="add" text={t('submitAnother')} onClick={onSubmitAnotherForm} />
+                        <Button icon="arrow_back" text={t('returnToMenu')} onClick={onReturnToMenu} />
                     </div>
                 </div>
             </FormBubble>
@@ -269,7 +269,7 @@ const ProgramReportForm: React.FC<ReportingFormProps> = ({
                                                             onClick={() => remove(index)}
                                                             className="text-red-500 hover:text-red-700"
                                                         >
-                                                            <Trash2 size={24} />
+                                                            <Icon name="delete" size={24} />
                                                         </button>
                                                     )}
                                                     <button
@@ -278,9 +278,9 @@ const ProgramReportForm: React.FC<ReportingFormProps> = ({
                                                         className="text-gray-500 hover:text-gray-700"
                                                     >
                                                         {collapsedActivities[index] ? (
-                                                            <ChevronDown size={24} />
+                                                            <Icon name="keyboard_arrow_down" size={24} />
                                                         ) : (
-                                                            <ChevronUp size={24} />
+                                                            <Icon name="keyboard_arrow_up" size={24} />
                                                         )}
                                                     </button>
                                                 </div>
@@ -444,7 +444,7 @@ const ProgramReportForm: React.FC<ReportingFormProps> = ({
                                             )}
                                         </div>
                                     ))}
-                                    <Button
+                                    <Button icon="add"
                                         text={t('activities.addActivity')}
                                         onClick={() => push(getInitialValues(project.id).activities[0])}
                                         className="mt-2 mb-1"
@@ -476,7 +476,7 @@ const ProgramReportForm: React.FC<ReportingFormProps> = ({
                         </div>
 
                         <div className="flex justify-center gap-4 mt-8">
-                            <Button 
+                            <Button icon="save" 
                                 text={t('drafts.saveDraft')} 
                                 type="button"
                                 onClick={() => handleSaveDraft(values)}
@@ -484,7 +484,7 @@ const ProgramReportForm: React.FC<ReportingFormProps> = ({
                                 variant="primary"
                                 className="w-full"
                             />
-                            <Button 
+                            <Button icon="send" 
                                 text={t('submit')} 
                                 type="submit"
                                 disabled={isSaving}

@@ -69,7 +69,7 @@ const ResetPassword = () => {
                 {error && <p className="text-red-500 text-sm text-center">{error}</p>}
                 {message && <p className="text-green-500 text-sm text-center">{message}</p>}
 
-                <Button
+                <Button icon="mail"
                     text={isLoading ? t('sendingResetLink') : t('sendResetLink')}
                     type="submit"
                     disabled={isLoading}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileWithProgress, UploadedFile } from './UploadInterfaces';
-import { Trash2, FileText, Image, Check } from 'lucide-react';
+import Icon from '../../../ui/Icon';
 
 interface Props {
     uploadingFiles: FileWithProgress[];
@@ -18,9 +18,9 @@ const formatFileSize = (bytes: number) => {
 };
 
 const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) return <FileText className="h-5 w-5 text-gray-400" />;
-    if (fileType.includes('image')) return <Image className="h-5 w-5 text-gray-400" />;
-    return <FileText className="h-5 w-5 text-gray-400" />;
+    if (fileType.includes('pdf')) return <Icon name="description" size={20} className="text-gray-400" />;
+    if (fileType.includes('image')) return <Icon name="image" size={20} className="text-gray-400" />;
+    return <Icon name="description" size={20} className="text-gray-400" />;
 };
 
 export const UploadedList: React.FC<Props> = ({
@@ -42,7 +42,7 @@ export const UploadedList: React.FC<Props> = ({
                                     <p className="text-sm font-medium text-gray-900">{file.file.name}</p>
                                     <p className="text-xs text-gray-500">{formatFileSize(file.file.size)}</p>
                                 </div>
-                                <Check className="h-5 w-5 text-green-500" />
+                                <Icon name="check_circle" size={20} className="text-green-500" />
                             </div>
                         </div>
                     </div>
@@ -63,7 +63,7 @@ export const UploadedList: React.FC<Props> = ({
                                     onClick={() => onRemoveUploaded(file.id)}
                                     className="text-gray-400 hover:text-red-500 transition-colors"
                                 >
-                                    <Trash2 className="h-5 w-5" />
+                                    <Icon name="delete" size={20} />
                                 </button>
                             </div>
                         </div>

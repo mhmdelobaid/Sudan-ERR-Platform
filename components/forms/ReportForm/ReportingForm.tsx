@@ -241,7 +241,7 @@ const ReportingForm: React.FC<ReportingFormProps> = ({ errId, reportId, project,
                                                 reportId={reportId}
                                             />
                                         ))}
-                                        <Button
+                                        <Button icon="add"
                                             text={t('addExpense')}
                                             onClick={() =>
                                                 arrayHelpers.push(getNewExpense())
@@ -318,13 +318,13 @@ const ReportingForm: React.FC<ReportingFormProps> = ({ errId, reportId, project,
                             </div>
 
                             <div className="flex justify-between mb-10">
-                                <Button 
+                                <Button icon="save" 
                                     text={t('saveDraft')}
                                     onClick={() => handleSaveDraft(values)}
                                     disabled={isSaving}
                                     className="bg-primaryGreen hover:bg-green-700"
                                 />
-                                <Button 
+                                <Button icon="send" 
                                     text={t('submitReport')}
                                     onClick={async () =>
                                         await submitEntireForm(values, reportId, project, setIsFormSubmitted)
@@ -504,7 +504,7 @@ const AfterFormSubmitted: React.FC<AfterFormSubmittedProps> = ({ onReturnToMenu 
         <div className="bg-white p-4 rounded-lg">
             <p className="text-black-bold text-base mb-4">{t('formSubmitted')}</p>
             <div className="flex justify-center">
-            <Button text={t('returnToMenu')} onClick={onReturnToMenu} />
+            <Button icon="arrow_back" text={t('returnToMenu')} onClick={onReturnToMenu} />
             </div>
         </div>
     )

@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { newSupabase } from '../services/newSupabaseClient';
 import { RESPONSE_STATUSES, STATUS_STYLE, toResponseCounts } from '../services/responseStatus';
+import Icon from '../components/ui/Icon';
 
 // LCC (مجلس تنسيق العمل القاعدي) logo colours, used only for the band under the header
 const LCC_BAND = ['#F2CB04', '#F13005', '#FE4D01', '#303EBB', '#5B177C'];
@@ -125,7 +126,7 @@ function Pipeline({ statuses, counts, drafts, total, label, stepLabel, isAr }: {
                             </div>
                         </div>
                         {arrow && (
-                            <span aria-hidden="true" className="hidden md:block absolute top-1/2 -translate-y-1/2 -end-[14px] text-brand-orange font-bold leading-none">{isAr ? '←' : '→'}</span>
+                            <span aria-hidden="true" className="hidden md:block absolute top-1/2 -translate-y-1/2 -end-[14px] text-brand-orange font-bold leading-none"><Icon name="arrow_forward" size={22} /></span>
                         )}
                     </li>
                 );
@@ -235,9 +236,9 @@ export default function Dashboard() {
             <main className="max-w-3xl mx-auto p-4">
                 <div className="no-print flex flex-wrap gap-2 mb-4">
                     <button onClick={() => window.print()} disabled={!data}
-                        className="px-4 py-2 rounded-lg bg-brand-blue text-white font-semibold disabled:opacity-50">{t('print')}</button>
+                        className="px-4 py-2 rounded-lg bg-brand-blue text-white font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-1.5"><Icon name="print" size={20} />{t('print')}</button>
                     <button onClick={() => router.push('/menu')}
-                        className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 font-semibold">{t('back')}</button>
+                        className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 font-semibold inline-flex items-center justify-center gap-1.5"><Icon name="arrow_back" size={20} />{t('back')}</button>
                 </div>
 
                 {!data && !error && <p className="text-gray-600">{t('loading')}</p>}

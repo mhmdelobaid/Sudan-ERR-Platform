@@ -105,7 +105,7 @@ const ScanPrefillForm: React.FC<{ project?: any }> = ({ project }) => {
           </MessageBubble>
           <MessageBubble>
             <div className="flex space-x-4 mt-2">
-              <Button
+              <Button icon="document_scanner"
                 text={t("scan_another_form")}
                 onClick={() => {
                   setShowFileUploader(false); // Reset to allow new scan
@@ -113,7 +113,7 @@ const ScanPrefillForm: React.FC<{ project?: any }> = ({ project }) => {
                   setStructuredData(null); // Reset structured data if needed
                 }}
               />
-              <Button
+              <Button icon="arrow_back"
                 text={t("return_to_menu")}
                 onClick={() => (window.location.href = "/menu")}
               />
