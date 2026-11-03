@@ -1,9 +1,11 @@
 // My account: every signed-in person sees their own details and changes their name, password and
 // language, signs out other devices, or logs out. Email, role and room are changed by an admin.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import Button from '../components/ui/Button';
+import SignaturePad, { SignaturePadHandle } from '../components/ui/SignaturePad';
+import { saveMySignature } from '../components/signatures/signApi';
 import { newSupabase } from '../services/newSupabaseClient';
 import { signOutAndLock } from '../services/appLock';
 
@@ -12,6 +14,8 @@ interface Profile {
     room_name: string | null; room_name_ar: string | null; room_type: string | null; err_code: string | null;
     locality: string | null; locality_ar: string | null; state: string | null; state_ar: string | null;
     can_see_all_states: boolean; visible_states: string[]; position: string | null;
+    officer_position?: 'program' | 'finance' | 'reporting' | null;
+    has_signature?: boolean; signature_png?: string | null; signature_updated_at?: string | null;
     created_at: string | null; last_sign_in_at: string | null;
 }
 type Note = { kind: 'ok' | 'error'; text: string } | null;
@@ -62,6 +66,13 @@ const ProfilePage: React.FC = () => {
     const [showPw, setShowPw] = useState(false);
     const [pwBusy, setPwBusy] = useState(false);
     const [pwNote, setPwNote] = useState<Note>(null);
+
+    // Saved signature (used to sign F1, F3, F4 and F5 with one tap)
+    const [sigEditing, setSigEditing] = useState(false);
+    const [sigEmpty, setSigEmpty] = useState(true);
+    const [sigBusy, setSigBusy] = useState(false);
+    const [sigNote, setSigNote] = useState<Note>(null);
+    const sigPad = useRef<SignaturePadHandle>(null);
 
     const [devBusy, setDevBusy] = useState(false);
     const [devNote, setDevNote] = useState<Note>(null);
@@ -125,6 +136,22 @@ const ProfilePage: React.FC = () => {
         }
     };
 
+    const saveSignature = async () => {
+        const png = sigPad.current?.toDataURL();
+        if (!png) return;
+        setSigBusy(true); setSigNote(null);
+        try {
+            const r = await saveMySignature(png);
+            setProfile(p => (p ? { ...p, has_signature: true, signature_png: r.signature_png, signature_updated_at: r.signature_updated_at } : p));
+            setSigEditing(false);
+            setSigNote({ kind: 'ok', text: t('signature.saved') });
+        } catch (e: any) {
+            setSigNote({ kind: 'error', text: t(e?.message === 'invalid_signature' ? 'signature.invalid' : 'error') });
+        } finally {
+            setSigBusy(false);
+        }
+    };
+
     const signOutOthers = async () => {
         setDevBusy(true); setDevNote(null);
         const { error } = await newSupabase.auth.signOut({ scope: 'others' });
@@ -133,7 +160,7 @@ const ProfilePage: React.FC = () => {
     };
 
     // Messages on screen were written in the old language, so they go.
-    const changeLanguage = (lng: 'ar' | 'en') => { setNameNote(null); setPwNote(null); setDevNote(null); i18n.changeLanguage(lng); };
+    const changeLanguage = (lng: 'ar' | 'en') => { setNameNote(null); setPwNote(null); setDevNote(null); setSigNote(null); i18n.changeLanguage(lng); };
 
     // What this person can see, in words
     const scope = (p: Profile) => {
@@ -204,6 +231,7 @@ const ProfilePage: React.FC = () => {
         <section className={card} aria-labelledby="sec-access">
             <h2 id="sec-access" className="text-base font-bold text-gray-900 mb-0">{t('access.title')}</h2>
             <Row label={t('access.role')}>{t(`role.${profile.role}`, { ns: 'userManagement', defaultValue: profile.role })}</Row>
+            {profile.officer_position && <Row label={t('access.officer')}>{t(`officer.${profile.officer_position}`, { ns: 'userManagement' })}</Row>}
             {profile.position && <Row label={t('access.position')}>{profile.position}</Row>}
             {profile.room_name && (
                 <Row label={t('access.roomLabel')}>{pick(profile.room_name, profile.room_name_ar)}{profile.err_code ? <span className="text-gray-500"> (<bdi>{profile.err_code}</bdi>)</span> : null}</Row>
@@ -212,6 +240,47 @@ const ProfilePage: React.FC = () => {
             {profile.state && <Row label={t('access.stateLabel')}>{pick(profile.state, profile.state_ar)}</Row>}
             <Row label={t('access.sees')}>{scope(profile)}</Row>
             <p className="text-xs text-gray-500 mb-0">{t('access.askAdmin')}</p>
+        </section>
+
+        {/* My signature: drawn once, added with one tap when signing F1, F3, F4 and F5 */}
+        <section className={card} aria-labelledby="sec-signature">
+            <h2 id="sec-signature" className="text-base font-bold text-gray-900 mb-0">{t('signature.title')}</h2>
+            <p className="text-sm text-gray-600 mb-0">
+                {profile.officer_position ? t('signature.hint') : t('signature.hintNotOfficer')}
+            </p>
+            {sigEditing ? (
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-gray-600">{t('signature.drawHere')}</span>
+                        <button type="button" className="text-sm text-blue-600 hover:underline" onClick={() => sigPad.current?.clear()}>{t('signature.clear')}</button>
+                    </div>
+                    <SignaturePad ref={sigPad} onChange={setSigEmpty} ariaLabel={t('signature.drawHere')} />
+                    <div className="flex flex-wrap gap-2 justify-end">
+                        <button type="button" className={btnLine} disabled={sigBusy} onClick={() => { setSigEditing(false); setSigNote(null); }}>{t('cancel')}</button>
+                        <button type="button" className={btnPrimary} disabled={sigBusy || sigEmpty} onClick={saveSignature}>{sigBusy ? t('saving') : t('signature.save')}</button>
+                    </div>
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    {profile.signature_png ? (
+                        <>
+                            <div className="rounded-xl border border-gray-200 bg-white p-2">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={profile.signature_png} alt={t('signature.title')} className="h-20 w-full object-contain" />
+                            </div>
+                            <p className="text-xs text-gray-500 mb-0">{t('signature.savedOn', { date: fmtDate(profile.signature_updated_at) })} · {t('signature.pastStay')}</p>
+                        </>
+                    ) : (
+                        <p className="text-sm text-gray-700 mb-0">{t('signature.none')}</p>
+                    )}
+                    <div className="flex justify-end">
+                        <button type="button" className={btnLine} onClick={() => { setSigEditing(true); setSigEmpty(true); setSigNote(null); }}>
+                            {profile.signature_png ? t('signature.redraw') : t('signature.draw')}
+                        </button>
+                    </div>
+                </div>
+            )}
+            <NoteBox note={sigNote} />
         </section>
 
         {/* Password */}

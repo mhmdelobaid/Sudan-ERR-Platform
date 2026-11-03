@@ -14,7 +14,7 @@ interface UserRow {
     err_id: string | null; room_name: string | null; room_name_ar: string | null; room_type: string | null; err_code: string | null;
     locality: string | null; locality_ar: string | null; state: string | null; state_ar: string | null;
     can_see_all_states: boolean; visible_states: string[]; created_at: string | null; last_sign_in_at: string | null; is_me: boolean;
-    position?: string | null; imported_at?: string | null; last_link_at?: string | null; last_link_method?: 'email' | 'copy' | null; link_count?: number;
+    position?: string | null; officer_position?: 'program' | 'finance' | 'reporting' | null; imported_at?: string | null; last_link_at?: string | null; last_link_method?: 'email' | 'copy' | null; link_count?: number;
 }
 interface Room {
     id: string; name: string | null; name_ar: string | null; type: string | null; err_code: string | null; status: string | null;
@@ -70,7 +70,7 @@ const UserManagement: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState('');
     const [stateFilter, setStateFilter] = useState('');
     const [editing, setEditing] = useState<string | null>(null);
-    const [draft, setDraft] = useState<{ display_name: string; role: string; status: Status; err_id: string; can_see_all_states: boolean; visible_states: string[] } | null>(null);
+    const [draft, setDraft] = useState<{ display_name: string; role: string; status: Status; err_id: string; can_see_all_states: boolean; visible_states: string[]; officer_position: string } | null>(null);
     const [roomSearch, setRoomSearch] = useState('');
     const [busy, setBusy] = useState<string | null>(null);
     const [showImport, setShowImport] = useState(false);
@@ -203,7 +203,7 @@ const UserManagement: React.FC = () => {
     const openEdit = (u: UserRow) => {
         setEditing(u.id); setRoomSearch(''); setMessage(null);
         setDraft({ display_name: u.display_name || '', role: u.role, status: u.status === 'deleted' ? 'suspended' : u.status, err_id: u.err_id || '',
-                   can_see_all_states: u.can_see_all_states, visible_states: u.visible_states || [] });
+                   can_see_all_states: u.can_see_all_states, visible_states: u.visible_states || [], officer_position: u.officer_position || '' });
     };
     const saveEdit = (u: UserRow) => {
         if (!draft) return;
@@ -214,6 +214,8 @@ const UserManagement: React.FC = () => {
         const needsRoom = ROOM_FOR[draft.role] !== null;
         const room = needsRoom ? draft.err_id : '';
         if (room !== (u.err_id || '')) changes.err_id = room;
+        // Program / finance officer: who signs the room's F3 contracts
+        if ((draft.officer_position || '') !== (u.officer_position || '')) changes.officer_position = draft.officer_position;
         if (SCOPED_STATES.includes(draft.role)) {
             if (draft.can_see_all_states !== u.can_see_all_states) changes.can_see_all_states = draft.can_see_all_states;
             const a = [...draft.visible_states].sort().join('|'), b = [...(u.visible_states || [])].sort().join('|');
@@ -313,6 +315,15 @@ const UserManagement: React.FC = () => {
                 </label>
             </div>
             {u.is_me && <p className="text-xs text-gray-500 mb-0">{t('selfNote')}</p>}
+            {ROOM_FOR[draft.role] !== null && (
+                <label className="block">
+                    <span className="block text-xs text-gray-600 mb-1">{t('field.officer')}</span>
+                    <select className={input} value={draft.officer_position} onChange={e => setDraft({ ...draft, officer_position: e.target.value })}>
+                        {['', 'program', 'finance', 'reporting'].map(o => <option key={o || 'none'} value={o}>{t(`officer.${o || 'none'}`)}</option>)}
+                    </select>
+                    <span className="block text-xs text-gray-500 mt-1">{t('officerNote')}</span>
+                </label>
+            )}
 
             {ROOM_FOR[draft.role] !== null && (
                 <div className="space-y-1">
@@ -509,6 +520,7 @@ const UserManagement: React.FC = () => {
                                                 <td className="p-3">
                                                     <span className="block font-semibold text-gray-900">{u.display_name || '—'}{u.is_me && <span className="ms-1 text-xs text-gray-500">({t('you')})</span>}</span>
                                                     <span className="block text-xs text-gray-500" dir="ltr">{u.email || '—'}</span>
+                                                    {u.officer_position && <span className="block text-xs font-semibold text-blue-800">{t(`officer.${u.officer_position}`)}</span>}
                                                     {u.position && <span className="block text-xs text-gray-500">{t('import.listSays', { text: u.position })}</span>}
                                                 </td>
                                                 <td className="p-3 text-gray-800">{t(`role.${u.role}`, { defaultValue: u.role })}</td>
@@ -547,6 +559,7 @@ const UserManagement: React.FC = () => {
                                     </div>
                                     <p className="text-sm text-gray-800 mb-0"><span className="text-gray-500">{t('col.role')}: </span>{t(`role.${u.role}`, { defaultValue: u.role })}</p>
                                     <p className="text-sm text-gray-700 mb-0"><span className="text-gray-500">{t('col.scope')}: </span>{scopeText(u)}</p>
+                                    {u.officer_position && <p className="text-xs font-semibold text-blue-800 mb-0">{t(`officer.${u.officer_position}`)}</p>}
                                     {u.position && <p className="text-xs text-gray-500 mb-0">{t('import.listSays', { text: u.position })}</p>}
                                     <p className="text-xs text-gray-500 mb-0">{t('col.lastSignIn')}: {fmtDate(u.last_sign_in_at)}</p>
                                     {linkStatus(u) && <p className="text-xs text-gray-500 mb-0">{linkStatus(u)}</p>}

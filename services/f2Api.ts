@@ -94,6 +94,15 @@ const KNOWN_ERRORS: Record<string, number> = {
     user_not_lcc_wg: 400,
     program_lead_required: 400,
     not_allowed: 403,
+    // Officer signatures (F1, F3, F4, F5) and officer positions
+    invalid_position: 400,
+    not_a_signer: 403,
+    no_saved_signature: 409,
+    not_your_room: 403,
+    partner_not_signed: 409,
+    invalid_signature: 400,
+    invalid_document: 400,
+    already_signed: 409,
     // keep last: other codes contain it
     not_found: 404,
 };

@@ -8,6 +8,7 @@ import MenuCard from '../components/ui/MenuCard';
 import {
     ClipboardDocumentCheckIcon, UserGroupIcon, UsersIcon, UserCircleIcon, FolderIcon, DocumentTextIcon, DocumentCheckIcon,
     BanknotesIcon, PresentationChartLineIcon, ChartBarIcon, ChatBubbleLeftEllipsisIcon, ArrowRightStartOnRectangleIcon,
+    PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 import ReportingForm from '../components/forms/ReportForm/ReportingForm';
 import ScanForm from './scan-form';
@@ -25,6 +26,7 @@ import FinancialReportDrafts from '../components/forms/FinancialReportForm/Finan
 import ProgramReportDrafts from '../components/forms/ProgramReportForm/ProgramReportDrafts';
 import { newSupabase } from '../services/newSupabaseClient';
 import { signOutAndLock } from '../services/appLock';
+import { fetchMySignatures } from '../components/signatures/signApi';
 
 /**
  * Chat-style menu.
@@ -104,6 +106,8 @@ const Menu = () => {
     const [projectToEdit, setProjectToEdit] = useState(null);
     const [userRole, setUserRole] = useState<string | null>(null);
     const [reportKind, setReportKind] = useState<'f4' | 'f5' | null>(null); // set by the F4 / F5 cards
+    // Room officers (program / finance / reporting): how many documents wait for their signature
+    const [signatureInfo, setSignatureInfo] = useState<{ position: string | null; waiting: number } | null>(null);
 
     const router = useRouter();
     const errId = router.query.errId;
@@ -149,6 +153,14 @@ const Menu = () => {
 
         checkAuth();
     }, [router]);
+
+    // Signatures waiting for me (only room officers get the card). Never blocks the menu.
+    useEffect(() => {
+        if (!userRole || ['state_rep', 'lcc_wg'].includes(userRole)) return;
+        fetchMySignatures()
+            .then(d => setSignatureInfo({ position: d.me?.officer_position || null, waiting: (d.queue || []).length }))
+            .catch(() => setSignatureInfo(null));
+    }, [userRole]);
 
     // Fetch active projects when 'reporting' menu is selected
     useEffect(() => {
@@ -446,6 +458,11 @@ const Menu = () => {
                         {['state_rep', 'admin', 'superadmin'].includes(userRole || '') && (
                             <MenuCard title={t('cardsTitle.f2')} description={t('cards.f2Review')}
                                 icon={<ClipboardDocumentCheckIcon className="w-6 h-6" />} onClick={() => router.push('/f2-review')} />
+                        )}
+                        {/* Room officers: documents waiting for my signature (F1, F3, F4, F5) */}
+                        {isRoomUser && signatureInfo?.position && (
+                            <MenuCard title={t('cardsTitle.signatures')} description={t('cards.signatures')} badge={signatureInfo.waiting}
+                                icon={<PencilSquareIcon className="w-6 h-6" />} onClick={() => router.push('/signatures')} />
                         )}
                         {isRoomUser && (
                             <>

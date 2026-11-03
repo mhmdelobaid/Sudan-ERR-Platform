@@ -64,7 +64,8 @@
     "room_locality": "Locality room",
     "room_state": "State room",
     "room_any": "Room (the rep's locality)",
-    "allStates": "Sees all states"
+    "allStates": "Sees all states",
+    "officer": "Officer position (signs F3)"
   },
   "roomSearch": "Search room, locality or state",
   "roomInactive": "not activated",
@@ -101,7 +102,8 @@
     "email_exists": "Already has an account with this email.",
     "login_not_found": "No login found for this account.",
     "invalid_method": "Invalid request.",
-    "invalid_user_id": "Invalid user."
+    "invalid_user_id": "Invalid user.",
+    "invalid_position": "Pick a valid officer position."
   },
   "import": {
     "open": "Import a list",
@@ -187,5 +189,12 @@
     "failed": "Not activated: {{names}}.",
     "selectAll": "Select all",
     "selectOne": "Select {{name}}"
-  }
+  },
+  "officer": {
+    "none": "None",
+    "program": "Program officer",
+    "finance": "Finance officer",
+    "reporting": "Reporting officer"
+  },
+  "officerNote": "The room's program officer and finance officer sign its F3 contracts, each from their own account. The import list's position column sets this automatically."
 }

@@ -49,14 +49,16 @@
     "f4": "Financial report and receipts",
     "f5": "Program report and people reached",
     "userManagement": "All users, their roles and status",
-    "profile": "Your name, password, language and devices"
+    "profile": "Your name, password, language and devices",
+    "signatures": "Documents of your room waiting for your signature"
   },
   "cardsTitle": {
     "f1": "F1 Planning & Budget",
     "f2": "F2 Project screening",
     "f3": "F3 Contract (MOU)",
     "f4": "F4 Financial report",
-    "f5": "F5 Program report"
+    "f5": "F5 Program report",
+    "signatures": "Waiting for my signature"
   },
   "userManagement": "User management",
   "profile": "My account"

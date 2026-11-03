@@ -1,0 +1,63 @@
+{
+  "title": "Waiting for my signature",
+  "subtitle": "Documents of your room that need your signature. Read each one, then sign with your saved signature.",
+  "loading": "Loading...",
+  "youSignAs": "You sign as: {{position}}",
+  "notOfficer": "Your account isn't set as your room's program, finance or reporting officer, so nothing waits for your signature. Ask the admin if this is wrong.",
+  "savedSignature": "Your saved signature",
+  "noSavedSignature": "You haven't saved a signature yet. You can draw it the first time you sign, or now in",
+  "goToProfile": "My account",
+  "empty": "Nothing is waiting for your signature.",
+  "recentTitle": "Signed recently",
+  "recentEmpty": "You haven't signed anything yet.",
+  "signedOn": "Signed {{date}}",
+  "docType": {
+    "f1": "F1 Work plan",
+    "f3": "F3 Contract (MOU)",
+    "f4": "F4 Financial report",
+    "f5": "F5 Program report"
+  },
+  "position": {
+    "program": "Program officer",
+    "finance": "Finance officer",
+    "reporting": "Reporting officer"
+  },
+  "code": "Number",
+  "partner": "Partner",
+  "amount": "Amount",
+  "alsoSigned": "Already signed: {{names}}",
+  "sign": "Sign",
+  "backToMenu": "Back to menu",
+  "done": "Signed.",
+  "doneComplete": "Signed. All the signatures are in.",
+  "confirm": {
+    "signAs": "You sign as {{position}}",
+    "read": "Read it before you sign:",
+    "agree": {
+      "f1": "I have read this work plan and agree to it on behalf of {{room}}.",
+      "f3": "I have read this contract and agree to it on behalf of {{room}}.",
+      "f4": "I have checked this financial report and confirm it is correct, on behalf of {{room}}.",
+      "f5": "I have checked this program report and confirm it is correct, on behalf of {{room}}."
+    },
+    "saved": "Your saved signature will be added:",
+    "drawFirst": "Draw your signature. It is saved in your account, so next time you sign with one tap.",
+    "clear": "Clear",
+    "final": "Once you sign, it can't be undone.",
+    "button": "Sign",
+    "sending": "Signing...",
+    "cancel": "Cancel"
+  },
+  "errors": {
+    "not_a_signer": "Your officer position doesn't sign this document. Ask the admin if your position is wrong.",
+    "no_saved_signature": "Draw your signature first.",
+    "not_your_room": "This document isn't for your room.",
+    "partner_not_signed": "The partner hasn't signed this contract yet.",
+    "already_signed": "This has already been signed for your position.",
+    "invalid_signature": "The signature couldn't be read. Clear it and draw it again.",
+    "invalid_document": "This document can't be signed here.",
+    "not_found": "This document wasn't found.",
+    "not_active": "Your account is not active.",
+    "unauthorized": "Your session has expired. Please log in again.",
+    "server_error": "Something went wrong. Please try again."
+  }
+}

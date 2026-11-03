@@ -1,11 +1,11 @@
 // User management, superadmin only.
 // GET  /api/user-management                       — every user + the rooms and states to pick from
-// POST /api/user-management { user_id, changes }  — change one user's role, status, room, name or visible states
+// POST /api/user-management { user_id, changes }  — change one user's role, status, room, name, visible states or officer position
 // The database checks the caller is a superadmin (um_users / um_update_user) and logs every change in audit_logs.
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCaller, sendRpcError, withJsonErrors, isUuid } from '../../services/f2Api';
 
-const ALLOWED = ['role', 'status', 'err_id', 'display_name', 'can_see_all_states', 'visible_states'];
+const ALLOWED = ['role', 'status', 'err_id', 'display_name', 'can_see_all_states', 'visible_states', 'officer_position'];
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
     const caller = await getCaller(req, res);

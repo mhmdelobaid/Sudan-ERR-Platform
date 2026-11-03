@@ -1,13 +1,16 @@
 {
   "title": "F3 Contract (MOU)",
-  "subtitle": "Contracts for your room's projects. The Partner team makes the MOU in the portal after screening (F2) and the final review.",
+  "subtitle": "Contracts for your room's projects. The Partner team makes and signs the MOU in the portal; then your room's program officer and finance officer sign it here.",
   "loading": "Loading...",
   "empty": "No contracts, or projects waiting for one, yet.",
   "backToMenu": "Back to menu",
   "state": {
     "ready": "Contract ready",
     "portalReview": "Waiting for portal review",
-    "preparing": "Contract being prepared"
+    "preparing": "Contract being prepared",
+    "signed": "Signed by the room",
+    "toSign": "Waiting for room signatures",
+    "waitingPartner": "Waiting for the partner to sign"
   },
   "mouCode": "MOU code",
   "partner": "Partner",
@@ -24,6 +27,29 @@
   "preparingNote": "The project is approved and the Partner team is preparing the contract in the portal.",
   "errors": {
     "unauthorized": "Your session has expired. Please log in again.",
-    "server_error": "Something went wrong. Please try again."
+    "server_error": "Something went wrong. Please try again.",
+    "not_active": "Your account is not active."
+  },
+  "sign": {
+    "heading": "Signatures",
+    "partner": "Partner",
+    "partnerSigned": "Signed in the portal",
+    "partnerWaiting": "Not signed yet",
+    "position": {
+      "program": "Program officer",
+      "finance": "Finance officer"
+    },
+    "signedBy": "Signed by {{name}}",
+    "signatureOf": "Signature of {{name}}",
+    "waitingOfficer": "Not signed yet",
+    "waitingPartnerShort": "Signs after the partner",
+    "button": "Sign",
+    "noteDone": "Both officers have signed. The partner can now make the transfer.",
+    "notePartnerFirst": "The partner signs first in the portal. Then the program officer and the finance officer sign here.",
+    "noteYourTurn": "It's your turn to sign. The transfer can't be made until both officers have signed.",
+    "noteWaitingOther": "Waiting for the other officer to sign. The transfer can't be made until both have signed.",
+    "noteOnlyOfficers": "Only the room's program officer and finance officer can sign, each from their own account.",
+    "done": "Your signature is saved.",
+    "doneBoth": "Your signature is saved. Both officers have now signed."
   }
 }

@@ -37,7 +37,8 @@ interface FileData {
     lcc: null | { decision: string; note: string | null; decided_at: string; decided_by_name: string | null; working_group_name_ar: string | null; working_group_name_en: string | null };
     lcc_status: string;
     locality_ack: null | { acknowledged_at: string; acknowledged_by_name: string | null };
-    f3: null | { mou_code: string | null; partner_name: string | null; err_name: string | null; total_amount: Num; start_date: string | null; end_date: string | null; transfer_date: string | null; exchange_rate: Num; has_signed_copy: boolean };
+    f3: null | { mou_code: string | null; partner_name: string | null; err_name: string | null; total_amount: Num; start_date: string | null; end_date: string | null; transfer_date: string | null; exchange_rate: Num; has_signed_copy: boolean;
+          partner_signed?: boolean; signatures?: Partial<Record<'program' | 'finance', { name: string; signed_at: string; image: string }>> };
     f4: { id: number; report_date: string | null; total_grant: Num; total_expenses: Num; total_other_sources: Num; remainder: Num; review_status: string | null;
           excess_expenses: string | null; surplus_use: string | null; lessons: string | null; training: string | null;
           expenses: { activity: string | null; description: string | null; amount: Num; payment_date: string | null; payment_method: string | null; receipt_no: string | null }[] }[];
@@ -411,7 +412,30 @@ const ProjectFile: React.FC = () => {
                             <Field label={t('f3.start')}>{fmtDate(data.f3.start_date)}</Field>
                             <Field label={t('f3.end')}>{fmtDate(data.f3.end_date)}</Field>
                             <Field label={t('f3.transfer')}>{fmtDate(data.f3.transfer_date)}</Field>
-                            <Field label={t('f3.signed')}>{data.f3.has_signed_copy ? t('yes') : t('no')}</Field>
+                            <Field label={t('f3.partnerSigned')}>{(data.f3.partner_signed ?? data.f3.has_signed_copy) ? t('yes') : t('no')}</Field>
+                        </div>
+                    )}
+                    {/* The room's two officers sign in the app after the partner (F3 signatures) */}
+                    {data.f3 && (
+                        <div className="grid grid-cols-2 gap-3 pf-keep mt-3">
+                            {(['program', 'finance'] as const).map(pos => {
+                                const s = data.f3?.signatures?.[pos];
+                                return (
+                                    <div key={pos} className="rounded-xl border border-gray-200 p-3">
+                                        <span className="block text-xs text-gray-500">{t(`f3.sig.${pos}`)}</span>
+                                        {s ? (
+                                            <>
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={s.image} alt={t('f3.sig.alt', { name: s.name })} className="h-16 w-full object-contain bg-white" />
+                                                <span className="block text-sm font-semibold text-gray-900">{s.name}</span>
+                                                <span className="block text-xs text-gray-500">{fmtDate(s.signed_at)}</span>
+                                            </>
+                                        ) : (
+                                            <span className="block text-sm text-gray-500 mt-2">{t('f3.sig.notSigned')}</span>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </Section>

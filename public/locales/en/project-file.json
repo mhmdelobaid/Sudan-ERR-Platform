@@ -92,7 +92,14 @@
     "start": "Start",
     "end": "End",
     "transfer": "Transfer date",
-    "signed": "Signed copy uploaded"
+    "signed": "Signed copy uploaded",
+    "partnerSigned": "Signed by the partner",
+    "sig": {
+      "program": "Program officer signature",
+      "finance": "Finance officer signature",
+      "notSigned": "Not signed yet",
+      "alt": "Signature of {{name}}"
+    }
   },
   "f4": {
     "date": "Report date",
