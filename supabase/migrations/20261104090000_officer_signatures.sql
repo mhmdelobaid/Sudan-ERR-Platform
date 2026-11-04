@@ -10,7 +10,10 @@
 --   F5 program report   reporting                       (part 2: before it goes to review)
 --
 -- 1. users.officer_position: 'program' | 'finance' | 'reporting'. Set from the import list's "position"
---    column (um_officer_position) or by a superadmin in User Management.
+--    column (um_officer_position) or by a superadmin in User Management. ERR room accounts only
+--    (base_err, locality_err, state_err): a trigger keeps it empty for every other role. The Project
+--    Working Groups are the national project teams (program, finance, reporting, external comms); their
+--    members never sign as a room's officer, even when their list says "finance" or "program".
 -- 2. user_signatures: one saved signature per account (PNG data URL). Locked: only functions read it.
 --    me_set_signature(png) saves or replaces it; me_profile() shows it to its owner.
 -- 3. document_signatures: one row per document and officer position, with the signature copied in.
@@ -43,10 +46,28 @@ RETURNS text LANGUAGE sql IMMUTABLE SET search_path TO 'public' AS $function$
     ELSE NULL END
 $function$;
 
--- Accounts already imported: fill the position from what their list said.
+-- Only ERR room accounts have an officer position. Project Working Group members, reps and staff
+-- never do; whatever sets the column (import, User Management, the portal), this keeps it empty for them.
+CREATE OR REPLACE FUNCTION public.users_officer_position_room_only()
+RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $function$
+BEGIN
+  IF NEW.role IS NULL OR NEW.role NOT IN ('base_err', 'locality_err', 'state_err') THEN
+    NEW.officer_position := NULL;
+  END IF;
+  RETURN NEW;
+END
+$function$;
+DROP TRIGGER IF EXISTS users_officer_position_room_only ON public.users;
+CREATE TRIGGER users_officer_position_room_only
+  BEFORE INSERT OR UPDATE OF role, officer_position ON public.users
+  FOR EACH ROW EXECUTE FUNCTION public.users_officer_position_room_only();
+REVOKE ALL ON FUNCTION public.users_officer_position_room_only() FROM PUBLIC, anon, authenticated;
+
+-- Room accounts already imported: fill the position from what their list said.
 UPDATE public.users u SET officer_position = public.um_officer_position(i.position)
   FROM public.um_invites i
- WHERE i.user_id = u.id AND u.officer_position IS NULL AND public.um_officer_position(i.position) IS NOT NULL;
+ WHERE i.user_id = u.id AND u.role IN ('base_err', 'locality_err', 'state_err')
+   AND u.officer_position IS NULL AND public.um_officer_position(i.position) IS NOT NULL;
 
 -- 2. Saved signature per account -------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.user_signatures (

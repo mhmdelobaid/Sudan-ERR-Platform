@@ -65,7 +65,7 @@
     "room_state": "State room",
     "room_any": "Room (the rep's locality)",
     "allStates": "Sees all states",
-    "officer": "Officer position (signs F3)"
+    "officer": "Room officer (signs F3)"
   },
   "roomSearch": "Search room, locality or state",
   "roomInactive": "not activated",
@@ -196,5 +196,5 @@
     "finance": "Finance officer",
     "reporting": "Reporting officer"
   },
-  "officerNote": "The room's program officer and finance officer sign its F3 contracts, each from their own account. The import list's position column sets this automatically."
+  "officerNote": "For ERR room accounts only. The room's program officer and finance officer sign its F3 contracts, each from their own account. The import list's position column sets this automatically. Project Working Group members (the national project teams) don't sign for a room."
 }

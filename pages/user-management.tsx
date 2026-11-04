@@ -25,6 +25,9 @@ interface StateOpt { name: string; name_ar: string | null }
 
 const ROLES = ['base_err', 'locality_err', 'state_err', 'state_rep', 'lcc_wg', 'support', 'admin', 'superadmin', 'partner'];
 const STATUSES: Status[] = ['active', 'pending', 'suspended'];
+// Only ERR room accounts have an officer position (the room's program, finance and reporting officers).
+// Project Working Group members (national project teams), reps and staff never sign for a room.
+const OFFICER_ROLES = ['base_err', 'locality_err', 'state_err'];
 // The room a role needs (null = no room, 'any' = any room)
 const ROOM_FOR: Record<string, string | null> = {
     base_err: 'base', locality_err: 'locality', state_err: 'state', state_rep: 'any',
@@ -215,8 +218,9 @@ const UserManagement: React.FC = () => {
         const needsRoom = ROOM_FOR[draft.role] !== null;
         const room = needsRoom ? draft.err_id : '';
         if (room !== (u.err_id || '')) changes.err_id = room;
-        // Program / finance officer: who signs the room's F3 contracts
-        if ((draft.officer_position || '') !== (u.officer_position || '')) changes.officer_position = draft.officer_position;
+        // Room officer (program / finance / reporting): who signs the room's documents. Room accounts only.
+        const officer = OFFICER_ROLES.includes(draft.role) ? (draft.officer_position || '') : '';
+        if (officer !== (u.officer_position || '')) changes.officer_position = officer;
         if (SCOPED_STATES.includes(draft.role)) {
             if (draft.can_see_all_states !== u.can_see_all_states) changes.can_see_all_states = draft.can_see_all_states;
             const a = [...draft.visible_states].sort().join('|'), b = [...(u.visible_states || [])].sort().join('|');
@@ -316,7 +320,7 @@ const UserManagement: React.FC = () => {
                 </label>
             </div>
             {u.is_me && <p className="text-xs text-gray-500 mb-0">{t('selfNote')}</p>}
-            {ROOM_FOR[draft.role] !== null && (
+            {OFFICER_ROLES.includes(draft.role) && (
                 <label className="block">
                     <span className="block text-xs text-gray-600 mb-1">{t('field.officer')}</span>
                     <select className={input} value={draft.officer_position} onChange={e => setDraft({ ...draft, officer_position: e.target.value })}>
