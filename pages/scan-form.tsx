@@ -9,6 +9,7 @@ import BulkPdfProcessor from "../components/forms/BulkPdfProcessor";
 import { supabase } from "../services/supabaseClient";
 import { authFetch } from '../services/authFetch';
 import Icon from '../components/ui/Icon';
+import CameraButton from '../components/ui/CameraButton';
 
 interface ScanFormProps {
   onReturnToMenu: () => void;
@@ -278,15 +279,19 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
             <div className="mt-4">
               {uploadType === 'image' ? (
                 <div className="flex flex-col items-start space-y-2">
-                  <label className="bg-primaryGreen text-white py-2 px-4 rounded-lg cursor-pointer inline-flex items-center justify-center">
-                    {t("choose_file")}
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleFileChange} 
-                      className="hidden" 
-                    />
-                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <CameraButton onChange={handleFileChange} />
+                    <label className="bg-primaryGreen text-white py-2 px-4 rounded-lg cursor-pointer inline-flex items-center justify-center gap-1.5">
+                      <Icon name="photo_library" size={20} />
+                      {t("choose_file")}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                   {file && <span className="text-gray-600">{file.name}</span>}
                   <button
                     onClick={handleUpload}

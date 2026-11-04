@@ -6,6 +6,9 @@ import performUpload from './performUpload';
 import { v4 as uuidv4 } from 'uuid';
 import { postImageRecordToDb } from './postImageRecordToDb';
 import Icon from '../../../ui/Icon';
+import CameraButton from '../../../ui/CameraButton';
+
+const TILE = 'flex-1 min-w-[9rem] flex items-center justify-center gap-2 p-4 border rounded-md bg-white hover:bg-gray-50 text-gray-800';
 
 export enum reportUploadType {
   RECEIPT,
@@ -125,7 +128,8 @@ const UploadBox: React.FC<UploadBoxProps> = ({ onFileChange, uploadType, uploadI
   const inputId = `file-upload-${uploadId}`;
 
   return (
-    <div className="border-dashed border-2 border-gray-300 p-4 rounded-md">
+    <div className="border-dashed border-2 border-gray-300 p-4 rounded-md flex flex-wrap gap-2">
+      <CameraButton onChange={onFileChange} className={TILE} iconSize={22} />
       <input
         type="file"
         multiple
@@ -135,9 +139,9 @@ const UploadBox: React.FC<UploadBoxProps> = ({ onFileChange, uploadType, uploadI
       />
       <label
         htmlFor={inputId}
-        className="flex items-center justify-center p-4 border rounded-md cursor-pointer hover:bg-gray-50"
+        className={`${TILE} cursor-pointer`}
       >
-        <Icon name="upload" size={22} className="me-2" />
+        <Icon name="upload" size={22} />
         {uploadType === reportUploadType.RECEIPT ? (
           <span>{t("chooseReceiptFiles")}</span>
         ) : (

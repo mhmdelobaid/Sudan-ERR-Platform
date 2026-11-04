@@ -80,5 +80,6 @@
   "categoriesError": "Couldn't load the expense types. Check your connection and try again.",
   "enterBankingDetails": "Enter your bank details",
   "bankingDetails": "Bank details",
-  "removeExpense": "Remove this expense"
+  "removeExpense": "Remove this expense",
+  "takePhoto": "Take a photo"
 }

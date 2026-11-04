@@ -8,6 +8,7 @@ import CustomFormReview from "../components/forms/CustomFormReview";
 import { useRouter } from "next/router";
 import { authFetch } from '../services/authFetch';
 import Icon from '../components/ui/Icon';
+import CameraButton from '../components/ui/CameraButton';
 
 interface ScanCustomFormProps {
   project: any; // The selected project passed from the menu
@@ -91,16 +92,20 @@ const ScanCustomForm: React.FC<ScanCustomFormProps> = ({
               {t("instruction", { project: project?.project_objectives || t("default_project_objectives") })}
             </p>
             <div className="flex flex-col items-start space-y-2">
-              <label className="bg-primaryGreen text-white py-2 px-4 rounded-lg cursor-pointer inline-flex items-center justify-center">
-                {t("choose_file")}
-                <input
-                  type="file"
-                  name="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label>
+              <div className="flex flex-wrap gap-2">
+                <CameraButton onChange={handleFileChange} />
+                <label className="bg-primaryGreen text-white py-2 px-4 rounded-lg cursor-pointer inline-flex items-center justify-center gap-1.5">
+                  <Icon name="photo_library" size={20} />
+                  {t("choose_file")}
+                  <input
+                    type="file"
+                    name="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
               {file && <span className="text-gray-600">{file.name}</span>}
               <button
                 onClick={handleUpload}

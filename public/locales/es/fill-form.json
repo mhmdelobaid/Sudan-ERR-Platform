@@ -50,5 +50,6 @@
   "uploadError": "Error al subir el recibo",
   "addAnotherExpense": "Agregar Otro Gasto",
   "receiptRequired": "Se requiere recibo",
-  "categoriesError": "No se pudieron cargar los tipos de gasto. Revisa tu conexión e inténtalo de nuevo."
+  "categoriesError": "No se pudieron cargar los tipos de gasto. Revisa tu conexión e inténtalo de nuevo.",
+  "takePhoto": "Tomar una foto"
 }

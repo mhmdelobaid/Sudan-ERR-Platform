@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { uploadImages } from "../../services/uploadImages";
+import Icon from "../ui/Icon";
+import CameraButton from "../ui/CameraButton";
 
 interface FileUploaderProps {
   projectId: string;
@@ -31,23 +33,23 @@ const FileUploader: React.FC<FileUploaderProps> = ({ projectId, onUploadComplete
       return;
     }
 
-    if (e.target.files) {
+    if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files);
       setFiles(selectedFiles);
       setUploading(true);
-      const urls: string[] = [];
 
       try {
-        for (const file of selectedFiles) {
-          let result = await uploadImages(
-            files, 
-            projectId,
-            'financial'  // Since this is used for expense reports
-          );
-          if (result[0].errorMessage) { 
-            throw new Error(result[0].errorMessage);
-          }
+        // Upload what was just chosen (the files state isn't updated yet at this point).
+        const results = await uploadImages(
+          selectedFiles,
+          projectId,
+          'financial'  // Since this is used for expense reports
+        );
+        const failed = results.find(r => !r.success);
+        if (failed) {
+          throw new Error(failed.errorMessage);
         }
+        const urls = results.map(r => r.url).filter((u): u is string => !!u);
 
         onUploadComplete(urls);
         setFiles([]);
@@ -62,17 +64,22 @@ const FileUploader: React.FC<FileUploaderProps> = ({ projectId, onUploadComplete
 
   return (
     <div>
-      {/* "Choose Files" button styled as a label */}
-      <label className="bg-primaryGreen text-white py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition-all cursor-pointer inline-flex items-center justify-center">
-        {uploading ? t("uploading") : t("choose_files")}
-        <input
-          type="file"
-          multiple
-          onChange={handleFileChange}
-          className="hidden"
-          disabled={uploading}
-        />
-      </label>
+      <div className="flex flex-wrap gap-2">
+        <CameraButton onChange={handleFileChange} disabled={uploading}
+          className="bg-primaryGreen text-white py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition-all inline-flex items-center justify-center gap-1.5" />
+        {/* "Choose Files" button styled as a label */}
+        <label className="bg-primaryGreen text-white py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition-all cursor-pointer inline-flex items-center justify-center gap-1.5">
+          <Icon name="photo_library" size={20} />
+          {uploading ? t("uploading") : t("choose_files")}
+          <input
+            type="file"
+            multiple
+            onChange={handleFileChange}
+            className="hidden"
+            disabled={uploading}
+          />
+        </label>
+      </div>
       {/* Display selected file names */}
       {files.length > 0 && !uploading && (
         <span className="text-gray-600 ml-2">

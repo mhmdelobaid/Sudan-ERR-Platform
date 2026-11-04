@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileWithProgress } from './UploadInterfaces';
+import CameraButton from '../../../ui/CameraButton';
 
 interface UploadChooserSupportingProps {
     onFilesSelected: (files: FileWithProgress[]) => void;
@@ -28,7 +29,13 @@ const UploadChooserSupporting: React.FC<UploadChooserSupportingProps> = React.me
     }, [onFilesSelected]);
 
     return (
-        <div className="mb-4">
+        <div className="mb-4 space-y-2">
+            <CameraButton
+                onChange={handleFileChange}
+                disabled={disabled}
+                iconSize={18}
+                className="inline-flex items-center gap-1.5 py-2 px-4 rounded-full text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100"
+            />
             <input
                 type="file"
                 onChange={handleFileChange}

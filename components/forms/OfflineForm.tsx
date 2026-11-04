@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { addFormToSessionQueue } from '../../services/sessionUtils';
 import { authFetch } from '../../services/authFetch';
 import Icon from '../ui/Icon';
+import CameraButton from '../ui/CameraButton';
 
 interface OfflineFormProps {
   onClose: () => void;
@@ -51,9 +52,8 @@ const OfflineForm: React.FC<OfflineFormProps> = ({ onClose, onSubmitSuccess }) =
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+    if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
-      console.log('File selected:', e.target.files[0].name);
     }
   };
 
@@ -258,14 +258,18 @@ const OfflineForm: React.FC<OfflineFormProps> = ({ onClose, onSubmitSuccess }) =
             placeholder={t('placeholders.lessons')}
             className="w-full p-1 border rounded mb-2"
           />
-          <label className="bg-primaryGreen text-white py-2 px-4 rounded-lg cursor-pointer hover:bg-green-700 transition-all inline-flex items-center mb-2">
-            {t('choose_file')}
-            <input
-              type="file"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            <CameraButton onChange={handleFileChange} />
+            <label className="bg-primaryGreen text-white py-2 px-4 rounded-lg cursor-pointer hover:bg-green-700 transition-all inline-flex items-center gap-1.5">
+              <Icon name="upload" size={20} />
+              {t('choose_file')}
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+          </div>
           <span className="text-gray-600 ml-2">{file ? file.name : t('no_file_chosen')}</span>
           <div className="flex justify-end space-x-4 mt-3">
             <button
