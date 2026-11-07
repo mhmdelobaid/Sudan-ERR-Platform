@@ -9,7 +9,13 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
  */
 function launchServiceCreds(): { url: string; key: string } | null {
   const url = process.env.NEXT_PUBLIC_NEW_SUPABASE_URL?.trim() || '';
-  const key = process.env.SUPABASE_SERVICE_KEY?.trim() || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || '';
+  // The launch database's own service key. SUPABASE_SERVICE_KEY may still hold the old database's key on
+  // older setups, so NEW_SUPABASE_SERVICE_ROLE_KEY comes first.
+  const key =
+    process.env.NEW_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    process.env.SUPABASE_SERVICE_KEY?.trim() ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    '';
   if (!url || !key) return null;
   return { url, key };
 }
@@ -41,4 +47,4 @@ export function isProdSupabaseConfigured(): boolean {
 }
 
 export const REPORTING_DB_NOT_CONFIGURED =
-  'Database not configured. Set NEXT_PUBLIC_NEW_SUPABASE_URL and SUPABASE_SERVICE_KEY.';
+  'Database not configured. Set NEXT_PUBLIC_NEW_SUPABASE_URL and NEW_SUPABASE_SERVICE_ROLE_KEY.';
