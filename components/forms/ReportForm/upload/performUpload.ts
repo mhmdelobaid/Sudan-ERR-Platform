@@ -2,8 +2,9 @@ import { newSupabase } from "../../../../services/newSupabaseClient"
 import * as tus from "tus-js-client";
 import { constructUploadPath, getErrName, getProjectName } from "../../../../services/uploadPaths";
 
-// Use the correct project ID for the new Supabase instance
-const supabaseProjectId = "khavbdocjufkyhwpiniw";
+// Uploads go to the app's own database (the launch database), never to a fixed project: this used to name
+// another Supabase project ("khavbdocjufkyhwpiniw"), so receipts left the launch database or failed.
+const supabaseUrl = process.env.NEXT_PUBLIC_NEW_SUPABASE_URL;
 const bucketName = "images"
 const key = process.env.NEXT_PUBLIC_NEW_SUPABASE_ANON_KEY;
 
@@ -27,13 +28,17 @@ export default async function uploadFile(file: File, projectId: string, { onProg
             reportType: 'financial'
         });
 
+        // Uploaded as the signed-in person, so the storage access rules apply to them
+        const { data: { session } } = await newSupabase.auth.getSession();
+
         return new Promise((resolve, reject) => {
             var upload = new tus.Upload(file, {
-                endpoint: `https://${supabaseProjectId}.supabase.co/storage/v1/upload/resumable`,
+                endpoint: `${supabaseUrl}/storage/v1/upload/resumable`,
                 retryDelays: [0, 3000, 5000, 10000, 20000],
                 headers: {
-                    authorization: `Bearer ${key}`,
-                    'x-upsert': 'true',
+                    authorization: `Bearer ${session?.access_token || key}`,
+                    apikey: key || '',
+                    'x-upsert': 'false', // every name is new (it starts with the time), so nothing is overwritten
                 },
                 uploadDataDuringCreation: true,
                 removeFingerprintOnSuccess: true,

@@ -1,7 +1,7 @@
 // public/sw.js
 // Dynamic cache versioning: Increment this version number when deploying to invalidate old caches
 // The service worker file itself will be updated on deployment, triggering a new install
-const CACHE_VERSION = '4'; // Increment this on each deployment to invalidate old caches
+const CACHE_VERSION = '5'; // Increment this on each deployment to invalidate old caches
 const CACHE_NAME = `offline-chatbot-cache-v${CACHE_VERSION}`;
 
 // Static assets to pre-cache (excluding HTML pages for network-first strategy)
@@ -15,8 +15,13 @@ const urlsToCache = [
   '/locales/en/home.json',
   '/locales/ar/home.json',
   '/locales/es/home.json',
-  '/offline-mode' // Keep offline fallback page cached
+  '/',            // the calculator: opening the app with no network still starts here (the code is asked for first)
+  '/offline-mode' // offline mode (F4 reports kept on the phone)
 ];
+
+// Pages kept fresh in the cache, for opening the app with no network. Neither holds personal data: the
+// calculator and the offline form are drawn on the phone. Other pages are never cached.
+const OFFLINE_PAGES = ['/', '/offline-mode', '/en', '/en/offline-mode'];
 
 // Install event: cache static assets only
 self.addEventListener('install', (event) => {
@@ -66,30 +71,27 @@ self.addEventListener('fetch', (event) => {
   // Network-first strategy for HTML pages
   if (isHTML) {
     event.respondWith(
-      // Whatever the server answers is passed on as it is (don't cache HTML): a page, an error page,
-      // or a redirect such as a login page in front of a test site. The offline page is only for
-      // when there is no network at all (fetch throws).
+      // Whatever the server answers is passed on as it is: a page, an error page, or a redirect such as a login
+      // page in front of a test site. Only a good answer for one of OFFLINE_PAGES is kept, to replace the copy.
       fetch(request)
+        .then((response) => {
+          if (response && response.ok && response.type === 'basic' && OFFLINE_PAGES.includes(url.pathname)) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(url.pathname, copy));
+          }
+          return response;
+        })
         .catch(() => {
-          // If offline, try to serve from cache
+          // No network at all: the same page if it's kept, otherwise the calculator (so the code is asked for
+          // first and the disguise holds), and offline mode only if the calculator was never kept.
           console.log('Network request failed, trying cache for:', request.url);
-          return caches.match(request)
-            .then((cachedResponse) => {
-              if (cachedResponse) {
-                return cachedResponse;
-              }
-              // If no cached HTML, return offline fallback page
-              return caches.match('/offline-mode')
-                .then((offlinePage) => {
-                  if (offlinePage) {
-                    return offlinePage;
-                  }
-                  return new Response('Offline page not available.', {
-                    status: 503,
-                    headers: { 'Content-Type': 'text/plain' },
-                  });
-                });
-            });
+          return caches.match(url.pathname)
+            .then((hit) => hit || caches.match('/'))
+            .then((hit) => hit || caches.match('/offline-mode'))
+            .then((hit) => hit || new Response('Offline page not available.', {
+              status: 503,
+              headers: { 'Content-Type': 'text/plain' },
+            }));
         })
     );
   } else {

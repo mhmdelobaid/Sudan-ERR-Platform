@@ -31,8 +31,9 @@ export function lock() {
     } catch { /* ignore */ }
 }
 
-// Left on the phone after sign-out: forms saved offline that haven't been sent yet.
-const KEEP_KEYS = ['offlineSessionQueue', 'offlineQueue', 'i18nextLng'];
+// Left on the phone after sign-out: F4 reports saved offline that haven't been sent yet (their photos are in
+// IndexedDB), the projects and expense types the offline form offers, and the language.
+const KEEP_KEYS = ['offlineReportsV2', 'offlineProjects', 'offlineCategories', 'offlineSessionQueue', 'offlineQueue', 'i18nextLng'];
 
 /** Remove every copy of the login and other personal data from this browser. */
 function clearLocalData() {
