@@ -69,5 +69,6 @@
       "allocated": "La solicitud está preasignada a una subvención",
       "committed": "La solicitud está comprometida a una subvención"
     }
-  }
+  },
+  "colLocality": "Localidad"
 }

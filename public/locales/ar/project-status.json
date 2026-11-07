@@ -82,5 +82,6 @@
   "pageLabel": "صفحة",
   "pageOfShort": "من {{totalPages}} ({{total}})",
   "pageInputAria": "الانتقال إلى صفحة",
-  "fetchError": "فشل تحميل المشاريع."
+  "fetchError": "فشل تحميل المشاريع.",
+  "colLocality": "المحلية"
 }

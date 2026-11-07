@@ -351,7 +351,7 @@ const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditPro
               <table className="w-full text-sm min-w-[320px]">
                 <thead className="bg-[#1c2d48] text-[#a8b6cc] text-xs">
                   <tr>
-                    <th className="px-3 py-2.5 text-start font-semibold">{t('locality')}</th>
+                    <th className="px-3 py-2.5 text-start font-semibold">{t('colLocality')}</th>
                     <th className="px-3 py-2.5 text-start font-semibold whitespace-nowrap">
                       {t('colDate')}
                     </th>

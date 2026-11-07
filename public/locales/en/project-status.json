@@ -82,5 +82,6 @@
   "pageLabel": "Page",
   "pageOfShort": "of {{totalPages}} ({{total}})",
   "pageInputAria": "Go to page",
-  "fetchError": "Failed to load projects."
+  "fetchError": "Failed to load projects.",
+  "colLocality": "Locality"
 }
