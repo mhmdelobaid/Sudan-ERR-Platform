@@ -1,370 +1,687 @@
-//pages/project-status.tsx
-import React, { useState, useEffect } from 'react';
+// pages/project-status.tsx
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import ProjectFileLink from '../components/ui/ProjectFileLink';
-import MessageBubble from '../components/ui/MessageBubble';
-import Button from '../components/ui/Button';
+import type { i18n as I18nType } from 'i18next';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { newSupabase } from '../services/newSupabaseClient';
-import StatusChip from '../components/ui/StatusChip';
-import Icon from '../components/ui/Icon';
+import appI18n from '../services/i18n';
+import ProjectFileLink from '../components/ui/ProjectFileLink';
+import enProjectStatus from '../public/locales/en/project-status.json';
+import arProjectStatus from '../public/locales/ar/project-status.json';
+import esProjectStatus from '../public/locales/es/project-status.json';
 
-interface ProjectStatusProps {
-    onReturnToMenu: () => void;
-    onEditProject?: (projectId: string) => void;
+const PROJECT_STATUS_BUNDLES = {
+  en: enProjectStatus,
+  ar: arProjectStatus,
+  es: esProjectStatus,
+} as const;
+
+function ensureProjectStatusBundles(instance: I18nType) {
+  (Object.keys(PROJECT_STATUS_BUNDLES) as (keyof typeof PROJECT_STATUS_BUNDLES)[]).forEach(
+    (lng) => {
+      const bundle = PROJECT_STATUS_BUNDLES[lng];
+      instance.addResourceBundle(lng, 'project-status', bundle, true, true);
+      instance.addResourceBundle(lng, 'projectStatus', bundle, true, true);
+    }
+  );
 }
 
+ensureProjectStatusBundles(appI18n);
+
+interface ProjectStatusProps {
+  onReturnToMenu: () => void;
+  onEditProject?: (projectId: string) => void;
+}
+
+type ProjectRow = {
+  id: string;
+  date?: string | null;
+  state?: string | null;
+  locality?: string | null;
+  status: string;
+  funding_status?: string | null;
+  submitted_at?: string | null;
+  last_modified?: string | null;
+  version?: number;
+  err_id?: string;
+  project_name?: string | null;
+  is_own_room?: boolean;
+  room?: { name?: string; name_ar?: string; err_code?: string; state?: string } | null;
+  // F-2 flow: the locality's acknowledgement, and the working groups' confirmation once screened
+  locality_ack?: { acknowledged_at: string } | null;
+  wg_confirmation?: { decided_at: string; note?: string | null } | null;
+  // detail fields
+  project_objectives?: string | null;
+  intended_beneficiaries?: string | null;
+  estimated_beneficiaries?: number | null;
+  estimated_timeframe?: string | null;
+  additional_support?: string | null;
+  planned_activities?: any[];
+};
+
+const PAGE_SIZE = 20;
+
+const STATUS_FILTERS = ['', 'pending', 'screened', 'feedback', 'approved', 'rejected'] as const;
+
+const statusColor = (status: string) => {
+  if (status === 'active') return 'text-emerald-300';
+  if (status === 'pending') return 'text-brand-orange';
+  if (status === 'feedback') return 'text-[#9BB0D4]';
+  if (status === 'approved') return 'text-emerald-200';
+  if (status === 'screened') return 'text-sky-300';
+  if (status === 'rejected') return 'text-red-300';
+  return 'text-[#a8b6cc]';
+};
+
 const ProjectStatus: React.FC<ProjectStatusProps> = ({ onReturnToMenu, onEditProject }) => {
-    const { t, i18n } = useTranslation('projectStatus'); // Use translations for the "project-status" namespace
-    const [projects, setProjects] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [selectedProject, setSelectedProject] = useState(null);
-    const [feedbackMap, setFeedbackMap] = useState({});
-    const [isExpanding, setIsExpanding] = useState(false);
-    const [viewerRole, setViewerRole] = useState<string | null>(null);
-    const [ackBusy, setAckBusy] = useState<string | null>(null);
+  const { t, i18n } = useTranslation(['project-status', 'projectStatus']);
+  // Sync before paint — hook instance may differ from services/i18n.
+  ensureProjectStatusBundles(i18n);
 
-    useEffect(() => {
-        const fetchProjectStatuses = async () => {
-            setLoading(true);
-            try {
-                // Get current session
-                const { data: { session } } = await newSupabase.auth.getSession();
-                
-                if (!session) {
-                    throw new Error('No session found');
-                }
+  const [projects, setProjects] = useState<ProjectRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQ, setSearchQ] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [detailMap, setDetailMap] = useState<Record<string, ProjectRow>>({});
+  const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
+  const [feedbackMap, setFeedbackMap] = useState<Record<string, any[]>>({});
+  const [pageInput, setPageInput] = useState('1');
+  const [viewerRole, setViewerRole] = useState<string | null>(null);
+  const [ackBusy, setAckBusy] = useState<string | null>(null);
 
-                const res = await fetch('/api/project-status', {
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
-                    }
-                });
+  const page = Math.floor(offset / PAGE_SIZE) + 1;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
 
-                const data = await res.json();
-                if (data.success) {
-                    setProjects(data.projects);
-                    setViewerRole(data.viewer_role || null);
-                    
-                    // Pre-fetch feedback for all projects with feedback status
-                    const feedbackProjects = data.projects.filter(p => p.status === 'feedback' || p.status === 'rejected');
-                    await Promise.all(
-                        feedbackProjects.map(async (project) => {
-                            try {
-                                const feedback = await fetchProjectFeedback(project.id);
-                                if (feedback && Array.isArray(feedback) && feedback.length > 0) {
-                                    setFeedbackMap(prev => ({
-                                        ...prev,
-                                        [project.id]: feedback
-                                    }));
-                                } else {
-                                    console.warn(`No feedback found for project ${project.id}`);
-                                }
-                            } catch (error) {
-                                console.error('Error pre-fetching feedback:', error);
-                            }
-                        })
-                    );
-                } else {
-                    setError(data.message || 'Failed to fetch projects');
-                }
-            } catch (error) {
-                console.error('Error fetching project statuses:', error);
-                setError(t('fetchError'));
-            } finally {
-                setLoading(false);
-            }
-        };
+  const goToPage = (raw: string) => {
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n)) {
+      setPageInput(String(page));
+      return;
+    }
+    const clamped = Math.min(totalPages, Math.max(1, n));
+    setPageInput(String(clamped));
+    const nextOffset = (clamped - 1) * PAGE_SIZE;
+    if (nextOffset !== offset) {
+      setExpandedId(null);
+      setOffset(nextOffset);
+    }
+  };
 
-        fetchProjectStatuses();
-    }, [t]);
+  // Debounce search
+  useEffect(() => {
+    const tmr = setTimeout(() => {
+      const next = searchInput.trim();
+      setSearchQ((prev) => {
+        if (prev !== next) setOffset(0);
+        return next;
+      });
+    }, 300);
+    return () => clearTimeout(tmr);
+  }, [searchInput]);
 
-    const fetchProjectFeedback = async (projectId) => {
-        try {
-            const { data: { session } } = await newSupabase.auth.getSession();
-            
-            if (!session) {
-                throw new Error('No session found');
-            }
+  const fetchList = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const {
+        data: { session },
+      } = await newSupabase.auth.getSession();
+      if (!session) throw new Error('No session found');
 
-            const res = await fetch(`/api/project-feedback?project_id=${projectId}`, {
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                }
-            });
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        offset: String(offset),
+        language: i18n.language || 'en',
+      });
+      if (statusFilter) params.set('status', statusFilter);
+      if (searchQ) params.set('q', searchQ);
 
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
+      const res = await fetch(`/api/project-status?${params}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.message || 'Failed to fetch projects');
+        setProjects([]);
+        setTotal(0);
+        return;
+      }
+      setProjects(data.projects || []);
+      setViewerRole(data.viewer_role || null);
+      setTotal(typeof data.total === 'number' ? data.total : (data.projects || []).length);
+    } catch (err) {
+      console.error('Error fetching project statuses:', err);
+      setError(t('fetchError'));
+    } finally {
+      setLoading(false);
+    }
+  }, [offset, statusFilter, searchQ, i18n.language, t]);
 
-            const data = await res.json();
-            if (data.success) {
-                return data.feedback;
-            }
-            return null;
-        } catch (error) {
-            console.error('Error fetching feedback:', error);
-            setError(t('feedbackFetchError'));
-            return null;
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
+
+  const fetchProjectFeedback = async (projectId: string) => {
+    try {
+      const {
+        data: { session },
+      } = await newSupabase.auth.getSession();
+      if (!session) return null;
+      const res = await fetch(`/api/project-feedback?project_id=${projectId}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.success ? data.feedback : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const fetchDetail = async (projectId: string) => {
+    if (detailMap[projectId]) return detailMap[projectId];
+    setDetailLoadingId(projectId);
+    try {
+      const {
+        data: { session },
+      } = await newSupabase.auth.getSession();
+      if (!session) throw new Error('No session');
+      const res = await fetch(
+        `/api/project-status?id=${encodeURIComponent(projectId)}&language=${i18n.language || 'en'}`,
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
         }
-    };
+      );
+      const data = await res.json();
+      if (res.ok && data.success && data.project) {
+        setDetailMap((prev) => ({ ...prev, [projectId]: data.project }));
+        return data.project as ProjectRow;
+      }
+    } catch (e) {
+      console.error('Detail fetch error:', e);
+    } finally {
+      setDetailLoadingId(null);
+    }
+    return null;
+  };
 
-    const handleProjectClick = async (project) => {
-        // If clicking the same project, collapse it
-        if (selectedProject?.id === project.id) {
-            setIsExpanding(false);
-            setTimeout(() => {
-                setSelectedProject(null);
-            }, 200); // Match this with the transition duration
-            return;
-        }
+  const handleRowClick = async (project: ProjectRow) => {
+    if (expandedId === project.id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(project.id);
+    const detail = await fetchDetail(project.id);
+    if ((detail?.status === 'feedback' || detail?.status === 'rejected') && !feedbackMap[project.id]) {
+      const feedback = await fetchProjectFeedback(project.id);
+      if (feedback && Array.isArray(feedback)) {
+        setFeedbackMap((prev) => ({ ...prev, [project.id]: feedback }));
+      }
+    }
+  };
 
-        // Otherwise expand the new project
-        setIsExpanding(true);
-        setSelectedProject(project);
-    };
+  // Locality acknowledges an F1 from one of its rooms ("تم الاطلاع"). It doesn't block anything.
+  const acknowledgeProject = async (projectId: string) => {
+    setAckBusy(projectId);
+    try {
+      const { data: { session } } = await newSupabase.auth.getSession();
+      if (!session) throw new Error('No session found');
+      const res = await fetch('/api/locality-ack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ project_id: projectId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.code || 'failed');
+      setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, locality_ack: data.ack } : p)));
+    } catch (e) {
+      console.error('Locality acknowledgement failed:', e);
+      setError(t('locality.ackError'));
+    } finally {
+      setAckBusy(null);
+    }
+  };
 
-    const handleEditProject = (projectId) => {
-        if (onEditProject) {
-            onEditProject(projectId);
-        }
-    };
+  const formatDate = (dateString?: string | null, short = false) => {
+    if (!dateString) return '—';
+    const d = new Date(dateString);
+    if (Number.isNaN(d.getTime())) return String(dateString);
+    if (short) {
+      return d.toLocaleDateString(i18n.language, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+    }
+    return d.toLocaleString(i18n.language);
+  };
 
-    // Locality acknowledges an F1 from one of its rooms ("تم الاطلاع"). It doesn't block anything.
-    const acknowledgeProject = async (projectId: string) => {
-        setAckBusy(projectId);
-        try {
-            const { data: { session } } = await newSupabase.auth.getSession();
-            if (!session) throw new Error('No session found');
-            const res = await fetch('/api/locality-ack', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-                body: JSON.stringify({ project_id: projectId }),
-            });
-            const data = await res.json();
-            if (!res.ok || !data.success) throw new Error(data.code || 'failed');
-            setProjects(prev => prev.map(p => (p.id === projectId ? { ...p, locality_ack: data.ack } : p)));
-        } catch (e) {
-            console.error('Locality acknowledgement failed:', e);
-            setError(t('locality.ackError'));
-        } finally {
-            setAckBusy(null);
-        }
-    };
+  const statusLabel = (status: string) => {
+    if (status === 'feedback') return t('feedbackStatus');
+    const key = status;
+    const translated = t(key);
+    return translated === key ? status : translated;
+  };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return '';
-        return new Date(dateString).toLocaleString(i18n.language);
-    };
+  const localityLabel = (p: ProjectRow) =>
+    p.locality || p.state || p.project_name || t('workPlan');
 
-    return (
-        <div className="space-y-4 p-4">
-            {/* Page Title */}
-            <h2 className="text-xl font-bold">{t('projectStatusTitle')}</h2>
+  const filterChips = useMemo(
+    () =>
+      STATUS_FILTERS.map((value) => ({
+        value,
+        label: value === '' ? t('filterAll') : statusLabel(value),
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, i18n.language]
+  );
 
-            {/* Loading Indicator */}
-            {loading ? (
-                <MessageBubble>{t('loading')}</MessageBubble>
-            ) : projects.length > 0 ? (
-                <div className="space-y-4">
-                    {/* Display Each Project */}
-                    {projects.map((project) => (
-                        <div
-                            key={project.id}
-                            className="p-4 border rounded-lg shadow-md bg-white transition-all duration-200 cursor-pointer hover:shadow-lg hover:border-gray-300"
-                            onClick={() => handleProjectClick(project)}
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="app-section-label mb-1">F1</p>
+        <h2 className="text-xl font-bold text-white mb-1">{t('projectStatusTitle')}</h2>
+        <p className="text-sm text-[#a8b6cc] mb-0">{t('subtitle')}</p>
+      </div>
+
+      {/* Filters */}
+      <div className="space-y-2.5">
+        <div className="flex flex-wrap gap-1.5">
+          {filterChips.map((chip) => {
+            const active = statusFilter === chip.value;
+            return (
+              <button
+                key={chip.value || 'all'}
+                type="button"
+                onClick={() => {
+                  setStatusFilter(chip.value);
+                  setOffset(0);
+                  setExpandedId(null);
+                }}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  active
+                    ? 'bg-brand-orange text-[#152238]'
+                    : 'bg-[#1c2d48] text-[#a8b6cc] border border-white/10 hover:text-white'
+                }`}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
+        </div>
+        <input
+          type="search"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder={t('searchPlaceholder')}
+          className="app-input !py-2 text-sm"
+        />
+      </div>
+
+      {error && (
+        <div className="rounded-xl bg-red-500/10 border border-red-400/30 text-red-300 px-3 py-2 text-sm">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-sm text-[#a8b6cc]">{t('loading')}</p>
+      ) : projects.length > 0 ? (
+        <>
+          <div className="rounded-xl border border-white/10 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[320px]">
+                <thead className="bg-[#1c2d48] text-[#a8b6cc] text-xs">
+                  <tr>
+                    <th className="px-3 py-2.5 text-start font-semibold">{t('locality')}</th>
+                    <th className="px-3 py-2.5 text-start font-semibold whitespace-nowrap">
+                      {t('colDate')}
+                    </th>
+                    <th className="px-3 py-2.5 text-start font-semibold">{t('status')}</th>
+                    <th className="w-8 px-2 py-2.5" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects.map((project) => {
+                    const open = expandedId === project.id;
+                    const detail = detailMap[project.id];
+                    return (
+                      <React.Fragment key={project.id}>
+                        <tr
+                          className={`border-t border-white/10 cursor-pointer transition-colors ${
+                            open ? 'bg-[#243656]' : 'bg-[#152238] hover:bg-[#1c2d48]'
+                          }`}
+                          onClick={() => handleRowClick(project)}
                         >
-                            <div className="flex justify-between items-start">
-                                <div className="flex-grow">
-                                    <h3 className="font-bold">
-                                        {t('project')}: {project.project_objectives}
-                                    </h3>
-                                    {!project.is_own_room && project.room && (
-                                        <p className="text-sm text-gray-600">
-                                            <strong>{t('room')}:</strong>{' '}
-                                            {(i18n.language === 'ar' ? project.room.name_ar || project.room.name : project.room.name || project.room.name_ar) || project.room.err_code}
-                                            {project.room.state ? ` · ${project.room.state}` : ''}
-                                        </p>
-                                    )}
-                                    <p>
-                                        <strong>{t('status')}:</strong>{' '}
-                                        <StatusChip status={project.status} />
-                                    </p>
-                                    <ProjectFileLink projectId={project.id} className="my-1" />
+                          <td className="px-3 py-2.5 text-white font-medium max-w-[140px]">
+                            <span className="line-clamp-2">{localityLabel(project)}</span>
+                            {!project.is_own_room && project.room && (
+                              <span className="block text-[11px] text-[#8a97ab] mt-0.5 truncate">
+                                {(i18n.language === 'ar'
+                                  ? project.room.name_ar || project.room.name
+                                  : project.room.name || project.room.name_ar) ||
+                                  project.room.err_code}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 text-[#a8b6cc] whitespace-nowrap text-xs">
+                            {formatDate(project.submitted_at || project.date, true)}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span
+                              className={`text-xs font-semibold ${statusColor(project.status)}`}
+                            >
+                              {statusLabel(project.status)}
+                            </span>
+                          </td>
+                          <td className="px-2 py-2.5 text-[#8a97ab]">
+                            {open ? (
+                              <ChevronUpIcon className="h-4 w-4" />
+                            ) : (
+                              <ChevronDownIcon className="h-4 w-4" />
+                            )}
+                          </td>
+                        </tr>
+                        {open && (
+                          <tr className="border-t border-white/10 bg-[#0f1828]">
+                            <td colSpan={4} className="px-3 py-3">
+                              {detailLoadingId === project.id && !detail ? (
+                                <p className="text-xs text-[#8a97ab]">{t('loading')}</p>
+                              ) : (
+                                <div
+                                  className="space-y-2.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <ProjectFileLink projectId={project.id} />
                                     {/* Locality acknowledgement: a label for everyone, a button for the locality */}
                                     {project.locality_ack ? (
-                                        <p className="text-sm text-emerald-800 mb-1"><Icon name="check_circle" size={16} className="inline-block align-text-bottom me-1" />{t('locality.acked', { date: formatDate(project.locality_ack.acknowledged_at) })}</p>
+                                      <span className="text-xs text-emerald-300">
+                                        ✓ {t('locality.acked', { date: formatDate(project.locality_ack.acknowledged_at, true) })}
+                                      </span>
                                     ) : ['pending', 'feedback', 'screened'].includes(project.status) && (
-                                        viewerRole === 'locality_err' ? (
-                                            <button type="button" disabled={ackBusy === project.id}
-                                                onClick={(e) => { e.stopPropagation(); acknowledgeProject(project.id); }}
-                                                className="my-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold px-3 py-1.5 inline-flex items-center justify-center gap-1.5"><Icon name="task_alt" size={18} />
-                                                {ackBusy === project.id ? t('locality.acking') : ` ${t('locality.ack')}`}
-                                            </button>
-                                        ) : (
-                                            <p className="text-sm text-gray-500 mb-1">{t('locality.notYet')}</p>
-                                        )
+                                      viewerRole === 'locality_err' ? (
+                                        <button
+                                          type="button"
+                                          disabled={ackBusy === project.id}
+                                          onClick={() => acknowledgeProject(project.id)}
+                                          className="rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-semibold px-3 py-1.5"
+                                        >
+                                          {ackBusy === project.id ? t('locality.acking') : t('locality.ack')}
+                                        </button>
+                                      ) : (
+                                        <span className="text-xs text-[#8a97ab]">{t('locality.notYet')}</span>
+                                      )
                                     )}
-                                    {project.status === 'screened' && (
-                                        project.wg_confirmation ? (
-                                            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 my-1 text-sm">
-                                                <p className="mb-0 text-emerald-900"><Icon name="check_circle" size={16} className="inline-block align-text-bottom me-1" />{t('wg.confirmed', { date: formatDate(project.wg_confirmation.decided_at) })}</p>
-                                                {project.wg_confirmation.note && (
-                                                    <p className="mb-0 mt-1 whitespace-pre-line text-gray-800"><strong>{t('wg.note')}:</strong> {project.wg_confirmation.note}</p>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm text-gray-600 mb-0">{t('wg.waiting')}</p>
-                                        )
-                                    )}
-                                    <p>
-                                        <strong>{t('submittedAt')}:</strong>{' '}
-                                        {formatDate(project.submitted_at)}
-                                    </p>
-                                    <p>
-                                        <strong>{t('funding.status')}:</strong>{' '}
-                                        <span className="text-gray-700">{t(`funding.${project.funding_status || 'unassigned'}`)}</span>
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        {t(`funding.desc.${project.funding_status || 'unassigned'}`)}
-                                    </p>
-                                    {project.version > 1 && (
-                                        <p>
-                                            <strong>{t('version')}:</strong> {project.version}
+                                  </div>
+
+                                  {project.status === 'screened' && (
+                                    project.wg_confirmation ? (
+                                      <div className="rounded-lg bg-emerald-500/10 border border-emerald-400/30 p-2.5 text-xs">
+                                        <p className="mb-0 text-emerald-200">
+                                          ✓ {t('wg.confirmed', { date: formatDate(project.wg_confirmation.decided_at, true) })}
                                         </p>
-                                    )}
-                                </div>
-                                <div className="flex items-center text-gray-500">
-                                    {selectedProject?.id === project.id ? (
-                                        <Icon name="keyboard_arrow_up" size={20} />
+                                        {project.wg_confirmation.note && (
+                                          <p className="mb-0 mt-1 whitespace-pre-line text-[#e8eef8]">
+                                            <span className="text-[#8a97ab]">{t('wg.note')}: </span>{project.wg_confirmation.note}
+                                          </p>
+                                        )}
+                                      </div>
                                     ) : (
-                                        <Icon name="keyboard_arrow_down" size={20} />
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <div 
-                                className={`transition-all duration-200 ease-in-out overflow-hidden ${
-                                    selectedProject?.id === project.id ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'
-                                }`}
-                            >
-                                {/* Project Details Section */}
-                                <div className="space-y-4">
-                                    {/* Basic Information */}
-                                    <div className="bg-gray-50 p-3 rounded-lg">
-                                        <h4 className="font-semibold mb-2">{t('details.basicInfo')}</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                            {project.date && (
-                                                <p className="text-sm"><strong>{t('details.date')}:</strong> {formatDate(project.date)}</p>
-                                            )}
-                                            {(project.state || project.locality) && (
-                                                <p className="text-sm"><strong>{t('details.location')}:</strong> {[project.state, project.locality].filter(Boolean).join(', ')}</p>
-                                            )}
-                                            {project.intended_beneficiaries && (
-                                                <p className="text-sm"><strong>{t('details.intendedBeneficiaries')}:</strong> {project.intended_beneficiaries}</p>
-                                            )}
-                                            {project.estimated_beneficiaries && (
-                                                <p className="text-sm"><strong>{t('details.estimatedBeneficiaries')}:</strong> {project.estimated_beneficiaries}</p>
-                                            )}
-                                            {project.estimated_timeframe && (
-                                                <p className="text-sm"><strong>{t('details.timeframe')}:</strong> {project.estimated_timeframe}</p>
-                                            )}
-                                        </div>
+                                      <p className="text-xs text-[#a8b6cc] mb-0">{t('wg.waiting')}</p>
+                                    )
+                                  )}
+
+                                  {detail?.project_objectives && (
+                                    <div className="rounded-lg bg-[#1c2d48] border border-white/5 p-2.5">
+                                      <p className="text-[11px] text-[#8a97ab] mb-0.5">
+                                        {t('details.objectives')}
+                                      </p>
+                                      <p className="text-sm text-[#e8eef8] whitespace-pre-wrap mb-0">
+                                        {detail.project_objectives}
+                                      </p>
                                     </div>
+                                  )}
 
-                                    {/* Activities Section */}
-                                    {project.planned_activities && project.planned_activities.length > 0 && (
-                                        <div className="bg-gray-50 p-3 rounded-lg mt-2">
-                                            <h4 className="font-semibold mb-2">{t('details.plannedActivities')}</h4>
-                                            <div className="space-y-2">
-                                                {project.planned_activities.map((activity, index) => (
-                                                    <div key={index} className="border-b pb-1 text-sm">
-                                                        {activity.activityName && (
-                                                            <p><strong>{t('details.activity')}:</strong> {activity.activityName}</p>
-                                                        )}
-                                                        {activity.location && (
-                                                            <p><strong>{t('details.location')}:</strong> {activity.location}</p>
-                                                        )}
-                                                        {activity.quantity && (
-                                                            <p><strong>{t('details.quantity')}:</strong> {activity.quantity}</p>
-                                                        )}
-                                                        {activity.duration && (
-                                                            <p><strong>{t('details.duration')}:</strong> {activity.duration}</p>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
+                                  <div className="rounded-lg bg-[#1c2d48] border border-white/5 p-2.5">
+                                    <h4 className="font-semibold mb-1.5 text-white text-xs">
+                                      {t('details.basicInfo')}
+                                    </h4>
+                                    <div className="grid grid-cols-1 gap-1 text-xs text-[#a8b6cc]">
+                                      {(detail?.state || detail?.locality || project.state || project.locality) && (
+                                        <p>
+                                          <span className="text-[#8a97ab]">
+                                            {t('details.location')}:{' '}
+                                          </span>
+                                          {[
+                                            detail?.state || project.state,
+                                            detail?.locality || project.locality,
+                                          ]
+                                            .filter(Boolean)
+                                            .join(', ')}
+                                        </p>
+                                      )}
+                                      {detail?.intended_beneficiaries && (
+                                        <p>
+                                          <span className="text-[#8a97ab]">
+                                            {t('details.intendedBeneficiaries')}:{' '}
+                                          </span>
+                                          {detail.intended_beneficiaries}
+                                        </p>
+                                      )}
+                                      {detail?.estimated_beneficiaries != null && (
+                                        <p>
+                                          <span className="text-[#8a97ab]">
+                                            {t('details.estimatedBeneficiaries')}:{' '}
+                                          </span>
+                                          {detail.estimated_beneficiaries}
+                                        </p>
+                                      )}
+                                      {detail?.estimated_timeframe && (
+                                        <p>
+                                          <span className="text-[#8a97ab]">
+                                            {t('details.timeframe')}:{' '}
+                                          </span>
+                                          {detail.estimated_timeframe}
+                                        </p>
+                                      )}
+                                      {project.funding_status && (
+                                        <p>
+                                          <span className="text-[#8a97ab]">
+                                            {t('funding.status')}:{' '}
+                                          </span>
+                                          {t(`funding.${project.funding_status}`, {
+                                            defaultValue: project.funding_status,
+                                          })}
+                                        </p>
+                                      )}
+                                      {project.version != null && project.version > 1 && (
+                                        <p>
+                                          <span className="text-[#8a97ab]">{t('version')}: </span>
+                                          {project.version}
+                                        </p>
+                                      )}
+                                      <p>
+                                        <span className="text-[#8a97ab]">{t('submittedAt')}: </span>
+                                        {formatDate(project.submitted_at)}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {detail?.planned_activities &&
+                                    detail.planned_activities.length > 0 && (
+                                      <div className="rounded-lg bg-[#1c2d48] border border-white/5 p-2.5">
+                                        <h4 className="font-semibold mb-1.5 text-white text-xs">
+                                          {t('details.plannedActivities')}
+                                        </h4>
+                                        <div className="space-y-1.5">
+                                          {detail.planned_activities.map(
+                                            (activity: any, index: number) => (
+                                              <div
+                                                key={index}
+                                                className="border-b border-white/5 pb-1.5 text-xs text-[#a8b6cc] last:border-0 last:pb-0"
+                                              >
+                                                {(activity.activityName || activity.activity) && (
+                                                  <p>
+                                                    <span className="text-[#8a97ab]">
+                                                      {t('details.activity')}:{' '}
+                                                    </span>
+                                                    {activity.activityName || activity.activity}
+                                                  </p>
+                                                )}
+                                                {activity.location && (
+                                                  <p>
+                                                    <span className="text-[#8a97ab]">
+                                                      {t('details.location')}:{' '}
+                                                    </span>
+                                                    {activity.location}
+                                                  </p>
+                                                )}
+                                              </div>
+                                            )
+                                          )}
                                         </div>
+                                      </div>
                                     )}
 
-                                    {/* Additional Support */}
-                                    {project.additional_support && (
-                                        <div className="bg-gray-50 p-3 rounded-lg mt-2">
-                                            <h4 className="font-semibold mb-2">{t('details.additional')}</h4>
-                                            <p className="text-sm"><strong>{t('details.additionalSupport')}:</strong> {project.additional_support}</p>
-                                        </div>
-                                    )}
+                                  {detail?.additional_support && (
+                                    <div className="rounded-lg bg-[#1c2d48] border border-white/5 p-2.5">
+                                      <h4 className="font-semibold mb-1 text-white text-xs">
+                                        {t('details.additional')}
+                                      </h4>
+                                      <p className="text-xs text-[#a8b6cc] mb-0">
+                                        {detail.additional_support}
+                                      </p>
+                                    </div>
+                                  )}
 
-                                    {/* The reps' reason when the F-2 decision was a rejection */}
-                                    {project.status === 'rejected' && feedbackMap[project.id]?.[0] && (
-                                        <div className="bg-red-50 p-3 rounded-lg border border-red-100 mt-2">
-                                            <h4 className="font-semibold mb-2">{t('feedback.rejectedReason')}</h4>
-                                            <p className="mb-2 text-sm whitespace-pre-line">{feedbackMap[project.id][0].feedback_text}</p>
-                                            {feedbackMap[project.id][0].created_at && (
-                                                <p className="text-xs text-gray-600">
-                                                    {t('feedback.at')}: {formatDate(feedbackMap[project.id][0].created_at)}
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
+                                  {project.status === 'rejected' && feedbackMap[project.id]?.[0] && (
+                                    <div className="rounded-lg bg-red-500/10 border border-red-400/30 p-2.5">
+                                      <h4 className="font-semibold mb-1 text-white text-xs">{t('feedback.rejectedReason')}</h4>
+                                      <p className="mb-0 text-sm text-[#e8eef8] whitespace-pre-wrap">{feedbackMap[project.id][0].feedback_text}</p>
+                                    </div>
+                                  )}
 
-                                    {/* Feedback Section (if available) */}
-                                    {project.status === 'feedback' && feedbackMap[project.id] && feedbackMap[project.id].length > 0 && feedbackMap[project.id][0] && (
-                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-2">
-                                            <h4 className="font-semibold mb-2">{t('feedback.latest')}</h4>
-                                            <p className="mb-2 text-sm">{feedbackMap[project.id][0].feedback_text}</p>
-                                            {feedbackMap[project.id][0].created_by && (
-                                                <p className="text-xs text-gray-600">
-                                                    {t('feedback.by')}: {feedbackMap[project.id][0].created_by.full_name || t('feedback.unknown')}
-                                                </p>
-                                            )}
-                                            {feedbackMap[project.id][0].created_at && (
-                                                <p className="text-xs text-gray-600">
-                                                    {t('feedback.at')}: {formatDate(feedbackMap[project.id][0].created_at)}
-                                                </p>
-                                            )}
-                                            <div className="mt-2">
-                                                <Button icon="edit"
-                                                    text={t('feedback.editProject')}
-                                                    onClick={() => handleEditProject(project.id)}
-                                                    className="w-full"
-                                                />
-                                            </div>
-                                        </div>
+                                  {project.status === 'feedback' &&
+                                    feedbackMap[project.id]?.[0] && (
+                                      <div className="rounded-lg bg-brand-orange/10 border border-brand-orange/30 p-2.5">
+                                        <h4 className="font-semibold mb-1 text-white text-xs">
+                                          {t('feedback.latest')}
+                                        </h4>
+                                        <p className="mb-2 text-sm text-[#e8eef8]">
+                                          {feedbackMap[project.id][0].feedback_text}
+                                        </p>
+                                        {feedbackMap[project.id][0].created_by && (
+                                          <p className="text-[11px] text-[#8a97ab]">
+                                            {t('feedback.by')}:{' '}
+                                            {feedbackMap[project.id][0].created_by.full_name ||
+                                              t('feedback.unknown')}
+                                          </p>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => onEditProject?.(project.id)}
+                                          className="mt-2.5 w-full rounded-xl bg-brand-orange text-[#152238] text-sm font-bold py-2.5 hover:bg-[#ffb88a]"
+                                        >
+                                          {t('feedback.editProject')}
+                                        </button>
+                                      </div>
                                     )}
                                 </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <MessageBubble>{t('noProjectsFound')}</MessageBubble>
-            )}
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-            {/* Return to Menu Button */}
-            <Button icon="arrow_back" text={t('returnToMenu')} onClick={onReturnToMenu} />
-        </div>
-    );
+          {/* Pagination */}
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <button
+              type="button"
+              disabled={offset <= 0 || loading}
+              onClick={() => {
+                setExpandedId(null);
+                setOffset((o) => Math.max(0, o - PAGE_SIZE));
+              }}
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold bg-[#1c2d48] border border-white/10 text-[#a8b6cc] disabled:opacity-40 hover:text-white"
+            >
+              {t('prevPage')}
+            </button>
+            <div className="flex items-center gap-1.5 text-xs text-[#8a97ab]">
+              <span>{t('pageLabel')}</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={totalPages}
+                value={pageInput}
+                disabled={loading || total === 0}
+                onChange={(e) => setPageInput(e.target.value)}
+                onBlur={() => goToPage(pageInput)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    (e.target as HTMLInputElement).blur();
+                    goToPage(pageInput);
+                  }
+                }}
+                aria-label={t('pageInputAria')}
+                className="w-12 rounded-md border border-white/10 bg-[#122038] px-1.5 py-1 text-center text-xs font-semibold text-white outline-none focus:border-brand-orange/50 disabled:opacity-40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+              <span>{t('pageOfShort', { totalPages, total })}</span>
+            </div>
+            <button
+              type="button"
+              disabled={offset + PAGE_SIZE >= total || loading}
+              onClick={() => {
+                setExpandedId(null);
+                setOffset((o) => o + PAGE_SIZE);
+              }}
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold bg-[#1c2d48] border border-white/10 text-[#a8b6cc] disabled:opacity-40 hover:text-white"
+            >
+              {t('nextPage')}
+            </button>
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-[#8a97ab]">
+          {searchQ || statusFilter ? t('noFilteredProjects') : t('noProjectsFound')}
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={onReturnToMenu}
+        className="text-sm font-medium text-[#8a97ab] hover:text-brand-orange px-1 py-2 transition-colors"
+      >
+        {t('returnToMenu')}
+      </button>
+    </div>
+  );
 };
 
 export default ProjectStatus;
-
-

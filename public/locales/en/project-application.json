@@ -120,7 +120,11 @@
     "confirmDelete": "Are you sure you want to delete this draft?",
     "deleteError": "Failed to delete draft",
     "saved": "Draft Saved",
-    "saveError": "Failed to save draft"
+    "saveError": "Failed to save draft",
+    "hubSectionLabel": "F1 · Work Plans",
+    "hubTitle": "F1 Work Plans",
+    "hubSubtitle": "Continue a saved draft or start a new work plan for your room.",
+    "subtitle": "Continue a saved draft or start a new work plan for your room."
   },
   "actions": {
     "submit": "Submit",

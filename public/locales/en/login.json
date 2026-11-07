@@ -38,5 +38,9 @@
   "linkInvalid": "This link has expired or was already used. Ask your admin for a new one, or request one by email.",
   "getNewLink": "Request a new link by email",
   "passwordUpdated": "Password saved. Sign in with it now.",
-  "passwordSavedOpenApp": "Password saved. Open the app, enter the calculator code, then sign in with your email and new password."
+  "passwordSavedOpenApp": "Password saved. Open the app, enter the calculator code, then sign in with your email and new password.",
+  "lockApp": "Lock app",
+  "userGuide": "User guide",
+  "lccWebsite": "LCC website",
+  "offlineMode": "Offline mode"
 }

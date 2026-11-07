@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import AppShell from '../components/layout/AppShell';
 import Button from '../components/ui/Button';
 import SignaturePad, { SignaturePadHandle } from '../components/ui/SignaturePad';
 import { saveMySignature } from '../components/signatures/signApi';
@@ -177,15 +178,15 @@ const ProfilePage: React.FC = () => {
     };
 
     const shell = (body: React.ReactNode) => (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
-            <div className="max-w-xl mx-auto p-4 pb-16 space-y-4">{body}</div>
+        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start">
+            <div className="max-w-xl mx-auto pb-8 space-y-4">{body}</div>
         </div>
     );
 
     if (loadError) return shell(<>
         <div className={card}><p className="mb-0 text-gray-700">{t('loadError')}</p></div>
         <Button icon="refresh" text={t('retry')} onClick={() => load()} className="w-full" />
-        <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+        <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/home')} className="w-full" />
     </>);
     if (!profile) return shell(<div className={card}><p className="mb-0 text-gray-600">{t('loading')}</p></div>);
 
@@ -330,8 +331,18 @@ const ProfilePage: React.FC = () => {
             </div>
         </section>
 
-        <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+        <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/home')} className="w-full" />
     </>);
 };
 
-export default ProfilePage;
+/** Inside the app's frame (menu bar, language, sign out) */
+const ProfilePageInShell: React.FC = () => {
+    const { t: tApp } = useTranslation('app');
+    return (
+        <AppShell title={tApp('cards.profile.title')}>
+            <ProfilePage />
+        </AppShell>
+    );
+};
+
+export default ProfilePageInShell;

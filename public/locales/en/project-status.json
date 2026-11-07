@@ -28,7 +28,8 @@
     "at": "Provided at",
     "editProject": "Edit Project",
     "viewHistory": "View Feedback History",
-    "rejectedReason": "Reason for rejection"
+    "rejectedReason": "Reason for rejection",
+    "unknown": "Unknown"
   },
   "details": {
     "basicInfo": "Basic Information",
@@ -47,7 +48,8 @@
     "duration": "Duration",
     "additional": "Additional Information",
     "additionalSupport": "Additional Support",
-    "bankingDetails": "Banking Details"
+    "bankingDetails": "Banking Details",
+    "objectives": "Project objectives"
   },
   "feedbackFetchError": "Failed to fetch feedback",
   "funding": {
@@ -66,5 +68,19 @@
     "confirmed": "Confirmed by the working group on {{date}}; now with the intermediate partner for final review",
     "note": "Working group feedback",
     "waiting": "Passed F2, waiting for the working group to confirm"
-  }
+  },
+  "subtitle": "Track submitted work plans linked to your room.",
+  "workPlan": "Work plan",
+  "colDate": "Date",
+  "closed": "Closed",
+  "filterAll": "All",
+  "searchPlaceholder": "Search locality or state…",
+  "noFilteredProjects": "No projects match these filters.",
+  "prevPage": "Previous",
+  "nextPage": "Next",
+  "pageOf": "Page {{page}} of {{totalPages}} ({{total}})",
+  "pageLabel": "Page",
+  "pageOfShort": "of {{totalPages}} ({{total}})",
+  "pageInputAria": "Go to page",
+  "fetchError": "Failed to load projects."
 }

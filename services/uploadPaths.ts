@@ -78,7 +78,7 @@ export async function getErrName(): Promise<string> {
         const { data: userData, error: userError } = await newSupabase
             .from('users')
             .select('err_id')
-            .eq('id', session.user.id)
+            .eq('auth_user_id', session.user.id)
             .single();
 
         if (userError || !userData) {

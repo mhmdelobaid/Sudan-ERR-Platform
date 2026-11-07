@@ -3,13 +3,20 @@ const { i18n } = require('./next-i18next.config');
 const path = require('path');
 const fs = require('fs');
 
-// Copy PDF worker to public directory
+// Copy PDF worker to public only when missing or contents differ.
+// Unconditional copyFileSync updates mtime and triggers an infinite Fast Refresh loop.
 const workerPath = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'build', 'pdf.worker.min.js');
 const workerDest = path.join(process.cwd(), 'public', 'pdf.worker.min.js');
 
-// Ensure the worker file is copied
 try {
-  fs.copyFileSync(workerPath, workerDest);
+  if (fs.existsSync(workerPath)) {
+    const needsCopy =
+      !fs.existsSync(workerDest) ||
+      !fs.readFileSync(workerPath).equals(fs.readFileSync(workerDest));
+    if (needsCopy) {
+      fs.copyFileSync(workerPath, workerDest);
+    }
+  }
 } catch (err) {
   console.error('Error copying PDF worker:', err);
 }
@@ -25,15 +32,7 @@ const nextConfig = {
         config.resolve.alias.canvas = false
         return config
     },
-    // Add rewrites to handle service worker
-    async rewrites() {
-        return [
-            {
-                source: '/sw.js',
-                destination: '/_next/static/sw.js'
-            }
-        ];
-    },
+    // public/sw.js is served directly (no rewrite to /_next/static/sw.js)
     async headers() {
         return [
             // Basic browser protections on every page and API route (audit M2, 26 Oct 2026).
@@ -73,4 +72,3 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-

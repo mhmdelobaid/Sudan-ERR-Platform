@@ -2,255 +2,248 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useTranslation } from 'react-i18next'; // Import translation hook
+import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
+import Link from 'next/link';
+import { BookOpen, ExternalLink, WifiOff, Eye, EyeOff } from 'lucide-react';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
 import { appAccess } from '../services/appAccess';
-import Link from 'next/link';
+import { lock } from '../services/appLock';
+import i18n from '../services/i18n';
+
 const LogoImage = '/brand/err-logo.png';
-import i18n from '../services/i18n'; 
-import Icon from '../components/ui/Icon';
 
 /**
- * Login.tsx
- * 
- * UI for logging in
+ * Login, which is also the landing screen after the calculator code: sign in, plus the user guide
+ * (in the app's language), the LCC website and offline mode. LockGate (_app.tsx) already sends anyone
+ * who hasn't entered the calculator code back to the calculator.
  */
 
 export interface User {
-    err_id: string
+  err_id: string;
 }
 
 const Login = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
-    const [isOffline, setIsOffline] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [isOffline, setIsOffline] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-    const router = useRouter();
-    const { t } = useTranslation('login'); // Load translations for the "login" namespace
+  const router = useRouter();
+  const { t } = useTranslation('login');
+  const locale = router.locale || 'ar';
+  const isRtl = locale === 'ar';
+  const guideHref = `/guides/user-guide-${locale === 'en' ? 'en' : 'ar'}.pdf`;
 
-    // Back from the "set new password" page
-    useEffect(() => {
-        if (router.isReady && router.query.password === 'updated') setSuccessMessage(t('passwordUpdated'));
-    }, [router.isReady, router.query.password, t]);
+  // Back from the "set new password" page
+  useEffect(() => {
+    if (router.isReady && router.query.password === 'updated') setSuccessMessage(t('passwordUpdated'));
+  }, [router.isReady, router.query.password, t]);
 
-    useEffect(() => {
-        const handleOnline = () => setIsOffline(false);
-        const handleOffline = () => setIsOffline(true);
-
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-
-        // Set initial status
-        setIsOffline(!navigator.onLine);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
-    
-
-    // Login form submission handler
-    const handleLogin = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setError('');
-        setIsLoading(true);
-
-        if (isOffline) { // Prevent login while offline
-            setError(t('offlineLoginError'));
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            console.log('Attempting login...');
-            // Sign in with Supabase Auth
-            const { data: authData, error: signInError } = await newSupabase.auth.signInWithPassword({
-                email,
-                password
-            });
-
-            if (signInError) {
-                console.error('Auth error:', signInError);
-                setError(t('loginError'));
-                setIsLoading(false);
-                return;
-            }
-
-            if (!authData.user) {
-                console.error('No user data returned');
-                setError(t('loginError'));
-                setIsLoading(false);
-                return;
-            }
-
-            console.log('Auth successful, fetching user data...');
-            // Fetch user's role and status from our users table
-            const { data: userData, error: userError } = await newSupabase
-                .from('users')
-                .select('role, status, display_name')
-                .eq('id', authData.user.id)
-                .single();
-
-            if (userError) {
-                setError(t('userDataError'));
-                setIsLoading(false);
-                return;
-            }
-
-            // Only active ERR, support and admin accounts may use the app (partners use the portal)
-            const access = appAccess(userData);
-            if (access !== 'ok') {
-                await newSupabase.auth.signOut({ scope: 'local' });
-                setError(t(access === 'pending' ? 'accountPending' : 'noAccess'));
-                setIsLoading(false);
-                return;
-            }
-
-            // Successful login. A room officer who hasn't saved a signature yet is asked for it first
-            // (they can choose "Later"); everyone else goes to the menu.
-            let next = '/menu';
-            try {
-                const { data: me } = await newSupabase.rpc('me_profile');
-                if (me?.officer_position && !me?.has_signature) next = '/add-signature';
-            } catch { /* the menu is always fine */ }
-            router.push(next);
-
-        } catch (error) {
-            console.error('Login error:', error);
-            setError(t('unexpectedError')); // Use translated fallback error message
-        } finally {
-            setIsLoading(false);
-        }
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOffline(!navigator.onLine);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
+  }, []);
 
-    // Navigate back to the home page
-    const handleBackToHome = () => {
-        sessionStorage.setItem('fromInternalPage', 'true');
-        router.push('/');
-    };
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError('');
+    setIsLoading(true);
 
-    // Language Switcher
-    const switchLanguage = async (lang: string) => {
-        await i18n.changeLanguage(lang); // Synchronize i18next
-        router.push(router.pathname, router.asPath, { locale: lang });
-    };
+    if (isOffline) {
+      setError(t('offlineLoginError'));
+      setIsLoading(false);
+      return;
+    }
 
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-gray-50">
-            {/* Logo and Title */}
-            <div className="flex flex-col items-center mb-6">
-                <Image
-                    src={LogoImage}
-                    alt={t('logoAlt')}
-                    width={100}
-                    height={100}
-                    className="mb-2"
-                    priority
-                />
+    try {
+      const { data: authData, error: signInError } = await newSupabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-                <h1 className="text-xl font-bold text-center">{t('welcomeMessage')}</h1>
-            </div>
+      if (signInError || !authData.user) {
+        if (signInError) console.error('Auth error:', signInError.message);
+        setError(t('loginError'));
+        setIsLoading(false);
+        return;
+      }
 
-            {/* Network Status Indicator */}
-            {isOffline && (
-                <p className="text-sm text-red-500 mt-2">{t('offlineWarning')}</p>
-            )}
+      const { data: userData, error: userError } = await newSupabase
+        .from('users')
+        .select('role, status, display_name')
+        .eq('id', authData.user.id)
+        .single();
 
-            {/* Language Switcher */}
-            <div className="flex justify-center mb-4">
-                <button onClick={() => switchLanguage('en')} className="mx-2">
-                    English
-                </button>
-                <button onClick={() => switchLanguage('ar')} className="mx-2">
-                    العربية
-                </button>
-                {/*<button onClick={() => switchLanguage('es')} className="mx-2">
-                    Español
-                </button>*/}
-            </div>
+      if (userError) {
+        await newSupabase.auth.signOut({ scope: 'local' });
+        setError(t('userDataError'));
+        setIsLoading(false);
+        return;
+      }
 
-            {/* Success Message Notification */}
-            {successMessage && (
-                <div className="fixed top-4 bg-green-100 text-green-700 p-2 rounded shadow-lg">
-                    {successMessage}
-                </div>
-            )}
+      // Only active ERR, support and admin accounts may use the app (partners use the portal)
+      const access = appAccess(userData);
+      if (access !== 'ok') {
+        await newSupabase.auth.signOut({ scope: 'local' });
+        setError(t(access === 'pending' ? 'accountPending' : 'noAccess'));
+        setIsLoading(false);
+        return;
+      }
 
-            {/* Login Form */}
-            <form onSubmit={handleLogin} className="flex flex-col items-center space-y-4 w-full max-w-xs">
-                <Input
-                    type="email"
-                    placeholder={t('emailPlaceholder')}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-                <div className="relative w-full">
-                    <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder={t('passwordPlaceholder')}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
-                    />
-                    {/* Show / hide the password so people can check what they typed */}
-                    <button
-                        type="button"
-                        className={`absolute top-1/2 transform -translate-y-1/2 ${i18n.language === 'ar' ? 'left-2' : 'right-2'}`}
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? t('hidePassword') : t('showPassword')}
-                        aria-pressed={showPassword}
-                        title={showPassword ? t('hidePassword') : t('showPassword')}
-                    >
-                        <Icon name={showPassword ? 'visibility_off' : 'visibility'} size={20} className="text-gray-500" />
-                    </button>
-                </div>
-                <Button icon="login" 
-                    text={isLoading ? t('loggingIn') : t('loginButton')} 
-                    type="submit"
-                    disabled={isLoading}
-                />
-                
-                <Link 
-                    href="/reset-password"
-                    className="text-sm text-blue-500 hover:text-blue-700 text-center"
-                >
-                    {t('forgotPassword')}
-                </Link>
-            </form>
+      // A room officer who hasn't saved a signature yet is asked for it first ("Later" is allowed)
+      let next = '/home';
+      try {
+        const { data: me } = await newSupabase.rpc('me_profile');
+        if (me?.officer_position && !me?.has_signature) next = '/add-signature';
+      } catch { /* home is always fine */ }
+      router.push(next);
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(t('unexpectedError'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            {/* Error Message */}
-            {error && <p className="text-red-500 mt-2">{error}</p>}
+  // Back to the calculator (nobody is signed in on this screen)
+  const lockApp = () => {
+    lock();
+    window.location.replace('/');
+  };
 
-            {/* Registration Link - Remove the redundant text and keep just the link */}
-            <div className="mt-4 text-center">
-                <Link 
-                    href="/register" 
-                    className="text-blue-500 hover:text-blue-700 font-medium"
-                >
-                    {t('registerLink')}
-                </Link>
-            </div>
+  const switchLanguage = async (lang: string) => {
+    await i18n.changeLanguage(lang);
+    router.push(router.pathname, router.asPath, { locale: lang });
+  };
 
-            {/* Back to Home Button */}
-            <div className="mt-4">
-                <button
-                    onClick={handleBackToHome}
-                    className="text-blue-500 hover:underline inline-flex items-center justify-center gap-1.5"
-                ><Icon name="arrow_back" size={20} />
-                    {t('backToHome')}
-                </button>
-            </div>
+  return (
+    <div className="relative flex flex-col items-center justify-center min-h-screen px-4 py-10 app-page-bg overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute -top-24 -start-16 h-64 w-64 rounded-full bg-brand-orange/25 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute top-1/3 -end-20 h-72 w-72 rounded-full bg-[#5D7EB3]/35 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-16 start-1/4 h-48 w-48 rounded-full bg-brand-orange/15 blur-3xl" />
 
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="flex flex-col items-center mb-8">
+          <div className="mb-4 h-[5.5rem] w-[5.5rem] rounded-3xl bg-white flex items-center justify-center shadow-lift">
+            <Image src={LogoImage} alt={t('logoAlt')} width={88} height={88} className="object-contain" priority />
+          </div>
+          <h1 className="text-xl font-bold text-center text-white leading-snug px-2">{t('welcomeMessage')}</h1>
         </div>
-    );
+
+        {isOffline && <p className="text-sm text-brand-orange text-center mb-3">{t('offlineWarning')}</p>}
+
+        <div className="flex justify-center gap-2 mb-5">
+          {[
+            { code: 'ar', label: 'العربية' },
+            { code: 'en', label: 'English' },
+          ].map((lang) => {
+            const active = locale === lang.code;
+            return (
+              <button
+                key={lang.code}
+                type="button"
+                onClick={() => switchLanguage(lang.code)}
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+                  active ? 'bg-brand-orange text-[#152238]' : 'bg-white/10 text-[#a8b6cc] hover:bg-white/15 hover:text-white'
+                }`}
+              >
+                {lang.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {successMessage && (
+          <div className="mb-4 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 px-3 py-2 text-sm text-center">
+            {successMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="flex flex-col space-y-3.5">
+          <Input type="email" placeholder={t('emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" />
+          <div className="relative w-full">
+            <Input
+              type={showPassword ? 'text' : 'password'}
+              placeholder={t('passwordPlaceholder')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              dir={isRtl ? 'rtl' : 'ltr'}
+            />
+            {/* Show / hide the password so people can check what they typed */}
+            <button
+              type="button"
+              className={`absolute top-1/2 -translate-y-1/2 p-1 text-ink-faint hover:text-ink ${isRtl ? 'left-2' : 'right-2'}`}
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+              aria-pressed={showPassword}
+              title={showPassword ? t('hidePassword') : t('showPassword')}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+          <Button
+            text={isLoading ? t('loggingIn') : t('loginButton')}
+            type="submit"
+            disabled={isLoading}
+            className="!m-0 !mt-1 w-full !rounded-xl !bg-brand-orange !text-[#152238] !shadow-soft hover:!bg-[#ffb88a] font-bold py-3"
+          />
+
+          <Link href="/reset-password" className="text-sm text-[#9BB0D4] hover:text-brand-orange text-center pt-1 transition-colors">
+            {t('forgotPassword')}
+          </Link>
+        </form>
+
+        {error && (
+          <p className="text-sm text-red-300 mt-3 text-center bg-red-500/10 border border-red-400/20 rounded-xl px-3 py-2">{error}</p>
+        )}
+
+        <div className="mt-8 flex items-start justify-center gap-6">
+          <a href={guideHref} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1.5 w-20 text-[#a8b6cc] hover:text-brand-orange transition-colors">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1c2d48] border border-white/10">
+              <BookOpen className="h-5 w-5" />
+            </span>
+            <span className="text-[11px] font-medium text-center leading-tight">{t('userGuide')}</span>
+          </a>
+
+          <a href="https://lccsudan.org/" target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1.5 w-20 text-[#a8b6cc] hover:text-brand-orange transition-colors">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1c2d48] border border-white/10">
+              <ExternalLink className="h-5 w-5" />
+            </span>
+            <span className="text-[11px] font-medium text-center leading-tight">{t('lccWebsite')}</span>
+          </a>
+
+          <button type="button" onClick={() => router.push('/offline-mode')} className="flex flex-col items-center gap-1.5 w-20 text-[#a8b6cc] hover:text-brand-orange transition-colors">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1c2d48] border border-white/10">
+              <WifiOff className="h-5 w-5" />
+            </span>
+            <span className="text-[11px] font-medium text-center leading-tight">{t('offlineMode')}</span>
+          </button>
+        </div>
+
+        <div className="mt-6 flex flex-col items-center gap-3 text-sm">
+          <Link href="/register" className="text-[#9BB0D4] hover:text-brand-orange font-medium transition-colors">
+            {t('registerLink')}
+          </Link>
+          <button type="button" onClick={lockApp} className="text-[#8a97ab] hover:text-white transition-colors">
+            {t('lockApp')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import AppShell from '../components/layout/AppShell';
 import ProjectFileLink from '../components/ui/ProjectFileLink';
 import Button from '../components/ui/Button';
 import SignConfirm from '../components/signatures/SignConfirm';
@@ -110,12 +111,8 @@ const F3Contracts: React.FC = () => {
     };
 
     return (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
-            <div className="max-w-3xl mx-auto p-4 pb-16 space-y-4">
-                <div className="flex justify-end text-sm">
-                    <button onClick={() => i18n.changeLanguage('en')} className="mx-2 text-blue-500 hover:underline">English</button>
-                    <button onClick={() => i18n.changeLanguage('ar')} className="mx-2 text-blue-500 hover:underline">العربية</button>
-                </div>
+        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start">
+            <div className="max-w-3xl mx-auto pb-8 space-y-4">
                 <header className="bg-white rounded-2xl shadow-md p-4">
                     <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
                     <p className="text-sm text-gray-600 mb-0">{t('subtitle')}</p>
@@ -193,7 +190,7 @@ const F3Contracts: React.FC = () => {
                     </ul>
                 )}
 
-                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/home')} className="w-full" />
             </div>
 
             {signing && signing.contract.mou_id && (
@@ -219,4 +216,14 @@ const F3Contracts: React.FC = () => {
     );
 };
 
-export default F3Contracts;
+/** Inside the app's frame (menu bar, language, sign out) */
+const F3ContractsInShell: React.FC = () => {
+    const { t: tApp } = useTranslation('app');
+    return (
+        <AppShell title={tApp('nav.f3Long')}>
+            <F3Contracts />
+        </AppShell>
+    );
+};
+
+export default F3ContractsInShell;

@@ -265,7 +265,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Signed-in, active app users only (this route calls paid AI services or writes reports)
-  if (!(await requireAppUser(req, res))) return;
+  const user = await requireAppUser(req, res);
+  if (!user) return;
 
   let filePath: string | null = null;
 

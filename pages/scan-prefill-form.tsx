@@ -115,7 +115,7 @@ const ScanPrefillForm: React.FC<{ project?: any }> = ({ project }) => {
               />
               <Button icon="arrow_back"
                 text={t("return_to_menu")}
-                onClick={() => (window.location.href = "/menu")}
+                onClick={() => (window.location.href = "/home")}
               />
             </div>
           </MessageBubble>

@@ -4,6 +4,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import AppShell from '../components/layout/AppShell';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
 import ImportPanel from '../components/userManagement/ImportPanel';
@@ -278,19 +279,13 @@ const UserManagement: React.FC = () => {
             .slice(0, 200);
     };
 
-    const langSwitch = (
-        <div className="flex justify-end text-sm">
-            <button onClick={() => i18n.changeLanguage('en')} className="mx-2 text-blue-500 hover:underline">English</button>
-            <button onClick={() => i18n.changeLanguage('ar')} className="mx-2 text-blue-500 hover:underline">العربية</button>
-        </div>
-    );
 
-    if (auth === 'loading') return <div dir={isAr ? 'rtl' : 'ltr'} className="text-start p-6 text-center text-gray-600">{t('loading')}</div>;
+    if (auth === 'loading') return <div dir={isAr ? 'rtl' : 'ltr'} className="text-start p-6 text-center text-[#a8b6cc]">{t('loading')}</div>;
     if (auth === 'denied') {
         return (
             <div dir={isAr ? 'rtl' : 'ltr'} className="text-start max-w-xl mx-auto p-6 space-y-4">
                 <div className="bg-white rounded-2xl shadow-md p-4 text-gray-700">{t('notAllowed')}</div>
-                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/home')} className="w-full" />
             </div>
         );
     }
@@ -393,9 +388,8 @@ const UserManagement: React.FC = () => {
     );
 
     return (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
-            <div className="max-w-6xl mx-auto p-4 pb-16 space-y-4">
-                {langSwitch}
+        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start">
+            <div className="max-w-6xl mx-auto pb-8 space-y-4">
                 <header className="bg-white rounded-2xl shadow-md p-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 mb-0">{t('title')}</h1>
@@ -580,10 +574,20 @@ const UserManagement: React.FC = () => {
                     </>
                 )}
 
-                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/home')} className="w-full" />
             </div>
         </div>
     );
 };
 
-export default UserManagement;
+/** Inside the app's frame (menu bar, language, sign out) */
+const UserManagementInShell: React.FC = () => {
+    const { t: tApp } = useTranslation('app');
+    return (
+        <AppShell title={tApp('cards.users.title')}>
+            <UserManagement />
+        </AppShell>
+    );
+};
+
+export default UserManagementInShell;

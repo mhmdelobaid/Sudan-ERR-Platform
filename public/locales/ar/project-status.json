@@ -28,7 +28,8 @@
     "at": "تاريخ الملاحظات",
     "editProject": "تعديل المشروع",
     "viewHistory": "عرض سجل الملاحظات",
-    "rejectedReason": "سبب الرفض"
+    "rejectedReason": "سبب الرفض",
+    "unknown": "غير معروف"
   },
   "details": {
     "basicInfo": "معلومات أساسية",
@@ -47,7 +48,8 @@
     "duration": "المدة",
     "additional": "معلومات إضافية",
     "additionalSupport": "الدعم الإضافي",
-    "bankingDetails": "التفاصيل المصرفية"
+    "bankingDetails": "التفاصيل المصرفية",
+    "objectives": "أهداف المشروع"
   },
   "feedbackFetchError": "فشل في جلب الملاحظات",
   "funding": {
@@ -66,5 +68,19 @@
     "confirmed": "أكدت مجموعة العمل المشروع بتاريخ {{date}}، وهو الآن عند الشريك الوسيط للمراجعة النهائية",
     "note": "ملاحظات مجموعة العمل",
     "waiting": "اجتاز الفرز، بانتظار تأكيد مجموعة العمل"
-  }
+  },
+  "subtitle": "تتبع خطط العمل المقدمة المرتبطة بغرفتك.",
+  "workPlan": "خطة عمل",
+  "colDate": "التاريخ",
+  "closed": "مغلق",
+  "filterAll": "الكل",
+  "searchPlaceholder": "ابحث بالمحلية أو الولاية…",
+  "noFilteredProjects": "لا توجد مشاريع مطابقة لهذه الفلاتر.",
+  "prevPage": "السابق",
+  "nextPage": "التالي",
+  "pageOf": "صفحة {{page}} من {{totalPages}} ({{total}})",
+  "pageLabel": "صفحة",
+  "pageOfShort": "من {{totalPages}} ({{total}})",
+  "pageInputAria": "الانتقال إلى صفحة",
+  "fetchError": "فشل تحميل المشاريع."
 }

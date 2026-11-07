@@ -39,9 +39,9 @@ const AddSignature: React.FC = () => {
             const me = (data || {}) as { officer_position?: Position | null; has_signature?: boolean };
             if (cancelled) return;
             // Not an officer, or already saved: nothing to ask.
-            if (!me.officer_position || me.has_signature) { router.replace('/menu'); return; }
+            if (!me.officer_position || me.has_signature) { router.replace('/home'); return; }
             setPosition(me.officer_position);
-        })().catch(() => { if (!cancelled) router.replace('/menu'); });
+        })().catch(() => { if (!cancelled) router.replace('/home'); });
         return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -53,7 +53,7 @@ const AddSignature: React.FC = () => {
         try {
             await saveMySignature(png);
             setSaved(true);
-            setTimeout(() => router.replace('/menu'), 1200);
+            setTimeout(() => router.replace('/home'), 1200);
         } catch (e: any) {
             setError(t(e?.message === 'invalid_signature' ? 'errors.invalid_signature' : 'errors.server_error'));
             setBusy(false);
@@ -97,7 +97,7 @@ const AddSignature: React.FC = () => {
                                 <button type="button" className={btnPrimary} disabled={busy || empty} onClick={save}>
                                     <Icon name="save" size={20} />{busy ? t('welcome.saving') : t('welcome.save')}
                                 </button>
-                                <button type="button" className={btnLine} disabled={busy} onClick={() => router.replace('/menu')}>
+                                <button type="button" className={btnLine} disabled={busy} onClick={() => router.replace('/home')}>
                                     <Icon name="skip_next" size={20} />{t('welcome.later')}
                                 </button>
                             </div>

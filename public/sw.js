@@ -1,7 +1,7 @@
 // public/sw.js
 // Dynamic cache versioning: Increment this version number when deploying to invalidate old caches
 // The service worker file itself will be updated on deployment, triggering a new install
-const CACHE_VERSION = '5'; // Increment this on each deployment to invalidate old caches
+const CACHE_VERSION = '6'; // Increment this on each deployment to invalidate old caches
 const CACHE_NAME = `offline-chatbot-cache-v${CACHE_VERSION}`;
 
 // Static assets to pre-cache (excluding HTML pages for network-first strategy)
@@ -26,8 +26,8 @@ const OFFLINE_PAGES = ['/', '/offline-mode', '/en', '/en/offline-mode'];
 // Install event: cache static assets only
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Install event triggered with cache version:', CACHE_VERSION);
-  // Force the new service worker to activate immediately
-  self.skipWaiting();
+  // No skipWaiting here: the app shows "update available" and the person taps it (SKIP_WAITING message
+  // below), so a form being filled is never reloaded under them.
   
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -173,4 +173,11 @@ self.addEventListener('activate', (event) => {
       });
     })
   );
+});
+
+// The person tapped "update" in the app: switch to this new version now.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

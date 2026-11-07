@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import AppShell from '../components/layout/AppShell';
 import ProjectFileLink from '../components/ui/ProjectFileLink';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
@@ -298,22 +299,16 @@ const F2Review: React.FC = () => {
         </div>
     );
 
-    const langSwitch = (
-        <div className="flex justify-end text-sm">
-            <button onClick={() => i18n.changeLanguage('en')} className="mx-2 text-blue-500 hover:underline">English</button>
-            <button onClick={() => i18n.changeLanguage('ar')} className="mx-2 text-blue-500 hover:underline">العربية</button>
-        </div>
-    );
 
     // --- Render ---------------------------------------------------------------------------------
     if (auth === 'loading') {
-        return <div dir={isAr ? 'rtl' : 'ltr'} className="text-start p-6 text-center text-gray-600">{t('loading')}</div>;
+        return <div dir={isAr ? 'rtl' : 'ltr'} className="text-start p-6 text-center text-[#a8b6cc]">{t('loading')}</div>;
     }
     if (auth === 'denied') {
         return (
             <div dir={isAr ? 'rtl' : 'ltr'} className="text-start max-w-xl mx-auto p-6 space-y-4">
                 <div className="bg-white rounded-2xl shadow-md p-4 text-gray-700">{t('notAllowed')}</div>
-                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/home')} className="w-full" />
             </div>
         );
     }
@@ -324,9 +319,8 @@ const F2Review: React.FC = () => {
     const stateName = queue[0]?.state;
 
     return (
-        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start min-h-screen bg-gray-100">
-            <div className="max-w-3xl mx-auto p-4 pb-32 space-y-4">
-                {langSwitch}
+        <div dir={isAr ? 'rtl' : 'ltr'} className="text-start">
+            <div className="max-w-3xl mx-auto pb-8 space-y-4">
 
                 {/* Header */}
                 <header className="bg-white rounded-2xl shadow-md p-4">
@@ -420,7 +414,7 @@ const F2Review: React.FC = () => {
                             </ul>
                         )}
 
-                        <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/menu')} className="w-full" />
+                        <Button icon="arrow_back" text={t('backToMenu')} onClick={() => router.push('/home')} className="w-full" />
                     </>
                 )}
 
@@ -690,4 +684,14 @@ const F2Review: React.FC = () => {
     );
 };
 
-export default F2Review;
+/** Inside the app's frame (menu bar, language, sign out) */
+const F2ReviewInShell: React.FC = () => {
+    const { t: tApp } = useTranslation('app');
+    return (
+        <AppShell title={tApp('nav.f2Long')}>
+            <F2Review />
+        </AppShell>
+    );
+};
+
+export default F2ReviewInShell;

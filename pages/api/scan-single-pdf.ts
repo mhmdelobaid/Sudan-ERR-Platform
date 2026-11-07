@@ -50,7 +50,7 @@ async function downloadFile(url: string): Promise<string> {
     const tmpDir = os.tmpdir();
     const tmpFile = path.join(tmpDir, `${Date.now()}.pdf`);
     
-    fs.writeFileSync(tmpFile, Buffer.from(await data.arrayBuffer()));
+    fs.writeFileSync(tmpFile, new Uint8Array(await data.arrayBuffer()));
     console.log('File downloaded successfully to:', tmpFile);
     
     return tmpFile;
@@ -139,10 +139,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Signed-in, active app users only (this route calls paid AI services or writes reports)
-  if (!(await requireAppUser(req, res))) return;
+  const user = await requireAppUser(req, res);
+  if (!user) return;
 
   let filePath: string | null = null;
-  
+
   try {
     const { fileUrl } = req.body;
     if (!fileUrl) {

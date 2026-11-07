@@ -1,0 +1,130 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close",
+    "retry": "Try again",
+    "select": "Select",
+    "none": "—"
+  },
+  "shell": {
+    "appName": "ERR App",
+    "tagline": "Work plans & reports",
+    "workspace": "Emergency Response Rooms",
+    "navigate": "Menu",
+    "mobileLayout": "Phone layout",
+    "desktopLayout": "Computer layout",
+    "logout": "Log out",
+    "language": "Change language"
+  },
+  "nav": {
+    "home": "Home",
+    "fsystem": "F-System",
+    "dashboard": "Dashboard",
+    "offline": "Offline",
+    "profile": "My account",
+    "f1": "F1 Work plans",
+    "f2": "F2 Screening",
+    "f2Long": "F2 Project screening",
+    "f3": "F3 Contracts",
+    "f3Long": "F3 Contract (MOU)",
+    "f4f5": "F4 & F5 Reports",
+    "wg": "Working group"
+  },
+  "offlineBar": {
+    "offline": "No internet. Saved reports will be sent when you're back online ({{count}} waiting).",
+    "waiting": "{{count}} offline report(s) waiting to be sent",
+    "sending": "Sending {{count}} report(s)…",
+    "failed": "{{failed}} couldn't be sent · {{count}} waiting",
+    "sendNow": "Send now",
+    "open": "Open"
+  },
+  "update": {
+    "available": "A new version of the app is ready.",
+    "update": "Update",
+    "later": "Later"
+  },
+  "home": {
+    "title": "Home",
+    "heading": "What do you want to work on?",
+    "intro": "Plan and apply (F1), follow your contract (F3), send your reports (F4 & F5), or work offline.",
+    "introStateRep": "Screen the F1 work plans of your state (F2) and follow the dashboard.",
+    "introWg": "Follow the projects your group runs after screening, and comment on their reports.",
+    "fsystem": "F-System",
+    "screening": "F2 screening",
+    "workingGroup": "Project Working Group",
+    "dashboard": "Dashboard",
+    "utilities": "Account & tools"
+  },
+  "fsystem": {
+    "heading": "Choose a form",
+    "intro": "The F-System in order: F1 work plan, F2 screening, F3 contract, then the F4 & F5 reports.",
+    "forms": "Forms"
+  },
+  "cards": {
+    "f1": {
+      "title": "Work plans",
+      "sub": "Apply & follow status"
+    },
+    "f2": {
+      "title": "Screening",
+      "sub": "Vote on F1 lines in your state",
+      "subAdmin": "Screening by state reps",
+      "subRoom": "Where your work plan is"
+    },
+    "f3": {
+      "title": "Contracts (MOU)",
+      "sub": "Your contract & transfer date"
+    },
+    "f4f5": {
+      "title": "Reports",
+      "sub": "Financial (F4) & program (F5)"
+    },
+    "signatures": {
+      "title": "Waiting for my signature",
+      "sub": "Documents of your room"
+    },
+    "wg": {
+      "title": "Our projects",
+      "sub": "After screening: follow & comment"
+    },
+    "dashboard": {
+      "title": "Overview",
+      "sub": "Funding, projects & people reached"
+    },
+    "profile": {
+      "title": "My account",
+      "sub": "Name, password, signature, devices"
+    },
+    "users": {
+      "title": "User management",
+      "sub": "Users, roles & status"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "sub": "Tell us what to fix"
+    },
+    "offline": {
+      "title": "Offline mode",
+      "sub": "F4 reports with no internet"
+    }
+  },
+  "f1": {
+    "title": "F1 Work plans",
+    "label": "F1 · Work plans",
+    "heading": "What do you want to do?",
+    "intro": "Apply for a new work plan for your room, or follow the ones you sent.",
+    "actions": "Actions",
+    "applyCode": "Apply",
+    "applyTitle": "New work plan",
+    "applySub": "Type it, or upload the paper form",
+    "statusCode": "Status",
+    "statusTitle": "My work plans",
+    "statusSub": "Follow what you sent",
+    "back": "Back to F-System"
+  }
+}
