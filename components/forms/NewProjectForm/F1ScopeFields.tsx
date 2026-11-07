@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { newSupabase } from '../../../services/newSupabaseClient';
 
 export type F1ScopeValue = {
@@ -60,6 +61,7 @@ export default function F1ScopeFields({
   compact = false,
   showOrganization = false,
 }: F1ScopeFieldsProps) {
+  const { t: tx } = useTranslation('app');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [needsRoomPicker, setNeedsRoomPicker] = useState(false);
@@ -77,7 +79,7 @@ export default function F1ScopeFields({
         const {
           data: { session },
         } = await newSupabase.auth.getSession();
-        if (!session) throw new Error('Not signed in');
+        if (!session) throw new Error(tx('x.notSignedIn'));
 
         const headers = { Authorization: `Bearer ${session.access_token}` };
         const [scopeRes, orgRes] = await Promise.all([
@@ -89,7 +91,7 @@ export default function F1ScopeFields({
 
         const data = await scopeRes.json();
         if (!scopeRes.ok || !data.success) {
-          throw new Error(data.message || 'Failed to load options');
+          throw new Error(data.message || tx('x.failedToLoadOptions'));
         }
         if (cancelled) return;
 
@@ -101,7 +103,7 @@ export default function F1ScopeFields({
         if (orgRes) {
           const orgData = await orgRes.json();
           if (!orgRes.ok || !orgData.success) {
-            throw new Error(orgData.message || 'Failed to load organizations');
+            throw new Error(orgData.message || tx('x.failedToLoadOrganizations'));
           }
           if (!cancelled) setOrganizations(orgData.organizations || []);
         }
@@ -123,7 +125,7 @@ export default function F1ScopeFields({
           }
         }
       } catch (e: any) {
-        if (!cancelled) setError(e.message || 'Failed to load scope');
+        if (!cancelled) setError(e.message || tx('x.failedToLoadScope'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -172,7 +174,7 @@ export default function F1ScopeFields({
     isAr && s.label_ar ? s.label_ar : s.label_en;
 
   if (loading) {
-    return <p className="text-sm text-[#a8b6cc]">Loading options…</p>;
+    return <p className="text-sm text-[#a8b6cc]">{tx('x.loadingOptions')}</p>;
   }
 
   if (error) {
@@ -193,7 +195,7 @@ export default function F1ScopeFields({
       {needsRoomPicker ? (
         <div className={`grid grid-cols-2 ${gap}`}>
           <div className="min-w-0">
-            <label className={labelClass}>State</label>
+            <label className={labelClass}>{tx('x.state')}</label>
             <select
               className={selectClass}
               value={
@@ -214,7 +216,7 @@ export default function F1ScopeFields({
                 });
               }}
             >
-              <option value="">Select</option>
+              <option value="">{tx('x.select2')}</option>
               {stateOptions.map((s) => (
                 <option key={s.valueKey} value={s.valueKey}>
                   {s.label}
@@ -223,7 +225,7 @@ export default function F1ScopeFields({
             </select>
           </div>
           <div className="min-w-0">
-            <label className={labelClass}>ERR room</label>
+            <label className={labelClass}>{tx('x.errRoom')}</label>
             <select
               className={selectClass}
               value={value.emergency_room_id}
@@ -241,7 +243,7 @@ export default function F1ScopeFields({
                 });
               }}
             >
-              <option value="">Select</option>
+              <option value="">{tx('x.select2')}</option>
               {roomsInState.map((r) => (
                 <option key={r.id} value={r.id}>
                   {roomLabel(r, locale)}
@@ -252,9 +254,9 @@ export default function F1ScopeFields({
         </div>
       ) : (
         <div>
-          <label className={labelClass}>ERR room</label>
+          <label className={labelClass}>{tx('x.errRoom')}</label>
           <div className={`${selectClass} bg-[#1c2d48] text-[#a8b6cc] truncate`}>
-            {value.room_label || 'Your room'}
+            {value.room_label || tx('x.yourRoom')}
           </div>
         </div>
       )}
@@ -262,13 +264,13 @@ export default function F1ScopeFields({
       {showOrganization ? (
         <div className={`grid grid-cols-2 ${gap}`}>
           <div className="min-w-0">
-            <label className={labelClass}>Grant segment</label>
+            <label className={labelClass}>{tx('x.grantSegment')}</label>
             <select
               className={selectClass}
               value={value.grant_segment}
               onChange={(e) => onChange({ ...value, grant_segment: e.target.value })}
             >
-              <option value="">Select</option>
+              <option value="">{tx('x.select2')}</option>
               {segments.map((s) => (
                 <option key={s.id} value={s.code}>
                   {segmentLabel(s)}
@@ -277,7 +279,7 @@ export default function F1ScopeFields({
             </select>
           </div>
           <div className="min-w-0">
-            <label className={labelClass}>Organization</label>
+            <label className={labelClass}>{tx('x.organization')}</label>
             <select
               className={selectClass}
               value={value.organization_id}
@@ -291,7 +293,7 @@ export default function F1ScopeFields({
                 });
               }}
             >
-              <option value="">Select</option>
+              <option value="">{tx('x.select2')}</option>
               {organizations.map((o) => (
                 <option key={o.id} value={o.id}>
                   {orgLabel(o)}
@@ -302,13 +304,13 @@ export default function F1ScopeFields({
         </div>
       ) : (
         <div>
-          <label className={labelClass}>Grant segment</label>
+          <label className={labelClass}>{tx('x.grantSegment')}</label>
           <select
             className={selectClass}
             value={value.grant_segment}
             onChange={(e) => onChange({ ...value, grant_segment: e.target.value })}
           >
-            <option value="">Select</option>
+            <option value="">{tx('x.select2')}</option>
             {segments.map((s) => (
               <option key={s.id} value={s.code}>
                 {segmentLabel(s)}

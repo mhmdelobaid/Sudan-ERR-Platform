@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ExternalLink } from 'lucide-react';
 
 type Props = {
@@ -8,11 +9,11 @@ type Props = {
 };
 
 const NARRATIVE_FIELDS: Array<[string, string]> = [
-  ['positive_changes', 'Positive changes'],
-  ['negative_results', 'Negative results'],
-  ['unexpected_results', 'Unexpected results'],
-  ['lessons_learned', 'Lessons learned'],
-  ['suggestions', 'Suggestions'],
+  ['positive_changes', 'x.positiveChanges'],
+  ['negative_results', 'x.negativeResults'],
+  ['unexpected_results', 'x.unexpectedResults'],
+  ['lessons_learned', 'x.lessonsLearned'],
+  ['suggestions', 'x.suggestions'],
 ];
 
 function count(v: unknown) {
@@ -21,6 +22,7 @@ function count(v: unknown) {
 }
 
 export default function F5ReportView({ reportId, token, onBack }: Props) {
+  const { t: tx } = useTranslation('app');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [report, setReport] = useState<any>(null);
@@ -37,14 +39,14 @@ export default function F5ReportView({ reportId, token, onBack }: Props) {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load report');
+        if (!res.ok) throw new Error(data.error || tx('x.failedToLoadReport'));
         if (!cancelled) {
           setReport(data.report);
           setReach(data.reach || []);
           setFiles(data.files || []);
         }
       } catch (e: any) {
-        if (!cancelled) setError(e?.message || 'Failed to load report');
+        if (!cancelled) setError(e?.message || tx('x.failedToLoadReport'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -55,7 +57,7 @@ export default function F5ReportView({ reportId, token, onBack }: Props) {
   }, [reportId, token]);
 
   if (loading) {
-    return <p className="text-sm text-[#a8b6cc]">Loading report…</p>;
+    return <p className="text-sm text-[#a8b6cc]">{tx('x.loadingReport')}</p>;
   }
 
   if (error) {
@@ -69,7 +71,7 @@ export default function F5ReportView({ reportId, token, onBack }: Props) {
           onClick={onBack}
           className="text-sm font-medium text-[#8a97ab] hover:text-white"
         >
-          Back
+          {tx('x.back')}
         </button>
       </div>
     );
@@ -81,13 +83,13 @@ export default function F5ReportView({ reportId, token, onBack }: Props) {
   return (
     <div className="space-y-4">
       <div>
-        <p className="app-section-label mb-1">F5 · Report</p>
+        <p className="app-section-label mb-1">{tx('x.f5Report')}</p>
         <h3 className="text-lg font-bold text-white mb-1">
-          Program report
+          {tx('x.programReport')}
           {date !== '—' ? ` · ${date}` : ''}
         </h3>
         <p className="text-sm text-[#a8b6cc] mb-0">
-          Activities: {reach.length}
+          {tx('x.activities')} {reach.length}
           {report?.reporting_person ? ` · ${report.reporting_person}` : ''}
         </p>
       </div>
@@ -104,7 +106,7 @@ export default function F5ReportView({ reportId, token, onBack }: Props) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-[#1c2d48] px-3 py-2 text-sm font-semibold text-white hover:border-brand-orange/40"
               >
-                Open attachment
+                {tx('x.openAttachment')}
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             ))}
@@ -113,10 +115,10 @@ export default function F5ReportView({ reportId, token, onBack }: Props) {
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-[#8a97ab] mb-2">
-          Activities ({reach.length})
+          {tx('x.activities2')}{reach.length})
         </p>
         {reach.length === 0 ? (
-          <p className="text-sm text-[#a8b6cc]">No activities.</p>
+          <p className="text-sm text-[#a8b6cc]">{tx('x.noActivities')}</p>
         ) : (
           <ul className="space-y-2 max-h-80 overflow-y-auto">
             {reach.map((r) => (
@@ -125,17 +127,17 @@ export default function F5ReportView({ reportId, token, onBack }: Props) {
                 className="rounded-xl border border-white/10 bg-[#152238] px-3 py-2.5"
               >
                 <p className="text-sm font-semibold text-white mb-0.5">
-                  {r.activity_name || 'Activity'}
+                  {r.activity_name || tx('x.activity')}
                 </p>
                 <p className="text-xs text-[#8a97ab] mb-0">
-                  Individuals: {count(r.individual_count)} · Families: {count(r.household_count)}
+                  {tx('x.individuals')} {count(r.individual_count)} {tx('x.families')} {count(r.household_count)}
                   {r.location ? ` · ${r.location}` : ''}
                   {r.start_date ? ` · ${String(r.start_date).slice(0, 10)}` : ''}
                 </p>
                 {(r.male_count != null || r.female_count != null) && (
                   <p className="text-xs text-[#8a97ab] mb-0">
-                    Male: {count(r.male_count)} · Female: {count(r.female_count)} · Under 18:{' '}
-                    {count(r.under18_male)}/{count(r.under18_female)} · Disabilities:{' '}
+                    {tx('x.male')} {count(r.male_count)} {tx('x.female')} {count(r.female_count)} {tx('x.under18')}{' '}
+                    {count(r.under18_male)}/{count(r.under18_female)} {tx('x.disabilities')}{' '}
                     {count(r.people_with_disabilities)}
                   </p>
                 )}
@@ -150,7 +152,7 @@ export default function F5ReportView({ reportId, token, onBack }: Props) {
           {narratives.map(([key, label]) => (
             <div key={key}>
               <p className="text-xs font-semibold uppercase tracking-wide text-[#8a97ab] mb-1">
-                {label}
+                {tx(label)}
               </p>
               <p className="text-sm text-[#a8b6cc] whitespace-pre-wrap mb-0">{report[key]}</p>
             </div>
@@ -163,7 +165,7 @@ export default function F5ReportView({ reportId, token, onBack }: Props) {
         onClick={onBack}
         className="w-full rounded-xl border border-white/15 text-white text-sm font-semibold py-2.5 hover:border-brand-orange/40"
       >
-        Back
+        {tx('x.back')}
       </button>
     </div>
   );

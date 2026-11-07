@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ExternalLink } from 'lucide-react';
 
 type Props = {
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export default function F4ReportView({ reportId, token, onBack }: Props) {
+  const { t: tx } = useTranslation('app');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [summary, setSummary] = useState<any>(null);
@@ -24,14 +26,14 @@ export default function F4ReportView({ reportId, token, onBack }: Props) {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load report');
+        if (!res.ok) throw new Error(data.error || tx('x.failedToLoadReport'));
         if (!cancelled) {
           setSummary(data.summary);
           setExpenses(data.expenses || []);
           setAttachments(data.attachments || []);
         }
       } catch (e: any) {
-        if (!cancelled) setError(e?.message || 'Failed to load report');
+        if (!cancelled) setError(e?.message || tx('x.failedToLoadReport'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -42,7 +44,7 @@ export default function F4ReportView({ reportId, token, onBack }: Props) {
   }, [reportId, token]);
 
   if (loading) {
-    return <p className="text-sm text-[#a8b6cc]">Loading report…</p>;
+    return <p className="text-sm text-[#a8b6cc]">{tx('x.loadingReport')}</p>;
   }
 
   if (error) {
@@ -56,7 +58,7 @@ export default function F4ReportView({ reportId, token, onBack }: Props) {
           onClick={onBack}
           className="text-sm font-medium text-[#8a97ab] hover:text-white"
         >
-          Back
+          {tx('x.back')}
         </button>
       </div>
     );
@@ -69,13 +71,13 @@ export default function F4ReportView({ reportId, token, onBack }: Props) {
   return (
     <div className="space-y-4">
       <div>
-        <p className="app-section-label mb-1">F4 · Report</p>
+        <p className="app-section-label mb-1">{tx('x.f4Report')}</p>
         <h3 className="text-lg font-bold text-white mb-1">
-          Report #{summary?.id}
+          {tx('x.report2')}{summary?.id}
           {date !== '—' ? ` · ${date}` : ''}
         </h3>
         <p className="text-sm text-[#a8b6cc] mb-0">
-          Expenses:{' '}
+          {tx('x.expenses')}{' '}
           {Number.isFinite(Number(summary?.total_expenses))
             ? `$${Number(summary.total_expenses).toLocaleString('en-US', {
                 minimumFractionDigits: 0,
@@ -98,7 +100,7 @@ export default function F4ReportView({ reportId, token, onBack }: Props) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-[#1c2d48] px-3 py-2 text-sm font-semibold text-white hover:border-brand-orange/40"
               >
-                Open attachment
+                {tx('x.openAttachment')}
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             ))}
@@ -107,10 +109,10 @@ export default function F4ReportView({ reportId, token, onBack }: Props) {
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-[#8a97ab] mb-2">
-          Expenses ({expenses.length})
+          {tx('x.expenses2')}{expenses.length})
         </p>
         {expenses.length === 0 ? (
-          <p className="text-sm text-[#a8b6cc]">No expense lines.</p>
+          <p className="text-sm text-[#a8b6cc]">{tx('x.noExpenseLines')}</p>
         ) : (
           <ul className="space-y-2 max-h-80 overflow-y-auto">
             {expenses.map((e) => (
@@ -119,7 +121,7 @@ export default function F4ReportView({ reportId, token, onBack }: Props) {
                 className="rounded-xl border border-white/10 bg-[#152238] px-3 py-2.5"
               >
                 <p className="text-sm font-semibold text-white mb-0.5">
-                  {e.expense_activity || e.expense_description || 'Expense'}
+                  {e.expense_activity || e.expense_description || tx('x.expense')}
                 </p>
                 <p className="text-xs text-[#8a97ab] mb-0">
                   {Number.isFinite(Number(e.expense_amount))
@@ -142,7 +144,7 @@ export default function F4ReportView({ reportId, token, onBack }: Props) {
         onClick={onBack}
         className="w-full rounded-xl border border-white/15 text-white text-sm font-semibold py-2.5 hover:border-brand-orange/40"
       >
-        Back
+        {tx('x.back')}
       </button>
     </div>
   );

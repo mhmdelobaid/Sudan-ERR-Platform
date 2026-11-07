@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, X } from 'lucide-react';
+import CameraButton from '../../../components/ui/CameraButton';
 import AppShell from '../../../components/layout/AppShell';
 import { useRequireAuth } from '../../../hooks/useRequireAuth';
 import ReportingForm from '../../../components/forms/ReportForm/ReportingForm';
@@ -51,7 +52,7 @@ function workflowFromAction(action: string | string[] | undefined): Workflow | n
 function formatReportLabel(r: any) {
   const date = r.report_date ? String(r.report_date).slice(0, 10) : null;
   const created = r.created_at ? String(r.created_at).slice(0, 10) : null;
-  return date || created || `Report #${r.id}`;
+  return date || created || `#${r.id}`;
 }
 
 function formatUsd(value: unknown) {
@@ -64,6 +65,7 @@ function formatUsd(value: unknown) {
 }
 
 export default function F4F5ProjectPage() {
+  const { t: tx } = useTranslation('app');
   const router = useRouter();
   const { projectId, action, reportId } = router.query;
   const { ready, token } = useRequireAuth();
@@ -164,11 +166,11 @@ export default function F4F5ProjectPage() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load reports');
+        if (!res.ok) throw new Error(data.error || tx('x.failedToLoadReports'));
         if (!cancelled) setExistingReports(data.reports || []);
       } catch (e: any) {
         if (!cancelled) {
-          setExistingError(e?.message || 'Failed to load reports');
+          setExistingError(e?.message || tx('x.failedToLoadReports'));
           setExistingReports([]);
         }
       } finally {
@@ -324,24 +326,24 @@ export default function F4F5ProjectPage() {
 
   if (!ready) {
     return (
-      <AppShell title="F4 & F5 Reporting">
-        <p className="text-[#a8b6cc] text-sm">Loading…</p>
+      <AppShell title={tx('x.f4F5Reporting')}>
+        <p className="text-[#a8b6cc] text-sm">{tx('x.loading')}</p>
       </AppShell>
     );
   }
 
   if (loading) {
     return (
-      <AppShell title="F4 & F5 Reporting">
-        <p className="text-[#a8b6cc] text-sm">Loading project…</p>
+      <AppShell title={tx('x.f4F5Reporting')}>
+        <p className="text-[#a8b6cc] text-sm">{tx('x.loadingProject')}</p>
       </AppShell>
     );
   }
 
   if (!project) {
     return (
-      <AppShell title="F4 & F5 Reporting">
-        <p className="text-sm text-red-300 mb-4">Project not found or not accessible.</p>
+      <AppShell title={tx('x.f4F5Reporting')}>
+        <p className="text-sm text-red-300 mb-4">{tx('x.projectNotFoundOrNotAccessible')}</p>
         <button
           type="button"
           className="inline-flex items-center gap-1 text-sm font-medium text-[#8a97ab] hover:text-brand-orange transition-colors"
@@ -350,14 +352,14 @@ export default function F4F5ProjectPage() {
           <span className="rtl:rotate-180 inline-flex">
             <ChevronRight className="h-4 w-4 rotate-180" />
           </span>
-          Back to reporting
+          {tx('x.backToReporting')}
         </button>
       </AppShell>
     );
   }
 
   return (
-    <AppShell title="F4 & F5 Reporting">
+    <AppShell title={tx('x.f4F5Reporting')}>
       <div className="mb-6">
         <button
           type="button"
@@ -371,9 +373,9 @@ export default function F4F5ProjectPage() {
             ? t('selectDifferentProject', 'Back to reporting')
             : t('backToReportTypes', 'Back')}
         </button>
-        <p className="app-section-label mb-1">F4 & F5 · Reporting</p>
+        <p className="app-section-label mb-1">{tx('x.f4F5Reporting2')}</p>
         <h2 className="text-xl font-bold text-white leading-snug mb-1 line-clamp-3">
-          {project.project_objectives || 'Untitled project'}
+          {project.project_objectives || tx('x.untitledProject')}
         </h2>
         <p className="text-sm text-[#a8b6cc] mb-0">
           {[project.locality, project.state].filter(Boolean).join(' · ') || '—'}
@@ -398,9 +400,9 @@ export default function F4F5ProjectPage() {
                   setF4UploadMode('scan');
                   setWorkflow('f4-choice');
                 }}
-                code="AI"
-                title="Upload F4 with AI"
-                subtitle="Scan a financial report"
+                code={tx('x.ai')}
+                title={tx('x.uploadF4WithAi')}
+                subtitle={tx('x.scanAFinancialReport')}
                 illustration={MouScene}
                 wash="bg-brand-orangeSoft"
                 size="md"
@@ -410,9 +412,9 @@ export default function F4F5ProjectPage() {
                   setF4UploadMode('fill');
                   setWorkflow('f4-choice');
                 }}
-                code="Manual"
-                title="Upload F4 Manual Form"
-                subtitle="Fill expenses by hand"
+                code={tx('x.manual')}
+                title={tx('x.uploadF4ManualForm')}
+                subtitle={tx('x.fillExpensesByHand')}
                 illustration={ReportingScene}
                 wash="bg-[#7B96C4]"
                 size="md"
@@ -422,9 +424,9 @@ export default function F4F5ProjectPage() {
                   setF5UploadMode('scan');
                   setWorkflow('f5-choice');
                 }}
-                code="AI"
-                title="Upload F5 with AI"
-                subtitle="Scan a program report"
+                code={tx('x.ai')}
+                title={tx('x.uploadF5WithAi')}
+                subtitle={tx('x.scanAProgramReport')}
                 illustration={ApprovalsScene}
                 wash="bg-brand-orangeSoft"
                 size="md"
@@ -435,9 +437,9 @@ export default function F4F5ProjectPage() {
                   setCurrentProgramDraft(null);
                   setWorkflow('f5-choice');
                 }}
-                code="Manual"
-                title="Upload F5 Manual Form"
-                subtitle="Fill the program report"
+                code={tx('x.manual')}
+                title={tx('x.uploadF5ManualForm')}
+                subtitle={tx('x.fillTheProgramReport')}
                 illustration={WorkPlanScene}
                 wash="bg-[#7B96C4]"
                 size="md"
@@ -447,9 +449,9 @@ export default function F4F5ProjectPage() {
                   await fetchDrafts();
                   setWorkflow('drafts');
                 }}
-                code="Drafts"
+                code={tx('x.drafts')}
                 title={t('viewDrafts', 'View drafts')}
-                subtitle="Continue saved reports"
+                subtitle={tx('x.continueSavedReports')}
                 illustration={ApprovalsScene}
                 wash="bg-[#9BB0D4]"
                 size="md"
@@ -492,19 +494,19 @@ export default function F4F5ProjectPage() {
               <>
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <p className="app-section-label mb-1">F4 · Financial</p>
+                    <p className="app-section-label mb-1">{tx('x.f4Financial')}</p>
                     <h3
                       id="f4-project-choice-title"
                       className="text-lg font-bold text-white leading-snug mb-0"
                     >
-                      What would you like to do?
+                      {tx('x.whatWouldYouLikeToDo')}
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={() => setWorkflow('menu')}
                     className="shrink-0 rounded-lg p-1.5 text-[#8a97ab] hover:text-white hover:bg-white/5"
-                    aria-label="Close"
+                    aria-label={tx('x.close')}
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -514,7 +516,7 @@ export default function F4F5ProjectPage() {
                   <div className="mb-4 space-y-3">
                     <div className="rounded-xl border border-white/10 bg-[#152238] px-3 py-2.5">
                       <p className="text-[10px] font-bold uppercase tracking-wide text-[#8a97ab] mb-0.5">
-                        File selected
+                        {tx('x.fileSelected')}
                       </p>
                       <p className="text-sm font-semibold text-white mb-0 truncate">
                         {pendingFile.name}
@@ -530,7 +532,7 @@ export default function F4F5ProjectPage() {
                       onClick={startScan}
                       className="w-full rounded-xl bg-brand-orange text-[#152238] text-sm font-bold py-3 px-4 hover:bg-[#ffb88a]"
                     >
-                      Upload & scan
+                      {tx('x.uploadScan')}
                     </button>
                     <div className="flex gap-2">
                       <button
@@ -538,33 +540,38 @@ export default function F4F5ProjectPage() {
                         onClick={openF4Upload}
                         className="flex-1 rounded-xl border border-white/15 text-white text-sm font-semibold py-2.5"
                       >
-                        Change file
+                        {tx('x.changeFile')}
                       </button>
                       <button
                         type="button"
                         onClick={clearPendingFile}
                         className="flex-1 rounded-xl border border-white/15 text-[#a8b6cc] text-sm font-semibold py-2.5"
                       >
-                        Cancel
+                        {tx('x.cancel')}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <button
+                  <>
+                      <button
                     type="button"
                     onClick={openF4Upload}
                     className="w-full rounded-xl bg-brand-orange text-[#152238] text-sm font-bold py-3 px-4 hover:bg-[#ffb88a] mb-4"
                   >
-                    Upload new
+                    {tx('x.uploadNew')}
                   </button>
+                      {f4UploadMode !== 'fill' && (
+                        <CameraButton onChange={onFilePicked} className="w-full rounded-xl border border-brand-orange/60 text-brand-orange text-sm font-bold py-3 px-4 mb-4 inline-flex items-center justify-center gap-1.5" />
+                      )}
+                    </>
                 )}
 
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-[#8a97ab] mb-2">
-                    Existing reports
+                    {tx('x.existingReports')}
                   </p>
                   {existingLoading && (
-                    <p className="text-sm text-[#a8b6cc]">Loading reports…</p>
+                    <p className="text-sm text-[#a8b6cc]">{tx('x.loadingReports')}</p>
                   )}
                   {existingError && (
                     <div className="rounded-xl bg-red-500/10 border border-red-400/30 text-red-300 px-3 py-2 text-sm">
@@ -575,7 +582,7 @@ export default function F4F5ProjectPage() {
                     !existingError &&
                     existingReports.length === 0 && (
                       <p className="text-sm text-[#a8b6cc]">
-                        No F4 reports yet for this project.
+                        {tx('x.noF4ReportsYetForThis')}
                       </p>
                     )}
                   {!existingLoading && existingReports.length > 0 && (
@@ -593,7 +600,7 @@ export default function F4F5ProjectPage() {
                                   {formatReportLabel(r)}
                                 </span>
                                 <span className="block text-xs text-[#8a97ab]">
-                                  Expenses: {formatUsd(r.total_expenses)}
+                                  {tx('x.expenses')} {formatUsd(r.total_expenses)}
                                   {r.review_status
                                     ? ` · ${r.review_status}`
                                     : ''}
@@ -681,19 +688,19 @@ export default function F4F5ProjectPage() {
               <>
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <p className="app-section-label mb-1">F5 · Program</p>
+                    <p className="app-section-label mb-1">{tx('x.f5Program')}</p>
                     <h3
                       id="f5-project-choice-title"
                       className="text-lg font-bold text-white leading-snug mb-0"
                     >
-                      What would you like to do?
+                      {tx('x.whatWouldYouLikeToDo')}
                     </h3>
                   </div>
                   <button
                     type="button"
                     onClick={() => setWorkflow('menu')}
                     className="shrink-0 rounded-lg p-1.5 text-[#8a97ab] hover:text-white hover:bg-white/5"
-                    aria-label="Close"
+                    aria-label={tx('x.close')}
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -703,7 +710,7 @@ export default function F4F5ProjectPage() {
                   <div className="mb-4 space-y-3">
                     <div className="rounded-xl border border-white/10 bg-[#152238] px-3 py-2.5">
                       <p className="text-[10px] font-bold uppercase tracking-wide text-[#8a97ab] mb-0.5">
-                        File selected
+                        {tx('x.fileSelected')}
                       </p>
                       <p className="text-sm font-semibold text-white mb-0 truncate">
                         {pendingFile.name}
@@ -719,7 +726,7 @@ export default function F4F5ProjectPage() {
                       onClick={startF5Scan}
                       className="w-full rounded-xl bg-brand-orange text-[#152238] text-sm font-bold py-3 px-4 hover:bg-[#ffb88a]"
                     >
-                      Upload & scan
+                      {tx('x.uploadScan')}
                     </button>
                     <div className="flex gap-2">
                       <button
@@ -727,33 +734,38 @@ export default function F4F5ProjectPage() {
                         onClick={openF5Upload}
                         className="flex-1 rounded-xl border border-white/15 text-white text-sm font-semibold py-2.5"
                       >
-                        Change file
+                        {tx('x.changeFile')}
                       </button>
                       <button
                         type="button"
                         onClick={clearPendingFile}
                         className="flex-1 rounded-xl border border-white/15 text-[#a8b6cc] text-sm font-semibold py-2.5"
                       >
-                        Cancel
+                        {tx('x.cancel')}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <button
+                  <>
+                      <button
                     type="button"
                     onClick={openF5Upload}
                     className="w-full rounded-xl bg-brand-orange text-[#152238] text-sm font-bold py-3 px-4 hover:bg-[#ffb88a] mb-4"
                   >
-                    Upload new
+                    {tx('x.uploadNew')}
                   </button>
+                      {f5UploadMode !== 'fill' && (
+                        <CameraButton onChange={onFilePicked} className="w-full rounded-xl border border-brand-orange/60 text-brand-orange text-sm font-bold py-3 px-4 mb-4 inline-flex items-center justify-center gap-1.5" />
+                      )}
+                    </>
                 )}
 
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-[#8a97ab] mb-2">
-                    Existing reports
+                    {tx('x.existingReports')}
                   </p>
                   {existingLoading && (
-                    <p className="text-sm text-[#a8b6cc]">Loading reports…</p>
+                    <p className="text-sm text-[#a8b6cc]">{tx('x.loadingReports')}</p>
                   )}
                   {existingError && (
                     <div className="rounded-xl bg-red-500/10 border border-red-400/30 text-red-300 px-3 py-2 text-sm">
@@ -764,7 +776,7 @@ export default function F4F5ProjectPage() {
                     !existingError &&
                     existingReports.length === 0 && (
                       <p className="text-sm text-[#a8b6cc]">
-                        No F5 reports yet for this project.
+                        {tx('x.noF5ReportsYetForThis')}
                       </p>
                     )}
                   {!existingLoading && existingReports.length > 0 && (
@@ -782,7 +794,7 @@ export default function F4F5ProjectPage() {
                                   {formatReportLabel(r)}
                                 </span>
                                 <span className="block text-xs text-[#8a97ab]">
-                                  Activities: {r.activities_count ?? 0}
+                                  {tx('x.activities')} {r.activities_count ?? 0}
                                 </span>
                               </span>
                               <ChevronRight className="h-4 w-4 shrink-0 text-[#8a97ab]" />
@@ -875,7 +887,7 @@ export default function F4F5ProjectPage() {
       {workflow === 'drafts' && (
         <div className="space-y-6 rounded-xl border border-white/10 bg-[#122038]/60 p-4">
           <div>
-            <h3 className="font-semibold text-white mb-3">F4 · Financial drafts</h3>
+            <h3 className="font-semibold text-white mb-3">{tx('x.f4FinancialDrafts')}</h3>
             <FinancialReportDrafts
               drafts={financialDrafts}
               onEditDraft={(draftId: string) => {
@@ -892,7 +904,7 @@ export default function F4F5ProjectPage() {
             />
           </div>
           <div>
-            <h3 className="font-semibold text-white mb-3">F5 · Program drafts</h3>
+            <h3 className="font-semibold text-white mb-3">{tx('x.f5ProgramDrafts')}</h3>
             <ProgramReportDrafts
               drafts={programDrafts}
               onEditDraft={(draftId: string) => {

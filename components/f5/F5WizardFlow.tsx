@@ -4,6 +4,8 @@
  * Each wizard step sends only the highlighted regions to `/api/f5/parse-snips`.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import CameraButton from '../ui/CameraButton';
 import { Loader2 } from 'lucide-react';
 import {
   WizardFullscreenShell,
@@ -180,6 +182,7 @@ export default function F5WizardFlow({
   onAutoStartFailed,
   onStepChange,
 }: Props) {
+  const { t: tx } = useTranslation('app');
   const [step, setStep] = useState<F5WizardFlowStep>(
     autoStart && initialFile ? 'preparing' : 'upload'
   );
@@ -282,7 +285,7 @@ export default function F5WizardFlow({
     async (fileOverride?: File | null) => {
       const selected = fileOverride ?? file;
       if (!selected) {
-        setError('Choose a PDF or image first');
+        setError(tx('x.chooseAPdfOrImageFirst'));
         return;
       }
       setFile(selected);
@@ -299,7 +302,7 @@ export default function F5WizardFlow({
         setStep('wizard');
       } catch (e: any) {
         console.error(e);
-        const msg = e?.message || 'Upload failed';
+        const msg = e?.message || tx('x.uploadFailed');
         setError(msg);
         if (autoStart && onAutoStartFailed) {
           onAutoStartFailed(msg);
@@ -322,7 +325,7 @@ export default function F5WizardFlow({
   const parseSnips = async (kind: F5WizardKind, files: File[]) => {
     if (kind !== expectedKind) return;
     if (!files.length) {
-      setError('Highlight at least one region first.');
+      setError(tx('x.highlightAtLeastOneRegionFirst'));
       return;
     }
     setError('');
@@ -379,7 +382,7 @@ export default function F5WizardFlow({
       }
     } catch (e: any) {
       console.error(e);
-      setError(e?.message || 'Could not read the selected regions. Try again.');
+      setError(e?.message || tx('x.couldNotReadTheSelectedRegions'));
     } finally {
       setWizardLoading(null);
     }
@@ -394,7 +397,7 @@ export default function F5WizardFlow({
       );
       await parseSnips(kind, files);
     } catch (e: any) {
-      setError(e?.message || 'Could not prepare the selected regions');
+      setError(e?.message || tx('x.couldNotPrepareTheSelectedRegions'));
     }
   };
 
@@ -410,7 +413,7 @@ export default function F5WizardFlow({
   const handleSave = async () => {
     if (!summary || saveInFlight.current) return;
     if (!summary.report_date) {
-      setError('Report date is required');
+      setError(tx('x.reportDateIsRequired'));
       return;
     }
     setError('');
@@ -427,7 +430,7 @@ export default function F5WizardFlow({
       setStep('done');
     } catch (e: any) {
       console.error(e);
-      setError(e?.message || 'Save failed');
+      setError(e?.message || tx('x.saveFailed'));
       setStep('review');
     } finally {
       saveInFlight.current = false;
@@ -455,12 +458,12 @@ export default function F5WizardFlow({
   if (step === 'done') {
     return (
       <div className="space-y-4 text-center py-8">
-        <p className="text-lg font-bold text-white mb-1">F5 report submitted</p>
+        <p className="text-lg font-bold text-white mb-1">{tx('x.f5ReportSubmitted')}</p>
         <p className="text-sm text-[#a8b6cc]">
-          {reportId != null ? 'Program report created for this project.' : 'Report saved.'}
+          {reportId != null ? tx('x.programReportCreatedForThisProject') : tx('x.reportSaved')}
         </p>
         <button type="button" onClick={onReturnToMenu} className={primaryBtn}>
-          Back
+          {tx('x.back')}
         </button>
       </div>
     );
@@ -471,7 +474,7 @@ export default function F5WizardFlow({
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-[#a8b6cc]">
         <Loader2 className="h-8 w-8 animate-spin text-brand-orange" />
         <p className="text-sm">
-          {step === 'preparing' ? 'Uploading your file…' : 'Saving report…'}
+          {step === 'preparing' ? tx('x.uploadingYourFile') : tx('x.savingReport')}
         </p>
       </div>
     );
@@ -481,11 +484,10 @@ export default function F5WizardFlow({
     return (
       <div className="space-y-4">
         <div>
-          <p className="app-section-label mb-1">F5 · Guided upload</p>
-          <h3 className="text-lg font-bold text-white mb-1">Upload program report</h3>
+          <p className="app-section-label mb-1">{tx('x.f5GuidedUpload')}</p>
+          <h3 className="text-lg font-bold text-white mb-1">{tx('x.uploadProgramReport')}</h3>
           <p className="text-sm text-[#a8b6cc] mb-0">
-            Upload your report, highlight the activities, demographics and questions, then review
-            and submit.
+            {tx('x.uploadYourReportHighlightTheActivities')}
           </p>
         </div>
         {errorBox}
@@ -495,6 +497,8 @@ export default function F5WizardFlow({
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           className="block w-full text-sm text-[#a8b6cc] file:mr-3 file:rounded-lg file:border-0 file:bg-brand-orange file:px-3 file:py-2 file:text-sm file:font-bold file:text-[#152238]"
         />
+        <CameraButton onChange={(e) => setFile(e.target.files?.[0] || null)} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand-orange/60 text-brand-orange px-3 py-2 text-sm font-bold" />
+        {file && <p className="text-xs text-[#a8b6cc] mb-0 truncate">{file.name}</p>}
         <div className="flex gap-2">
           <button
             type="button"
@@ -502,10 +506,10 @@ export default function F5WizardFlow({
             disabled={!file}
             className={primaryBtn}
           >
-            Upload & scan
+            {tx('x.uploadScan')}
           </button>
           <button type="button" onClick={onReturnToMenu} className={ghostBtn}>
-            Cancel
+            {tx('x.cancel')}
           </button>
         </div>
       </div>
@@ -535,7 +539,7 @@ export default function F5WizardFlow({
     ];
     return (
       <WizardFullscreenShell
-        title="F5 program report"
+        title={tx('x.f5ProgramReport')}
         steps={pills}
         expectedStepId={expectedKind}
         expectedStepLabel={STEP_LABEL[expectedKind]}
@@ -553,7 +557,7 @@ export default function F5WizardFlow({
         toolbarExtra={
           expectedKind !== 'activities' ? (
             <span className="text-[11px] text-[#8a97ab] whitespace-nowrap">
-              Rows: {reach.length}
+              {tx('x.rows')} {reach.length}
             </span>
           ) : undefined
         }
@@ -573,7 +577,7 @@ export default function F5WizardFlow({
         unsupportedBanner={
           viewerMode === 'unsupported' && !isRenderingPages ? (
             <div className="shrink-0 text-sm text-amber-300 bg-amber-500/10 border border-amber-400/30 rounded-xl p-3">
-              This file type cannot be shown for highlighting. Please upload a PDF or image.
+              {tx('x.thisFileTypeCannotBeShown')}
             </div>
           ) : undefined
         }
@@ -605,7 +609,7 @@ export default function F5WizardFlow({
         disabled={!summary.report_date}
         className={`${primaryBtn} w-full`}
       >
-        Submit report
+        {tx('x.submitReport')}
       </button>
       <div className="grid grid-cols-3 gap-1.5">
         <button
@@ -616,21 +620,21 @@ export default function F5WizardFlow({
           }}
           className={`${ghostBtn} px-1.5 py-2 text-xs leading-tight`}
         >
-          Back to highlighting
+          {tx('x.backToHighlighting')}
         </button>
         <button
           type="button"
           onClick={startOver}
           className={`${ghostBtn} px-1.5 py-2 text-xs leading-tight`}
         >
-          Start over
+          {tx('x.startOver')}
         </button>
         <button
           type="button"
           onClick={onReturnToMenu}
           className={`${ghostBtn} px-1.5 py-2 text-xs leading-tight`}
         >
-          Cancel
+          {tx('x.cancel')}
         </button>
       </div>
     </div>
@@ -662,9 +666,9 @@ export default function F5WizardFlow({
   return (
     <div className="space-y-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div>
-        <p className="app-section-label mb-1">F5 · Review</p>
-        <h3 className="text-lg font-bold text-white mb-1">Check the extracted details</h3>
-        <p className="text-sm text-[#a8b6cc] mb-0">Edit fields as needed, then submit.</p>
+        <p className="app-section-label mb-1">{tx('x.f5Review')}</p>
+        <h3 className="text-lg font-bold text-white mb-1">{tx('x.checkTheExtractedDetails')}</h3>
+        <p className="text-sm text-[#a8b6cc] mb-0">{tx('x.editFieldsAsNeededThenSubmit')}</p>
       </div>
 
       {/* Keep primary actions visible without scrolling behind the bottom nav */}
@@ -681,13 +685,13 @@ export default function F5WizardFlow({
           rel="noreferrer"
           className="inline-flex text-xs font-semibold text-brand-orange hover:underline"
         >
-          Open original file
+          {tx('x.openOriginalFile')}
         </a>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-xs text-[#8a97ab]">
-          Report date *
+          {tx('x.reportDate')}
           <input
             type="date"
             value={summary.report_date || ''}
@@ -697,7 +701,7 @@ export default function F5WizardFlow({
           />
         </label>
         <label className="block text-xs text-[#8a97ab]">
-          Reporting person
+          {tx('x.reportingPerson')}
           <input
             value={summary.reporting_person || ''}
             onChange={(e) => setSummary({ ...summary, reporting_person: e.target.value })}
@@ -708,27 +712,27 @@ export default function F5WizardFlow({
 
       <div className="rounded-xl border border-white/10 overflow-hidden">
         <div className="flex items-center justify-between bg-[#1c2d48] px-3 py-2">
-          <p className="text-xs font-semibold text-[#a8b6cc] mb-0">Activities</p>
+          <p className="text-xs font-semibold text-[#a8b6cc] mb-0">{tx('x.activities3')}</p>
           <button type="button" onClick={addReach} className="text-xs font-semibold text-brand-orange">
-            + Add row
+            {tx('x.addRow')}
           </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs min-w-[1280px]">
             <thead className="text-[#8a97ab]">
               <tr className="border-b border-white/10">
-                <th className="px-2 py-2 text-start">Activity</th>
-                <th className="px-2 py-2 text-start">Goal</th>
-                <th className="px-2 py-2 text-start">Location</th>
-                <th className="px-2 py-2 text-start">Start</th>
-                <th className="px-2 py-2 text-start">End</th>
-                <th className="px-2 py-2 text-start">Individuals</th>
-                <th className="px-2 py-2 text-start">Families</th>
-                <th className="px-2 py-2 text-start">Male</th>
-                <th className="px-2 py-2 text-start">Female</th>
-                <th className="px-2 py-2 text-start">Under 18 M</th>
-                <th className="px-2 py-2 text-start">Under 18 F</th>
-                <th className="px-2 py-2 text-start">Disabilities</th>
+                <th className="px-2 py-2 text-start">{tx('x.activity')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.goal')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.location')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.start')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.end')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.individuals2')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.families2')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.male2')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.female2')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.under18M')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.under18F')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.disabilities2')}</th>
                 <th className="px-2 py-2 w-8" />
               </tr>
             </thead>
@@ -760,7 +764,7 @@ export default function F5WizardFlow({
                     <input
                       value={row.start_date || ''}
                       onChange={(e) => updateReach(i, { start_date: e.target.value })}
-                      placeholder="YYYY-MM-DD"
+                      placeholder={tx('x.yyyyMmDd')}
                       className={`${cellInputCls} w-28`}
                     />
                   </td>
@@ -768,7 +772,7 @@ export default function F5WizardFlow({
                     <input
                       value={row.end_date || ''}
                       onChange={(e) => updateReach(i, { end_date: e.target.value })}
-                      placeholder="YYYY-MM-DD"
+                      placeholder={tx('x.yyyyMmDd')}
                       className={`${cellInputCls} w-28`}
                     />
                   </td>
@@ -793,8 +797,7 @@ export default function F5WizardFlow({
               {reach.length === 0 && (
                 <tr>
                   <td colSpan={13} className="px-3 py-4 text-center text-[#8a97ab]">
-                    No activity rows yet. Add one manually or go back and re-run the activities
-                    step.
+                    {tx('x.noActivityRowsYetAddOne')}
                   </td>
                 </tr>
               )}
@@ -805,11 +808,11 @@ export default function F5WizardFlow({
 
       {(
         [
-          ['positive_changes', 'Positive changes'],
-          ['negative_results', 'Negative results'],
-          ['unexpected_results', 'Unexpected results'],
-          ['lessons_learned', 'Lessons learned'],
-          ['suggestions', 'Suggestions'],
+          ['positive_changes', tx('x.positiveChanges')],
+          ['negative_results', tx('x.negativeResults')],
+          ['unexpected_results', tx('x.unexpectedResults')],
+          ['lessons_learned', tx('x.lessonsLearned')],
+          ['suggestions', tx('x.suggestions')],
         ] as const
       ).map(([key, label]) => (
         <label key={key} className="block text-xs text-[#8a97ab]">

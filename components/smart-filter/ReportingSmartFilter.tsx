@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, Eraser, Filter, X } from 'lucide-react';
 import type {
   ActiveFilter,
@@ -7,21 +8,24 @@ import type {
   FilterValue,
 } from './types';
 
+/** Labels starting with 'x.' are translation keys (namespace 'app'); others (state and room names) are shown as they are. */
+export const tl = (t: (k: string, o?: any) => string, s?: string | null) => (s && s.startsWith('x.') ? t(s) : s || '');
+
 export const REPORT_STATUS_OPTIONS: FilterSelectOption[] = [
-  { value: 'waiting', label: 'Waiting' },
-  { value: 'partial', label: 'Partial' },
-  { value: 'in review', label: 'Under review' },
-  { value: 'completed', label: 'Completed' },
+  { value: 'waiting', label: 'x.waiting' },
+  { value: 'partial', label: 'x.partial' },
+  { value: 'in review', label: 'x.underReview' },
+  { value: 'completed', label: 'x.completed' },
 ];
 
 export const PROJECT_STATUS_OPTIONS: FilterSelectOption[] = [
-  { value: 'active', label: 'Active' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'feedback', label: 'Changes requested' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'completed', label: 'Completed' },
+  { value: 'active', label: 'x.active' },
+  { value: 'pending', label: 'x.pending' },
+  { value: 'feedback', label: 'x.changesRequested' },
+  { value: 'approved', label: 'x.approved' },
+  { value: 'rejected', label: 'x.rejected' },
+  { value: 'closed', label: 'x.closed' },
+  { value: 'completed', label: 'x.completed' },
 ];
 
 const CHIP_COLORS: Record<string, string> = {
@@ -64,6 +68,7 @@ function MultiSelectPanel({
   selected: string[];
   onChange: (next: string[]) => void;
 }) {
+  const { t: tx } = useTranslation('app');
   const allSelected =
     options.length > 0 && options.every((o) => selected.includes(o.value));
 
@@ -74,7 +79,7 @@ function MultiSelectPanel({
         className="mb-1 w-full rounded-md px-2 py-1 text-start text-[11px] font-semibold text-[#a8b6cc] hover:bg-white/5"
         onClick={() => onChange(allSelected ? [] : options.map((o) => o.value))}
       >
-        {allSelected ? 'Clear all' : 'Select all'}
+        {allSelected ? tx('x.clearAll') : tx('x.selectAll')}
       </button>
       {options.map((opt) => {
         const checked = selected.includes(opt.value);
@@ -95,12 +100,12 @@ function MultiSelectPanel({
               }
               className="rounded border-white/30"
             />
-            {opt.label}
+            {tl(tx, opt.label)}
           </label>
         );
       })}
       {options.length === 0 && (
-        <p className="px-2 py-1 text-[11px] text-[#8a97ab]">No options</p>
+        <p className="px-2 py-1 text-[11px] text-[#8a97ab]">{tx('x.noOptions')}</p>
       )}
     </div>
   );
@@ -114,6 +119,7 @@ export default function ReportingSmartFilter({
   title,
   count,
 }: Props) {
+  const { t: tx } = useTranslation('app');
   const [addOpen, setAddOpen] = useState(false);
   const [openMultiId, setOpenMultiId] = useState<string | null>(null);
   const addRef = useRef<HTMLDivElement>(null);
@@ -174,7 +180,7 @@ export default function ReportingSmartFilter({
             className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 bg-[#1c2d48] px-2.5 text-xs font-semibold text-[#a8b6cc] hover:text-white"
           >
             <Filter className="h-3.5 w-3.5" />
-            Add filter
+            {tx('x.addFilter')}
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
           {addOpen && (
@@ -192,7 +198,7 @@ export default function ReportingSmartFilter({
                       onChange={(e) => toggleField(field, e.target.checked)}
                       className="rounded border-white/30"
                     />
-                    {field.label}
+                    {tl(tx, field.label)}
                   </label>
                 );
               })}
@@ -225,7 +231,7 @@ export default function ReportingSmartFilter({
                 className={`relative inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border px-2.5 py-1 ${color}`}
               >
                 <span className="text-[10px] font-bold uppercase tracking-wide text-[#a8b6cc]">
-                  {field.label}
+                  {tl(tx, field.label)}
                 </span>
 
                 {field.type === 'select' && (
@@ -235,11 +241,11 @@ export default function ReportingSmartFilter({
                     className="max-w-[9rem] rounded-md border-0 bg-transparent py-0.5 text-xs font-semibold text-white outline-none"
                   >
                     <option value="" className="bg-[#1c2d48]">
-                      {field.placeholder || 'Any'}
+                      {tl(tx, field.placeholder) || tx('x.any')}
                     </option>
                     {options.map((o) => (
                       <option key={o.value} value={o.value} className="bg-[#1c2d48]">
-                        {o.label}
+                        {tl(tx, o.label)}
                       </option>
                     ))}
                   </select>
@@ -259,10 +265,10 @@ export default function ReportingSmartFilter({
                     >
                       {Array.isArray(filter.value) && filter.value.length > 0
                         ? filter.value.length === 1
-                          ? options.find((o) => o.value === filter.value[0])
-                              ?.label || String(filter.value[0])
-                          : `${filter.value.length} selected`
-                        : field.placeholder || 'All'}
+                          ? tl(tx, options.find((o) => o.value === filter.value[0])
+                              ?.label) || String(filter.value[0])
+                          : tx('x.nSelected', { count: filter.value.length })
+                        : tl(tx, field.placeholder) || tx('x.all')}
                       <ChevronDown className="h-3 w-3" />
                     </button>
                     {openMultiId === filter.id && !localityDisabled && (
@@ -315,7 +321,7 @@ export default function ReportingSmartFilter({
                   type="button"
                   onClick={() => removeFilter(filter.id)}
                   className="rounded-full p-0.5 text-[#8a97ab] hover:text-white"
-                  aria-label={`Remove ${field.label}`}
+                  aria-label={tx('x.remove', { v0: tl(tx, field.label) })}
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -329,7 +335,7 @@ export default function ReportingSmartFilter({
             className="inline-flex items-center gap-1 text-xs font-semibold text-[#8a97ab] hover:text-brand-orange"
           >
             <Eraser className="h-3.5 w-3.5" />
-            Clear all
+            {tx('x.clearAll')}
           </button>
         </div>
       )}
@@ -348,63 +354,63 @@ export function getReportingFilterFields(opts: {
     opts.reportKind === 'f4'
       ? {
           id: 'f4_status',
-          label: 'F4 Status',
+          label: 'x.f4Status',
           type: 'select',
           options: REPORT_STATUS_OPTIONS,
-          placeholder: 'Any',
+          placeholder: 'x.any',
         }
       : {
           id: 'f5_status',
-          label: 'F5 Status',
+          label: 'x.f5Status',
           type: 'select',
           options: REPORT_STATUS_OPTIONS,
-          placeholder: 'Any',
+          placeholder: 'x.any',
         };
 
   const fields: FilterFieldConfig[] = [
     {
       id: 'state',
-      label: 'State',
+      label: 'x.state',
       type: 'multi_select',
       options: opts.stateOptions,
-      placeholder: 'All states',
+      placeholder: 'x.allStates',
     },
     {
       id: 'locality',
-      label: 'Locality',
+      label: 'x.locality',
       type: 'multi_select',
       options: opts.localityOptions,
-      placeholder: 'All localities',
+      placeholder: 'x.allLocalities',
     },
   ];
 
   if ((opts.roomOptions?.length || 0) > 0) {
     fields.push({
       id: 'room',
-      label: 'Room',
+      label: 'x.room',
       type: 'select',
       options: opts.roomOptions || [],
-      placeholder: 'All rooms',
+      placeholder: 'x.allRooms',
     });
   }
 
   fields.push(
     {
       id: 'project_status',
-      label: 'Project Status',
+      label: 'x.projectStatus',
       type: 'multi_select',
       options: PROJECT_STATUS_OPTIONS,
-      placeholder: 'All statuses',
+      placeholder: 'x.allStatuses',
     },
     reportStatusField,
     {
       id: 'date_range',
-      label: 'Date Range',
+      label: 'x.dateRange',
       type: 'date_range',
     },
     {
       id: 'transfer_date_range',
-      label: 'Date Transfer Range',
+      label: 'x.dateTransferRange',
       type: 'date_range',
     }
   );

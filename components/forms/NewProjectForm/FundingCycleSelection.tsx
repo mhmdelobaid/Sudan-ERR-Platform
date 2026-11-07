@@ -25,6 +25,7 @@ interface StatePool {
 interface FundingCycleSelectionProps { onReturnToMenu: () => void; }
 
 const FundingCycleSelection: React.FC<FundingCycleSelectionProps> = ({ onReturnToMenu }) => {
+  const { t: tx } = useTranslation('app');
     const { t } = useTranslation('projectApplication');
     const [pool, setPool] = useState<FundingPoolSummary | null>(null);
     const [loading, setLoading] = useState(true);
@@ -36,7 +37,7 @@ const FundingCycleSelection: React.FC<FundingCycleSelectionProps> = ({ onReturnT
         const fetchPool = async () => {
             try {
                 const { data: { session } } = await newSupabase.auth.getSession();
-                if (!session) throw new Error('No active session');
+                if (!session) throw new Error(tx('x.noActiveSession'));
 
                 const response = await fetch('/api/funding-pool', {
                     credentials: 'include',
@@ -45,9 +46,9 @@ const FundingCycleSelection: React.FC<FundingCycleSelectionProps> = ({ onReturnT
                         'Authorization': `Bearer ${session.access_token}`
                     }
                 });
-                if (!response.ok) throw new Error('Failed to fetch funding pool');
+                if (!response.ok) throw new Error(tx('x.failedToFetchFundingPool'));
                 const data = await response.json();
-                if (!data.success) throw new Error(data.message || 'Failed to fetch pool');
+                if (!data.success) throw new Error(data.message || tx('x.failedToFetchPool'));
                 setPool({ allocated: data.allocated || 0, committed: data.committed || 0, pending: data.pending || 0, remaining: data.remaining || 0, user_state: data.user_state || null });
                 setUserState(data.user_state || '');
                 // One entry per state the user may see (older servers only send the user's own state)
@@ -56,7 +57,7 @@ const FundingCycleSelection: React.FC<FundingCycleSelectionProps> = ({ onReturnT
                     : data.user_state ? [{ state: data.user_state, allocated: data.allocated || 0, committed: data.committed || 0, pending: data.pending || 0, remaining: data.remaining || 0, is_own_state: true }] : []);
             } catch (err) {
                 console.error('Error fetching funding pool:', err);
-                setError(err instanceof Error ? err.message : 'Unknown error');
+                setError(err instanceof Error ? err.message : tx('x.unknownError'));
             } finally {
                 setLoading(false);
             }
@@ -113,9 +114,9 @@ const FundingCycleSelection: React.FC<FundingCycleSelectionProps> = ({ onReturnT
                             </div>
                             <div className="space-y-2 text-sm">
                                 <p><strong>{t('grantCalls.availableAmount')}:</strong> {formatAmount(s.allocated)}</p>
-                                <p><strong>Committed:</strong> {formatAmount(s.committed)}</p>
-                                <p><strong>Pending:</strong> {formatAmount(s.pending)}</p>
-                                <p><strong>Remaining:</strong> {formatAmount(s.remaining)}</p>
+                                <p><strong>{tx('x.committed')}</strong> {formatAmount(s.committed)}</p>
+                                <p><strong>{tx('x.pending2')}</strong> {formatAmount(s.pending)}</p>
+                                <p><strong>{tx('x.remaining')}</strong> {formatAmount(s.remaining)}</p>
                             </div>
                         </div>
                     ))}

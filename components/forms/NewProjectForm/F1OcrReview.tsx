@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { newSupabase } from '../../../services/newSupabaseClient';
 import type { F1OcrReviewPayload, MapExpense, MapExtractedData, MapPlannedActivity } from '../../../lib/f1/mapReviewTypes';
@@ -34,6 +35,7 @@ function isOtherActivity(name: string | null | undefined): boolean {
 }
 
 export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
+  const { t: tx } = useTranslation('app');
   const [initialSnapshot] = useState(() =>
     seedReviewFromOcr(payload.extracted, {
       state: payload.state_name,
@@ -191,7 +193,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
       );
       if (!hasIndividuals) {
         const msg =
-          'At least one planned activity must have "Individuals" filled in before submission.';
+          tx('x.atLeastOnePlannedActivityMust');
         setValidationError(msg);
         return;
       }
@@ -202,7 +204,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
       const {
         data: { session },
       } = await newSupabase.auth.getSession();
-      if (!session) throw new Error('Not signed in');
+      if (!session) throw new Error(tx('x.notSignedIn'));
 
       await submitMapOcrWorkplan(edited, {
         emergency_room_id: payload.emergency_room_id,
@@ -214,7 +216,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
       });
       setDone(true);
     } catch (e: any) {
-      setValidationError(e?.message || 'Submit failed');
+      setValidationError(e?.message || tx('x.submitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -223,9 +225,9 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
   if (done) {
     return (
       <div className="space-y-4">
-        <p className="text-white text-base">F1 work plan submitted successfully.</p>
+        <p className="text-white text-base">{tx('x.f1WorkPlanSubmittedSuccessfully')}</p>
         <button type="button" onClick={onSubmitted} className="app-action-primary">
-          Done
+          {tx('x.done')}
         </button>
       </div>
     );
@@ -236,26 +238,24 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
   return (
     <div>
       <div className="mb-3">
-        <p className="app-section-label mb-0.5">F1 · Review</p>
-        <h2 className="text-lg font-bold text-white leading-snug">Review extracted F1</h2>
+        <p className="app-section-label mb-0.5">{tx('x.f1Review')}</p>
+        <h2 className="text-lg font-bold text-white leading-snug">{tx('x.reviewExtractedF1')}</h2>
         <p className="text-xs text-[#8a97ab] mt-0.5 mb-0">
-          {payload.organization_label || 'Org'}
-          {payload.room_label ? ` · ${payload.room_label}` : ''}
-          {payload.grant_segment ? ` · ${payload.grant_segment}` : ''}
+          {[payload.room_label, payload.grant_segment].filter(Boolean).join(' · ')}
         </p>
       </div>
 
       <div className="space-y-2.5">
         <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-brand-orange/20 border border-brand-orange/40">
-          <span className="font-semibold text-sm text-white">F1 amount</span>
+          <span className="font-semibold text-sm text-white">{tx('x.f1Amount')}</span>
           <span className="font-bold text-brand-orange" dir="ltr">
-            {totalUsd.toLocaleString()} USD
+            {totalUsd.toLocaleString()} {tx('x.usd')}
           </span>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
           <div className="min-w-0">
-            <label className={LABEL}>Date</label>
+            <label className={LABEL}>{tx('x.date')}</label>
             <input
               type="date"
               className={FIELD}
@@ -264,30 +264,30 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
             />
           </div>
           <div className="min-w-0">
-            <label className={LABEL}>Language</label>
+            <label className={LABEL}>{tx('x.language')}</label>
             <select
               className={FIELD}
               value={edited.language || 'en'}
               onChange={(e) => setField('language', e.target.value as 'ar' | 'en')}
             >
-              <option value="en">English</option>
-              <option value="ar">Arabic</option>
+              <option value="en">{tx('x.english')}</option>
+              <option value="ar">{tx('x.arabic')}</option>
             </select>
           </div>
           <div className="min-w-0">
-            <label className={LABEL}>State</label>
+            <label className={LABEL}>{tx('x.state')}</label>
             <div className={FIELD_RO}>
               {payload.state_name || edited.state || '—'}
             </div>
           </div>
           <div className="min-w-0">
-            <label className={LABEL}>Locality</label>
+            <label className={LABEL}>{tx('x.locality')}</label>
             <div className={FIELD_RO}>
               {payload.locality || edited.locality || '—'}
             </div>
           </div>
           <div className="min-w-0">
-            <label className={LABEL}>Estimated timeframe</label>
+            <label className={LABEL}>{tx('x.estimatedTimeframe')}</label>
             <input
               className={FIELD}
               value={edited.estimated_timeframe || ''}
@@ -295,7 +295,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
             />
           </div>
           <div className="min-w-0">
-            <label className={LABEL}>Estimated beneficiaries</label>
+            <label className={LABEL}>{tx('x.estimatedBeneficiaries')}</label>
             <input
               type="number"
               className={FIELD}
@@ -311,7 +311,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
         </div>
 
         <div>
-          <label className={LABEL}>Project objectives</label>
+          <label className={LABEL}>{tx('x.projectObjectives')}</label>
           <textarea
             rows={3}
             className={FIELD_AREA}
@@ -320,7 +320,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
           />
         </div>
         <div>
-          <label className={LABEL}>Intended beneficiaries</label>
+          <label className={LABEL}>{tx('x.intendedBeneficiaries')}</label>
           <textarea
             rows={2}
             className={FIELD_AREA}
@@ -332,18 +332,18 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
         {/* Planned activities */}
         <div>
           <h3 className="text-sm font-bold text-white mb-1.5">
-            Planned activities <span className="text-brand-orange">*</span>
+            {tx('x.plannedActivities')} <span className="text-brand-orange">*</span>
           </h3>
           <div className="rounded-xl border border-white/10 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead className="bg-[#1c2d48] text-[#a8b6cc]">
                   <tr>
-                    <th className="px-2 py-1.5 text-left font-semibold">Activity</th>
-                    <th className="px-2 py-1.5 text-left font-semibold min-w-[120px]">Sector</th>
-                    <th className="px-2 py-1.5 text-left font-semibold">Indiv.*</th>
-                    <th className="px-2 py-1.5 text-left font-semibold">Fam.</th>
-                    <th className="px-2 py-1.5 text-right font-semibold">Cost</th>
+                    <th className="px-2 py-1.5 text-left font-semibold">{tx('x.activity')}</th>
+                    <th className="px-2 py-1.5 text-left font-semibold min-w-[120px]">{tx('x.sector')}</th>
+                    <th className="px-2 py-1.5 text-left font-semibold">{tx('x.indiv')}</th>
+                    <th className="px-2 py-1.5 text-left font-semibold">{tx('x.fam')}</th>
+                    <th className="px-2 py-1.5 text-right font-semibold">{tx('x.cost')}</th>
                     <th className="w-8" />
                   </tr>
                 </thead>
@@ -364,7 +364,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                             });
                           }}
                         >
-                          <option value="">Sector</option>
+                          <option value="">{tx('x.sector')}</option>
                           {sectors.map((s) => (
                             <option key={s.id} value={s.id}>
                               {s.sector_name_en}
@@ -382,7 +382,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                             setActivity(index, {
                               individuals: e.target.value ? parseInt(e.target.value, 10) : null,
                             });
-                            if (validationError?.includes('Individuals')) setValidationError(null);
+                            if (validationError?.includes(tx('x.individuals2'))) setValidationError(null);
                           }}
                         />
                       </td>
@@ -421,7 +421,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                   {activities.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-3 py-3 text-[#8a97ab] text-center">
-                        Tag expenses with a planned activity below to populate this table.
+                        {tx('x.tagExpensesWithAPlannedActivity')}
                       </td>
                     </tr>
                   )}
@@ -429,17 +429,17 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
               </table>
             </div>
             <p className="px-3 py-2 text-[11px] text-[#8a97ab] border-t border-white/10 mb-0">
-              At least one activity needs Individuals before submit.
+              {tx('x.atLeastOneActivityNeedsIndividuals')}
             </p>
           </div>
         </div>
 
         {/* Expenses */}
         <div>
-          <h3 className="text-sm font-bold text-white mb-1.5">Expenses</h3>
+          <h3 className="text-sm font-bold text-white mb-1.5">{tx('x.expenses3')}</h3>
           {formCurrency === 'SDG' && (
             <p className="text-[11px] text-[#8a97ab] mb-1.5">
-              Form currency: SDG · Rate: 1 USD = {edited.exchange_rate || payload.exchange_rate} SDG
+              {tx('x.formCurrencySdgRate1Usd')} {edited.exchange_rate || payload.exchange_rate} {tx('x.sdg')}
             </p>
           )}
           <div className="rounded-xl border border-white/10 overflow-hidden">
@@ -447,13 +447,13 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
               <table className="w-full text-xs">
                 <thead className="bg-[#1c2d48] text-[#a8b6cc]">
                   <tr>
-                    <th className="px-2 py-1.5 text-left font-semibold">Expense</th>
+                    <th className="px-2 py-1.5 text-left font-semibold">{tx('x.expense')}</th>
                     <th className="px-2 py-1.5 text-left font-semibold min-w-[140px]">
-                      Planned activity
+                      {tx('x.plannedActivity')}
                     </th>
-                    <th className="px-2 py-1.5 text-right font-semibold">USD</th>
+                    <th className="px-2 py-1.5 text-right font-semibold">{tx('x.usd')}</th>
                     {formCurrency === 'SDG' && (
-                      <th className="px-2 py-1.5 text-right font-semibold">SDG</th>
+                      <th className="px-2 py-1.5 text-right font-semibold">{tx('x.sdg')}</th>
                     )}
                     <th className="w-8" />
                   </tr>
@@ -466,7 +466,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                           className={FIELD_SM}
                           value={expense.activity}
                           onChange={(e) => setExpense(index, { activity: e.target.value })}
-                          placeholder="Description"
+                          placeholder={tx('x.description')}
                         />
                       </td>
                       <td className="px-2 py-1">
@@ -488,7 +488,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                             });
                           }}
                         >
-                          <option value="">Select…</option>
+                          <option value="">{tx('x.select')}</option>
                           {catalogActivities.map((a) => (
                             <option key={a.id} value={a.id}>
                               {a.activity_name}
@@ -502,7 +502,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                             onChange={(e) =>
                               setExpense(index, { planned_activity_other: e.target.value })
                             }
-                            placeholder="Specify other"
+                            placeholder={tx('x.specifyOther')}
                           />
                         )}
                       </td>
@@ -555,7 +555,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                       colSpan={formCurrency === 'SDG' ? 2 : 2}
                       className="px-2 py-1.5 text-right font-semibold text-white"
                     >
-                      Total
+                      {tx('x.total')}
                     </td>
                     <td className="px-2 py-1.5 text-right font-bold text-brand-orange" dir="ltr">
                       {totalUsd.toLocaleString()}
@@ -595,14 +595,14 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                 }
               >
                 <Plus className="w-3.5 h-3.5" />
-                Add expense
+                {tx('x.addExpense')}
               </button>
             </div>
           </div>
         </div>
 
         <div>
-          <label className={LABEL}>Additional support</label>
+          <label className={LABEL}>{tx('x.additionalSupport')}</label>
           <textarea
             rows={2}
             className={FIELD_AREA}
@@ -611,7 +611,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
           />
         </div>
         <div>
-          <label className={LABEL}>Banking details</label>
+          <label className={LABEL}>{tx('x.bankingDetails')}</label>
           <textarea
             rows={2}
             className={FIELD_AREA}
@@ -621,18 +621,18 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
         </div>
 
         <div>
-          <label className={LABEL}>Officers</label>
+          <label className={LABEL}>{tx('x.officers')}</label>
           <div className="space-y-1.5">
             <div className="grid grid-cols-2 gap-2">
               <input
                 className={FIELD}
-                placeholder="Program officer name"
+                placeholder={tx('x.programOfficerName')}
                 value={edited.program_officer_name || ''}
                 onChange={(e) => setField('program_officer_name', e.target.value)}
               />
               <input
                 className={FIELD}
-                placeholder="Phone"
+                placeholder={tx('x.phone')}
                 value={edited.program_officer_phone || ''}
                 onChange={(e) => setField('program_officer_phone', e.target.value)}
               />
@@ -640,13 +640,13 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
             <div className="grid grid-cols-2 gap-2">
               <input
                 className={FIELD}
-                placeholder="Reporting officer name"
+                placeholder={tx('x.reportingOfficerName')}
                 value={edited.reporting_officer_name || ''}
                 onChange={(e) => setField('reporting_officer_name', e.target.value)}
               />
               <input
                 className={FIELD}
-                placeholder="Phone"
+                placeholder={tx('x.phone')}
                 value={edited.reporting_officer_phone || ''}
                 onChange={(e) => setField('reporting_officer_phone', e.target.value)}
               />
@@ -654,13 +654,13 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
             <div className="grid grid-cols-2 gap-2">
               <input
                 className={FIELD}
-                placeholder="Finance officer name"
+                placeholder={tx('x.financeOfficerName')}
                 value={edited.finance_officer_name || ''}
                 onChange={(e) => setField('finance_officer_name', e.target.value)}
               />
               <input
                 className={FIELD}
-                placeholder="Phone"
+                placeholder={tx('x.phone')}
                 value={edited.finance_officer_phone || ''}
                 onChange={(e) => setField('finance_officer_phone', e.target.value)}
               />
@@ -680,7 +680,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
           onClick={handleSubmit}
           className="app-action-primary !py-3 disabled:opacity-50"
         >
-          {submitting ? 'Submitting…' : 'Submit F1'}
+          {submitting ? tx('x.submitting') : tx('x.submitF1')}
         </button>
 
         <button
@@ -690,7 +690,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
           className="inline-flex items-center gap-1 text-sm font-medium text-[#8a97ab] hover:text-brand-orange"
         >
           <ChevronRight className="h-4 w-4 rotate-180" />
-          Back
+          {tx('x.back')}
         </button>
 
         {/* Original file — MAP-style collapsible (no OCR text) */}
@@ -700,7 +700,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
             onClick={() => setFileOpen((o) => !o)}
             className="w-full flex items-center justify-between gap-2 px-3 py-2.5 bg-[#1c2d48] text-left"
           >
-            <span className="text-sm font-semibold text-white">Original file</span>
+            <span className="text-sm font-semibold text-white">{tx('x.originalFile')}</span>
             <ChevronDown
               className={`h-4 w-4 text-[#a8b6cc] transition-transform ${
                 fileOpen ? 'rotate-180' : ''
@@ -720,21 +720,21 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                     <iframe
                       src={fileUrl}
                       className="w-full h-full"
-                      title="Uploaded F1"
+                      title={tx('x.uploadedF1')}
                     />
                   </div>
                 ) : isImage ? (
                   <div className="w-full max-h-[420px] rounded-lg border border-white/10 overflow-auto">
                     <img
                       src={fileUrl}
-                      alt="Uploaded F1"
+                      alt={tx('x.uploadedF1')}
                       className="w-full h-auto object-contain"
                     />
                   </div>
                 ) : (
                   <div className="rounded-lg border border-white/10 px-3 py-6 text-center space-y-2">
                     <p className="text-sm text-[#a8b6cc] mb-0">
-                      Preview not available for this file type.
+                      {tx('x.previewNotAvailableForThisFile')}
                     </p>
                     <a
                       href={fileUrl}
@@ -743,13 +743,13 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
                       rel="noreferrer"
                       className="inline-flex text-sm font-semibold text-brand-orange hover:underline"
                     >
-                      Open / download file
+                      {tx('x.openDownloadFile')}
                     </a>
                   </div>
                 )
               ) : (
                 <div className="rounded-lg border border-white/10 px-3 py-8 text-center text-sm text-[#8a97ab]">
-                  No file preview available
+                  {tx('x.noFilePreviewAvailable')}
                 </div>
               )}
             </div>

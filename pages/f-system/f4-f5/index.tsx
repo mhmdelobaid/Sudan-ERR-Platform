@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import CameraButton from '../../../components/ui/CameraButton';
 import AppShell from '../../../components/layout/AppShell';
 import ProjectIndex, { type ProjectRow } from '../../../components/projects/ProjectIndex';
 import { useRequireAuth } from '../../../hooks/useRequireAuth';
@@ -25,30 +26,30 @@ export type ReportingAction = 'f4-ai' | 'f4-manual' | 'f5-ai' | 'f5-manual';
 
 const ACTION_COPY: Record<
   ReportingAction,
-  { label: string; subtitle: string }
+  { label: string; subtitle: string } // translation keys
 > = {
   'f4-ai': {
-    label: 'Upload F4 with AI',
-    subtitle: 'Scan a financial report with OCR',
+    label: 'x.uploadF4WithAi',
+    subtitle: 'x.scanAFinancialReportWithOcr',
   },
   'f4-manual': {
-    label: 'Upload F4 Manual Form',
-    subtitle: 'Fill the financial report by hand',
+    label: 'x.uploadF4ManualForm',
+    subtitle: 'x.fillTheFinancialReportByHand',
   },
   'f5-ai': {
-    label: 'Upload F5 with AI',
-    subtitle: 'Scan a program report with OCR',
+    label: 'x.uploadF5WithAi',
+    subtitle: 'x.scanAProgramReportWithOcr',
   },
   'f5-manual': {
-    label: 'Upload F5 Manual Form',
-    subtitle: 'Fill the program report by hand',
+    label: 'x.uploadF5ManualForm',
+    subtitle: 'x.fillTheProgramReportByHand',
   },
 };
 
 function formatReportLabel(r: any) {
   const date = r.report_date ? String(r.report_date).slice(0, 10) : null;
   const created = r.created_at ? String(r.created_at).slice(0, 10) : null;
-  return date || created || `Report #${r.id}`;
+  return date || created || `#${r.id}`;
 }
 
 function formatUsd(value: unknown) {
@@ -61,6 +62,7 @@ function formatUsd(value: unknown) {
 }
 
 export default function F4F5ReportingIndexPage() {
+  const { t: tx } = useTranslation('app');
   const { ready, token } = useRequireAuth();
   const { t, i18n } = useTranslation('menu');
   const router = useRouter();
@@ -181,11 +183,11 @@ export default function F4F5ReportingIndexPage() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load reports');
+        if (!res.ok) throw new Error(data.error || tx('x.failedToLoadReports'));
         if (!cancelled) setExistingReports(data.reports || []);
       } catch (e: any) {
         if (!cancelled) {
-          setExistingError(e?.message || 'Failed to load reports');
+          setExistingError(e?.message || tx('x.failedToLoadReports'));
           setExistingReports([]);
         }
       } finally {
@@ -221,8 +223,8 @@ export default function F4F5ReportingIndexPage() {
 
   if (!ready || !token) {
     return (
-      <AppShell title="F4 & F5 Reporting">
-        <p className="text-[#a8b6cc] text-sm">Loading…</p>
+      <AppShell title={tx('x.f4F5Reporting')}>
+        <p className="text-[#a8b6cc] text-sm">{tx('x.loading')}</p>
       </AppShell>
     );
   }
@@ -230,7 +232,7 @@ export default function F4F5ReportingIndexPage() {
   if (view === 'pick-project' && action) {
     const copy = ACTION_COPY[action];
     return (
-      <AppShell title="F4 & F5 Reporting">
+      <AppShell title={tx('x.f4F5Reporting')}>
         <div className="mb-6">
           <button
             type="button"
@@ -244,14 +246,14 @@ export default function F4F5ReportingIndexPage() {
             <span className="rtl:rotate-180 inline-flex">
               <ChevronRight className="h-4 w-4 rotate-180" />
             </span>
-            Back to reporting
+            {tx('x.backToReporting')}
           </button>
-          <p className="app-section-label mb-1">F4 & F5 · Reporting</p>
+          <p className="app-section-label mb-1">{tx('x.f4F5Reporting2')}</p>
           <h2 className="text-xl font-bold text-white leading-snug mb-1">
             {t('selectProject', 'Select a project')}
           </h2>
           <p className="text-sm text-[#a8b6cc] mb-0">
-            {copy.label} — choose which project this report belongs to.
+            {tx(copy.label)} {tx('x.chooseWhichProjectThisReportBelongs')}
           </p>
         </div>
 
@@ -299,20 +301,20 @@ export default function F4F5ReportingIndexPage() {
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
                       <p className="app-section-label mb-1">
-                        {isF5 ? 'F5 · Program' : 'F4 · Financial'}
+                        {isF5 ? tx('x.f5Program') : tx('x.f4Financial')}
                       </p>
                       <h3
                         id="f4-choice-title"
                         className="text-lg font-bold text-white leading-snug mb-0"
                       >
-                        What would you like to do?
+                        {tx('x.whatWouldYouLikeToDo')}
                       </h3>
                     </div>
                     <button
                       type="button"
                       onClick={closeF4Modal}
                       className="shrink-0 rounded-lg p-1.5 text-[#8a97ab] hover:text-white hover:bg-white/5"
-                      aria-label="Close"
+                      aria-label={tx('x.close')}
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -322,7 +324,7 @@ export default function F4F5ReportingIndexPage() {
                     <div className="mb-4 space-y-3">
                       <div className="rounded-xl border border-white/10 bg-[#152238] px-3 py-2.5">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-[#8a97ab] mb-0.5">
-                          File selected
+                          {tx('x.fileSelected')}
                         </p>
                         <p className="text-sm font-semibold text-white mb-0 truncate">
                           {pendingFile.name}
@@ -338,7 +340,7 @@ export default function F4F5ReportingIndexPage() {
                         onClick={startScan}
                         className="w-full rounded-xl bg-brand-orange text-[#152238] text-sm font-bold py-3 px-4 hover:bg-[#ffb88a]"
                       >
-                        Upload & scan
+                        {tx('x.uploadScan')}
                       </button>
                       <div className="flex gap-2">
                         <button
@@ -346,33 +348,38 @@ export default function F4F5ReportingIndexPage() {
                           onClick={goUploadNew}
                           className="flex-1 rounded-xl border border-white/15 text-white text-sm font-semibold py-2.5"
                         >
-                          Change file
+                          {tx('x.changeFile')}
                         </button>
                         <button
                           type="button"
                           onClick={clearPendingFile}
                           className="flex-1 rounded-xl border border-white/15 text-[#a8b6cc] text-sm font-semibold py-2.5"
                         >
-                          Cancel
+                          {tx('x.cancel')}
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <button
+                    <>
+                      <button
                       type="button"
                       onClick={goUploadNew}
                       className="w-full rounded-xl bg-brand-orange text-[#152238] text-sm font-bold py-3 px-4 hover:bg-[#ffb88a] mb-4"
                     >
-                      Upload new
+                      {tx('x.uploadNew')}
                     </button>
+                      {action?.endsWith('-ai') && (
+                        <CameraButton onChange={onFilePicked} className="w-full rounded-xl border border-brand-orange/60 text-brand-orange text-sm font-bold py-3 px-4 mb-4 inline-flex items-center justify-center gap-1.5" />
+                      )}
+                    </>
                   )}
 
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-[#8a97ab] mb-2">
-                      Existing reports
+                      {tx('x.existingReports')}
                     </p>
                     {existingLoading && (
-                      <p className="text-sm text-[#a8b6cc]">Loading reports…</p>
+                      <p className="text-sm text-[#a8b6cc]">{tx('x.loadingReports')}</p>
                     )}
                     {existingError && (
                       <div className="rounded-xl bg-red-500/10 border border-red-400/30 text-red-300 px-3 py-2 text-sm">
@@ -383,7 +390,7 @@ export default function F4F5ReportingIndexPage() {
                       !existingError &&
                       existingReports.length === 0 && (
                         <p className="text-sm text-[#a8b6cc]">
-                          No {isF5 ? 'F5' : 'F4'} reports yet for this project.
+                          {tx('x.no')} {isF5 ? 'F5' : 'F4'} {tx('x.reportsYetForThisProject')}
                         </p>
                       )}
                     {!existingLoading && existingReports.length > 0 && (
@@ -499,14 +506,14 @@ export default function F4F5ReportingIndexPage() {
   }
 
   return (
-    <AppShell title="F4 & F5 Reporting">
+    <AppShell title={tx('x.f4F5Reporting')}>
       <div className="mb-6">
-        <p className="app-section-label mb-1">F4 & F5 · Reporting</p>
+        <p className="app-section-label mb-1">{tx('x.f4F5Reporting2')}</p>
         <h2 className="text-xl font-bold text-white leading-snug mb-1">
-          What do you want to do?
+          {tx('x.whatDoYouWantToDo')}
         </h2>
         <p className="text-sm text-[#a8b6cc] mb-0">
-          Upload financial (F4) or program (F5) reports for a project.
+          {tx('x.uploadFinancialF4OrProgramF5')}
         </p>
       </div>
 
@@ -514,25 +521,25 @@ export default function F4F5ReportingIndexPage() {
       <section className="mb-8">
         <div className="flex items-center gap-1.5 mb-3 px-0.5">
           <h3 className="text-lg font-bold text-white leading-tight">
-            F4 - Financial Reports
+            {tx('x.f4FinancialReports')}
           </h3>
         </div>
         <div className="-mx-4 overflow-x-auto pb-2 scrollbar-none">
           <div className="flex w-max min-w-full gap-3 px-4 snap-x snap-mandatory items-stretch">
             <HomeCard
               onClick={() => openAction('f4-ai')}
-              code="AI"
-              title="Upload F4 with AI"
-              subtitle="Scan a financial report"
+              code={tx('x.ai')}
+              title={tx('x.uploadF4WithAi')}
+              subtitle={tx('x.scanAFinancialReport')}
               illustration={MouScene}
               wash="bg-brand-orangeSoft"
               size="md"
             />
             <HomeCard
               onClick={() => openAction('f4-manual')}
-              code="Manual"
-              title="Upload F4 Manual Form"
-              subtitle="Fill expenses by hand"
+              code={tx('x.manual')}
+              title={tx('x.uploadF4ManualForm')}
+              subtitle={tx('x.fillExpensesByHand')}
               illustration={ReportingScene}
               wash="bg-[#7B96C4]"
               size="md"
@@ -545,25 +552,25 @@ export default function F4F5ReportingIndexPage() {
       <section className="mb-8">
         <div className="flex items-center gap-1.5 mb-3 px-0.5">
           <h3 className="text-lg font-bold text-white leading-tight">
-            F5 - Program Reports
+            {tx('x.f5ProgramReports')}
           </h3>
         </div>
         <div className="-mx-4 overflow-x-auto pb-2 scrollbar-none">
           <div className="flex w-max min-w-full gap-3 px-4 snap-x snap-mandatory items-stretch">
             <HomeCard
               onClick={() => openAction('f5-ai')}
-              code="AI"
-              title="Upload F5 with AI"
-              subtitle="Scan a program report"
+              code={tx('x.ai')}
+              title={tx('x.uploadF5WithAi')}
+              subtitle={tx('x.scanAProgramReport')}
               illustration={ApprovalsScene}
               wash="bg-brand-orangeSoft"
               size="md"
             />
             <HomeCard
               onClick={() => openAction('f5-manual')}
-              code="Manual"
-              title="Upload F5 Manual Form"
-              subtitle="Fill the program report"
+              code={tx('x.manual')}
+              title={tx('x.uploadF5ManualForm')}
+              subtitle={tx('x.fillTheProgramReport')}
               illustration={WorkPlanScene}
               wash="bg-[#7B96C4]"
               size="md"
@@ -579,7 +586,7 @@ export default function F4F5ReportingIndexPage() {
         <span className="rtl:rotate-180 inline-flex">
           <ChevronRight className="h-4 w-4 rotate-180" />
         </span>
-        Back to F-System
+        {tx('x.backToFSystem')}
       </Link>
     </AppShell>
   );

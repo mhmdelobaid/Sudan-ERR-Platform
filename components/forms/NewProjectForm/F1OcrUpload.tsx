@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import CameraButton from '../../ui/CameraButton';
 import { useRouter } from 'next/router';
 import { ChevronRight } from 'lucide-react';
 import F1ScopeFields, { emptyF1Scope, F1ScopeValue, scopeIsReady } from './F1ScopeFields';
@@ -14,6 +16,20 @@ type F1OcrUploadProps = {
 };
 
 export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps) {
+  const { t: tx } = useTranslation('app');
+  // A chosen file or a photo from the camera: checked, then uploaded for the AI to read
+  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    const f = e.target.files?.[0] || null;
+    setFile(null);
+    setTempFileKey(null);
+    if (!f) return;
+    if (f.size > MAX_FILE_SIZE) {
+      setError(tx('x.fileTooLargeMax40mb'));
+      return;
+    }
+    void uploadTemp(f);
+  };
   const router = useRouter();
   const locale = router.locale || 'en';
   const [scope, setScope] = useState<F1ScopeValue>(emptyF1Scope);
@@ -36,7 +52,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
       const {
         data: { session },
       } = await newSupabase.auth.getSession();
-      if (!session) throw new Error('Not signed in');
+      if (!session) throw new Error(tx('x.notSignedIn'));
 
       // Upload to Prod Storage via API (not staging)
       const body = new FormData();
@@ -48,14 +64,14 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
       });
       const result = await res.json();
       if (!res.ok || !result.success || !result.temp_file_key) {
-        throw new Error(result.message || 'Failed to upload file to Prod');
+        throw new Error(result.message || tx('x.failedToUploadFileToProd'));
       }
       setFile(selected);
       setTempFileKey(result.temp_file_key);
     } catch (e: any) {
       setFile(null);
       setTempFileKey(null);
-      setError(e.message || 'Failed to upload file');
+      setError(e.message || tx('x.failedToUploadFile'));
     } finally {
       setUploadingFile(false);
     }
@@ -74,7 +90,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
       const {
         data: { session },
       } = await newSupabase.auth.getSession();
-      if (!session) throw new Error('Not signed in');
+      if (!session) throw new Error(tx('x.notSignedIn'));
 
       const rate = currency === 'SDG' ? parsedExchangeRate : 1;
       const formData = new FormData();
@@ -91,7 +107,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
       });
       const result = await res.json();
       if (!res.ok || !result.success) {
-        throw new Error(result.message || 'OCR failed');
+        throw new Error(result.message || tx('x.ocrFailed'));
       }
 
       const extracted = result.data as MapExtractedData;
@@ -120,7 +136,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
         file_type: file.type,
       });
     } catch (e: any) {
-      setError(e.message || 'OCR failed');
+      setError(e.message || tx('x.ocrFailed'));
     } finally {
       setLoading(false);
     }
@@ -129,8 +145,8 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
   return (
     <div>
       <div className="mb-4">
-        <p className="app-section-label mb-0.5">F1 · Upload with AI</p>
-        <h2 className="text-lg font-bold text-white leading-snug">Upload F1 work plan</h2>
+        <p className="app-section-label mb-0.5">{tx('x.f1UploadWithAi')}</p>
+        <h2 className="text-lg font-bold text-white leading-snug">{tx('x.uploadF1WorkPlan')}</h2>
       </div>
 
       <div className="grid gap-2.5 mb-4">
@@ -144,29 +160,20 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
         <div className="grid grid-cols-[1fr_auto] gap-2.5 items-end">
           <div className="min-w-0">
             <label className="font-semibold block text-xs text-[#a8b6cc] mb-1">
-              F1 file (PDF or Word)
+              {tx('x.f1FilePdfOrWord')}
             </label>
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp,application/pdf"
               className="app-input !py-2 text-sm file:mr-2 file:rounded-md file:border-0 file:bg-brand-orange file:text-[#152238] file:font-semibold file:px-2.5 file:py-1 file:text-xs"
               disabled={uploadingFile || loading}
-              onChange={(e) => {
-                setError(null);
-                const f = e.target.files?.[0] || null;
-                setFile(null);
-                setTempFileKey(null);
-                if (!f) return;
-                if (f.size > MAX_FILE_SIZE) {
-                  setError('File too large (max 40MB)');
-                  return;
-                }
-                void uploadTemp(f);
-              }}
+              onChange={onPickFile}
             />
+            <CameraButton onChange={onPickFile} disabled={uploadingFile || loading}
+              className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand-orange/60 text-brand-orange px-3 py-1.5 text-xs font-bold" />
           </div>
           <div>
-            <label className="font-semibold block text-xs text-[#a8b6cc] mb-1">Currency</label>
+            <label className="font-semibold block text-xs text-[#a8b6cc] mb-1">{tx('x.currency')}</label>
             <div className="inline-flex rounded-lg border border-white/15 overflow-hidden">
               {(['SDG', 'USD'] as const).map((code) => (
                 <button
@@ -189,7 +196,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
         {currency === 'SDG' && (
           <div>
             <label className="font-semibold block text-xs text-[#a8b6cc] mb-1">
-              Exchange rate (USD → SDG)
+              {tx('x.exchangeRateUsdSdg')}
             </label>
             <input
               type="number"
@@ -212,7 +219,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
 
         {file && (
           <p className="text-[11px] text-[#8a97ab] -mt-1 mb-0 truncate">
-            {uploadingFile ? 'Uploading…' : file.name}
+            {uploadingFile ? tx('x.uploading') : file.name}
             {tempFileKey && !uploadingFile ? ' · ready' : ''}
           </p>
         )}
@@ -230,7 +237,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
         onClick={runOcr}
         className="app-action-primary !py-3 disabled:opacity-50"
       >
-        {loading ? 'Extracting…' : 'Extract & review'}
+        {loading ? tx('x.extracting') : tx('x.extractReview')}
       </button>
 
       <button
@@ -240,7 +247,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
         className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[#8a97ab] hover:text-brand-orange"
       >
         <ChevronRight className="h-4 w-4 rotate-180" />
-        Back
+        {tx('x.back')}
       </button>
     </div>
   );

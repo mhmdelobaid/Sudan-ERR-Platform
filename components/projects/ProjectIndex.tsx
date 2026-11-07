@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Loader2, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/router';
 import ReportingSmartFilter, {
@@ -65,6 +66,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
   reportKind = 'f4',
   useProdDb = false,
 }) => {
+  const { t: tx } = useTranslation('app');
   const router = useRouter();
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
@@ -180,7 +182,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
         const res = await fetch(`/api/get-projects?${params}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error('Failed to load projects');
+        if (!res.ok) throw new Error(tx('x.failedToLoadProjects'));
         const data = await res.json();
         const list: ProjectRow[] = data.projects || [];
         setTotal(data.total ?? list.length);
@@ -219,7 +221,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
           setRooms(Array.from(map.entries()).map(([id, label]) => ({ id, label })));
         }
       } catch (e: any) {
-        setError(e.message || 'Error loading projects');
+        setError(e.message || tx('x.errorLoadingProjects'));
       } finally {
         setLoading(false);
       }
@@ -279,7 +281,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
     null;
 
   const localityLabel = (p: ProjectRow) =>
-    p.locality || p.state || p.project_name || p.project_objectives || 'Untitled';
+    p.locality || p.state || p.project_name || p.project_objectives || tx('x.untitled');
 
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return '—';
@@ -307,7 +309,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
 
   const reportStatusLabel = (s?: string | null) => {
     if (!s) return '—';
-    if (s === 'in review') return 'Under review';
+    if (s === 'in review') return tx('x.underReview');
     return s.charAt(0).toUpperCase() + s.slice(1);
   };
 
@@ -322,7 +324,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
             locality: localityOptions,
             room: roomOptions,
           }}
-          title="Projects"
+          title={tx('x.projects')}
           count={total}
         />
       )}
@@ -334,7 +336,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search locality or state…"
+            placeholder={tx('x.searchLocalityOrState')}
             className="w-full rounded-xl border border-white/10 bg-[#122038] pl-10 pr-3 rtl:pl-3 rtl:pr-10 py-2.5 text-sm text-white placeholder:text-[#6b7a94] outline-none focus:border-brand-orange/50"
           />
         </div>
@@ -344,7 +346,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
             onChange={(e) => setRoomFilter(e.target.value)}
             className="sm:w-48 rounded-xl border border-white/10 bg-[#122038] px-3 py-2.5 text-sm text-white outline-none focus:border-brand-orange/50"
           >
-            <option value="">All rooms</option>
+            <option value="">{tx('x.allRooms')}</option>
             {rooms.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.label}
@@ -372,7 +374,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
       {useTable ? (
         <>
           {loading && projects.length === 0 ? (
-            <p className="text-sm text-[#a8b6cc]">Loading…</p>
+            <p className="text-sm text-[#a8b6cc]">{tx('x.loading')}</p>
           ) : projects.length > 0 ? (
             <>
               <div className="rounded-xl border border-white/10 overflow-hidden">
@@ -380,11 +382,11 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
                   <table className="w-full text-sm min-w-[320px]">
                     <thead className="bg-[#1c2d48] text-[#a8b6cc] text-xs">
                       <tr>
-                        <th className="px-3 py-2.5 text-start font-semibold">Locality</th>
+                        <th className="px-3 py-2.5 text-start font-semibold">{tx('x.locality')}</th>
                         <th className="px-3 py-2.5 text-start font-semibold whitespace-nowrap">
-                          Date
+                          {tx('x.date')}
                         </th>
-                        <th className="px-3 py-2.5 text-start font-semibold">Status</th>
+                        <th className="px-3 py-2.5 text-start font-semibold">{tx('x.status')}</th>
                         {enableSmartFilters && (
                           <th className="px-3 py-2.5 text-start font-semibold whitespace-nowrap">
                             {reportKind === 'f4' ? 'F4' : 'F5'}
@@ -443,10 +445,10 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
                     onClick={() => fetchPage(Math.max(0, offset - pageSize), true)}
                     className="rounded-lg px-3 py-1.5 text-xs font-semibold bg-[#1c2d48] border border-white/10 text-[#a8b6cc] disabled:opacity-40 hover:text-white"
                   >
-                    Previous
+                    {tx('x.previous')}
                   </button>
                   <div className="flex items-center gap-1.5 text-xs text-[#8a97ab]">
-                    <span>Page</span>
+                    <span>{tx('x.page2')}</span>
                     <input
                       type="number"
                       inputMode="numeric"
@@ -463,7 +465,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
                           goToPage(pageInput);
                         }
                       }}
-                      aria-label="Go to page"
+                      aria-label={tx('x.goToPage')}
                       className="w-12 rounded-md border border-white/10 bg-[#122038] px-1.5 py-1 text-center text-xs font-semibold text-white outline-none focus:border-brand-orange/50 disabled:opacity-40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
                     <span>
@@ -476,7 +478,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
                     onClick={() => fetchPage(offset + pageSize, true)}
                     className="rounded-lg px-3 py-1.5 text-xs font-semibold bg-[#1c2d48] border border-white/10 text-[#a8b6cc] disabled:opacity-40 hover:text-white"
                   >
-                    Next
+                    {tx('x.next')}
                   </button>
                 </div>
               )}
@@ -484,7 +486,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
           ) : (
             !loading && (
               <div className="rounded-xl border border-white/10 bg-[#122038]/60 px-4 py-10 text-center">
-                <p className="text-sm text-[#a8b6cc] mb-0">No projects match these filters.</p>
+                <p className="text-sm text-[#a8b6cc] mb-0">{tx('x.noProjectsMatchTheseFilters')}</p>
               </div>
             )
           )}
@@ -507,7 +509,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
                 <span className="mt-0.5 h-2 w-2 rounded-full bg-brand-orange shrink-0" />
                 <span className="min-w-0 flex-1">
                   <span className="font-semibold text-white text-sm leading-snug line-clamp-3 block">
-                    {p.project_objectives || 'Untitled'}
+                    {p.project_objectives || tx('x.untitled')}
                   </span>
                   <span className="mt-1 text-xs text-[#8a97ab] block">
                     {[p.locality, p.state, !p.is_own_room ? roomLabel(p) : null]
@@ -525,12 +527,12 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
               <thead>
                 <tr className="border-b border-white/10 text-left text-[#8a97ab]">
                   <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">
-                    Objectives
+                    {tx('x.objectives')}
                   </th>
                   <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">
-                    Locality
+                    {tx('x.locality')}
                   </th>
-                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">Room</th>
+                  <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide">{tx('x.room')}</th>
                   <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wide w-28" />
                 </tr>
               </thead>
@@ -542,7 +544,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
                     onClick={() => handleSelect(p)}
                   >
                     <td className="px-4 py-3 max-w-md font-medium text-white">
-                      <span className="line-clamp-2">{p.project_objectives || 'Untitled'}</span>
+                      <span className="line-clamp-2">{p.project_objectives || tx('x.untitled')}</span>
                     </td>
                     <td className="px-4 py-3 text-[#a8b6cc] whitespace-nowrap">
                       {p.locality || '—'}
@@ -552,7 +554,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1 text-brand-orange font-semibold text-sm">
-                        Open
+                        {tx('x.open')}
                         <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
                       </span>
                     </td>
@@ -570,7 +572,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
 
           {!loading && projects.length === 0 && (
             <div className="rounded-xl border border-white/10 bg-[#122038]/60 px-4 py-10 text-center">
-              <p className="text-sm text-[#a8b6cc] mb-0">No projects found.</p>
+              <p className="text-sm text-[#a8b6cc] mb-0">{tx('x.noProjectsFound')}</p>
             </div>
           )}
 
@@ -580,7 +582,7 @@ const ProjectIndex: React.FC<ProjectIndexProps> = ({
               onClick={() => fetchPage(offset, false)}
               className="w-full rounded-xl border border-white/10 bg-[#1c2d48] py-2.5 text-sm font-semibold text-[#a8b6cc] hover:text-white hover:border-brand-orange/40 transition-colors"
             >
-              Load more
+              {tx('x.loadMore')}
             </button>
           )}
         </div>

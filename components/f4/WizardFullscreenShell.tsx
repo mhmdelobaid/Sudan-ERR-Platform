@@ -6,6 +6,7 @@ import React, {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { Check, Maximize2, Minimize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { scaleSelectionForDisplay } from './wizard/scaleSelectionForDisplay';
@@ -81,17 +82,18 @@ function ZoomBar({
   onExpandedChange: (v: boolean) => void;
   disabled?: boolean;
 }) {
+  const { t: tx } = useTranslation('app');
   return (
     <div className="flex flex-wrap items-center gap-1 shrink-0">
       <button
         type="button"
         className={cx(btnBase, 'h-7 w-7')}
-        title="Zoom out"
+        title={tx('x.zoomOut')}
         disabled={disabled || zoom <= ZOOM_MIN}
         onClick={() => onZoomChange(clampZoom(zoom - ZOOM_STEP))}
       >
         <ZoomOut className="h-3.5 w-3.5" aria-hidden />
-        <span className="sr-only">Zoom out</span>
+        <span className="sr-only">{tx('x.zoomOut')}</span>
       </button>
       <span className="text-[11px] tabular-nums text-[#8a97ab] min-w-[3rem] text-center">
         {Math.round(zoom * 100)}%
@@ -99,12 +101,12 @@ function ZoomBar({
       <button
         type="button"
         className={cx(btnBase, 'h-7 w-7')}
-        title="Zoom in"
+        title={tx('x.zoomIn')}
         disabled={disabled || zoom >= ZOOM_MAX}
         onClick={() => onZoomChange(clampZoom(zoom + ZOOM_STEP))}
       >
         <ZoomIn className="h-3.5 w-3.5" aria-hidden />
-        <span className="sr-only">Zoom in</span>
+        <span className="sr-only">{tx('x.zoomIn')}</span>
       </button>
       <button
         type="button"
@@ -115,12 +117,12 @@ function ZoomBar({
         {expanded ? (
           <>
             <Minimize2 className="h-3.5 w-3.5" aria-hidden />
-            Exit full screen
+            {tx('x.exitFullScreen')}
           </>
         ) : (
           <>
             <Maximize2 className="h-3.5 w-3.5" aria-hidden />
-            Full screen
+            {tx('x.fullScreen')}
           </>
         )}
       </button>
@@ -152,6 +154,7 @@ function PageCanvas({
   setWrapRef: (el: HTMLDivElement | null) => void;
   expanded: boolean;
 }) {
+  const { t: tx } = useTranslation('app');
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
 
@@ -187,7 +190,7 @@ function PageCanvas({
         <img
           ref={imgRef}
           src={page.dataUrl}
-          alt={`Page ${pageIndex + 1}`}
+          alt={tx('x.page', { v0: pageIndex + 1 })}
           width={page.displayWidth || undefined}
           height={page.displayHeight || undefined}
           className={cx(
@@ -222,7 +225,7 @@ function PageCanvas({
           />
         )}
         <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded pointer-events-none">
-          Page {pageIndex + 1}
+          {tx('x.page2')} {pageIndex + 1}
         </div>
       </div>
     </div>
@@ -301,9 +304,12 @@ export function WizardFullscreenShell({
   onContinue,
   backDisabled,
   continueDisabled,
-  continueLabel = 'Continue to review',
-  backLabel = 'Cancel',
+  continueLabel: continueLabelProp,
+  backLabel: backLabelProp,
 }: WizardFullscreenShellProps) {
+  const { t: tx } = useTranslation('app');
+  const continueLabel = continueLabelProp ?? tx('x.continueToReview');
+  const backLabel = backLabelProp ?? tx('x.cancel');
   const fitToContainer = !expanded && zoom <= 1;
 
   const allStepsDone = steps.every((s) => s.completed);
@@ -311,7 +317,7 @@ export function WizardFullscreenShell({
   const toolbar = (
     <div className="shrink-0 rounded-xl border border-white/10 bg-[#152238] px-3 py-2 space-y-2">
       <p className="text-[11px] leading-snug text-[#8a97ab] pb-1.5 border-b border-white/10">
-        Drag with your finger (or mouse) to highlight the section, then run this step. Use zoom or full screen for small text.
+        {tx('x.dragWithYourFingerOrMouse')}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap items-center gap-1">
@@ -333,7 +339,7 @@ export function WizardFullscreenShell({
           ))}
         </div>
         <span className="text-[11px] text-[#8a97ab] whitespace-nowrap">
-          · {selectionCount} selection(s)
+          · {selectionCount} {tx('x.selectionS')}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -345,7 +351,7 @@ export function WizardFullscreenShell({
               onClick={onProcess}
               disabled={wizardLoading || processDisabled}
             >
-              {wizardLoading ? 'Processing…' : `Process ${expectedStepLabel}`}
+              {wizardLoading ? tx('x.processing') : tx('x.process', { v0: expectedStepLabel })}
             </button>
             <button
               type="button"
@@ -353,7 +359,7 @@ export function WizardFullscreenShell({
               onClick={onClearSelections}
               disabled={wizardLoading || clearDisabled}
             >
-              Clear selections
+              {tx('x.clearSelections')}
             </button>
           </>
         )}
@@ -403,12 +409,12 @@ export function WizardFullscreenShell({
 
   let pages: ReactNode;
   if (isRenderingPages) {
-    pages = emptyBox('Preparing document pages…', expanded ? 'min-h-[50vh]' : 'min-h-[280px]');
+    pages = emptyBox(tx('x.preparingDocumentPages'), expanded ? 'min-h-[50vh]' : 'min-h-[280px]');
   } else if (wizardPages.length === 0) {
     pages = emptyBox(
       viewerMode === 'unsupported'
-        ? 'No renderable pages — use a PDF or image file.'
-        : 'No renderable pages available',
+        ? tx('x.noRenderablePagesUseAPdf')
+        : tx('x.noRenderablePagesAvailable'),
       expanded ? 'min-h-[40vh]' : 'h-[300px]'
     );
   } else {
@@ -447,7 +453,7 @@ export function WizardFullscreenShell({
       )}
     >
       <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-[#1c2d48] px-3 py-1.5">
-        <span className="text-xs font-semibold text-[#a8b6cc]">Document — drag to highlight</span>
+        <span className="text-xs font-semibold text-[#a8b6cc]">{tx('x.documentDragToHighlight')}</span>
         {viewerChrome}
       </div>
       <div

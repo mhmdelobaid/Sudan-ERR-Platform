@@ -28,6 +28,7 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
     onNewProject,
     onReturnToMenu
 }) => {
+  const { t: tx } = useTranslation('app');
     const { t } = useTranslation('project-application');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -44,7 +45,7 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
             const { data: { session } } = await newSupabase.auth.getSession();
             
             if (!session) {
-                throw new Error('No active session');
+                throw new Error(tx('x.noActiveSession'));
             }
 
             const response = await fetch(`/api/project-drafts?id=${draftId}`, {
@@ -57,7 +58,7 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
             });
 
             if (!response.ok) {
-                throw new Error('Failed to delete draft');
+                throw new Error(tx('x.failedToDeleteDraft'));
             }
 
             onDeleteDraft(draftId);
@@ -73,15 +74,15 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
         <div>
             <div className="mb-6">
                 <p className="app-section-label mb-1">
-                    {t('drafts.hubSectionLabel', { defaultValue: 'F1 · Work Plans' })}
+                    {t('drafts.hubSectionLabel', { defaultValue: tx('x.f1WorkPlans') })}
                 </p>
                 <h2 className="text-xl font-bold text-white leading-snug mb-1">
-                    {t('drafts.hubTitle', { defaultValue: 'F1 Work Plans' })}
+                    {t('drafts.hubTitle', { defaultValue: tx('x.f1WorkPlans2') })}
                 </h2>
                 <p className="text-sm text-[#a8b6cc] mb-0">
                     {t('drafts.hubSubtitle', {
                         defaultValue:
-                            'Continue a saved draft or start a new work plan for your room.',
+                            tx('x.continueASavedDraftOrStart'),
                     })}
                 </p>
             </div>
@@ -97,9 +98,9 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
                     <div className="flex w-max min-w-full gap-3 px-4 snap-x snap-mandatory items-stretch">
                         <HomeCard
                             onClick={() => !isLoading && onNewProject()}
-                            code="New"
-                            title="Create an F1"
-                            subtitle="Work plan for your room"
+                            code={tx('x.new')}
+                            title={tx('x.createAnF1')}
+                            subtitle={tx('x.workPlanForYourRoom')}
                             illustration={WorkPlanScene}
                             wash="bg-brand-orangeSoft"
                             size="md"
@@ -107,9 +108,9 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
 
                         {drafts.length === 0 ? (
                             <HomeCard
-                                code="Drafts"
-                                title="F1 drafts"
-                                subtitle="Saved drafts will show up here"
+                                code={tx('x.drafts')}
+                                title={tx('x.f1Drafts')}
+                                subtitle={tx('x.savedDraftsWillShowUpHere')}
                                 illustration={ApprovalsScene}
                                 wash="bg-[#7B96C4]"
                                 size="md"
@@ -129,7 +130,7 @@ const ProjectDrafts: React.FC<ProjectDraftsProps> = ({
                                         <div className="relative h-[6.75rem] overflow-hidden bg-[#9BB0D4]">
                                             <span className="absolute inset-x-0 top-0 z-10 px-2.5 pt-2">
                                                 <span className="text-[10px] font-bold uppercase tracking-wide text-[#152238]/80 bg-white/75 px-1.5 py-0.5 rounded-md">
-                                                    Draft
+                                                    {tx('x.draft')}
                                                 </span>
                                             </span>
                                             <WorkPlanScene className="absolute inset-0 h-full w-full" />

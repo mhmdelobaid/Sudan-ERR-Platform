@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { ChevronRight } from 'lucide-react';
 import { HomeCard } from '../../home/HomeSection';
@@ -16,6 +17,7 @@ export default function F1CreateChooser({
   onChooseManual,
   onChooseOcr,
 }: F1CreateChooserProps) {
+  const { t: tx } = useTranslation('app');
   const router = useRouter();
   const [step, setStep] = useState<'method' | 'manual-scope'>('method');
   const [scope, setScope] = useState<F1ScopeValue>(emptyF1Scope);
@@ -25,10 +27,10 @@ export default function F1CreateChooser({
     return (
       <div>
         <div className="mb-6">
-          <p className="app-section-label mb-1">F1 · Manual entry</p>
-          <h2 className="text-xl font-bold text-white leading-snug mb-1">Scope</h2>
+          <p className="app-section-label mb-1">{tx('x.f1ManualEntry')}</p>
+          <h2 className="text-xl font-bold text-white leading-snug mb-1">{tx('x.scope')}</h2>
           <p className="text-sm text-[#a8b6cc] mb-0">
-            Choose grant segment{scope.emergency_room_id ? '' : ', state and ERR'}, then continue to the form.
+            {tx('x.chooseGrantSegment')}{scope.emergency_room_id ? '' : ', state and ERR'}{tx('x.thenContinueToTheForm')}
           </p>
         </div>
 
@@ -47,14 +49,14 @@ export default function F1CreateChooser({
           className="app-action-primary"
           onClick={() => {
             if (!scopeIsReady(scope)) {
-              setScopeError('Select grant segment and ERR room to continue.');
+              setScopeError(tx('x.selectGrantSegmentAndErrRoom'));
               return;
             }
             setScopeError(null);
             onChooseManual(scope);
           }}
         >
-          Continue to form
+          {tx('x.continueToForm')}
         </button>
 
         <button
@@ -63,7 +65,7 @@ export default function F1CreateChooser({
           className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#8a97ab] hover:text-brand-orange"
         >
           <ChevronRight className="h-4 w-4 rotate-180" />
-          Back
+          {tx('x.back')}
         </button>
       </div>
     );
@@ -72,10 +74,10 @@ export default function F1CreateChooser({
   return (
     <div>
       <div className="mb-6">
-        <p className="app-section-label mb-1">F1 · Work Plans</p>
-        <h2 className="text-xl font-bold text-white leading-snug mb-1">Create an F1</h2>
+        <p className="app-section-label mb-1">{tx('x.f1WorkPlans')}</p>
+        <h2 className="text-xl font-bold text-white leading-snug mb-1">{tx('x.createAnF1')}</h2>
         <p className="text-sm text-[#a8b6cc] mb-0">
-          Upload a completed form or fill it in yourself.
+          {tx('x.uploadACompletedFormOrFill')}
         </p>
       </div>
 
@@ -83,18 +85,18 @@ export default function F1CreateChooser({
         <div className="flex w-max min-w-full gap-3 px-4 snap-x snap-mandatory items-stretch">
           <HomeCard
             onClick={onChooseOcr}
-            code="AI"
-            title="Upload with AI"
-            subtitle="PDF or Word form"
+            code={tx('x.ai')}
+            title={tx('x.uploadWithAi')}
+            subtitle={tx('x.pdfOrWordForm')}
             illustration={ReportingScene}
             wash="bg-[#7B96C4]"
             size="md"
           />
           <HomeCard
             onClick={() => setStep('manual-scope')}
-            code="Manual"
-            title="Manual entry"
-            subtitle="Fill the F1 form yourself"
+            code={tx('x.manual')}
+            title={tx('x.manualEntry')}
+            subtitle={tx('x.fillTheF1FormYourself')}
             illustration={WorkPlanScene}
             wash="bg-brand-orangeSoft"
             size="md"
@@ -108,7 +110,7 @@ export default function F1CreateChooser({
         className="inline-flex items-center gap-1 text-sm font-medium text-[#8a97ab] hover:text-brand-orange"
       >
         <ChevronRight className="h-4 w-4 rotate-180" />
-        Back to drafts
+        {tx('x.backToDrafts')}
       </button>
     </div>
   );

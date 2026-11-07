@@ -166,5 +166,6 @@
     "report_locked": "This report has been approved, so it can't be changed."
   },
   "Womens Activities": "Women's activities",
-  "Childrens Activities": "Children's activities"
+  "Childrens Activities": "Children's activities",
+  "loading": "Loading…"
 }

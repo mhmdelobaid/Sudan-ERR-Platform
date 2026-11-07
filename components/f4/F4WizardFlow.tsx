@@ -4,6 +4,8 @@
  * Each wizard step sends only the highlighted regions to `/api/f4/parse-snips`.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import CameraButton from '../ui/CameraButton';
 import { Loader2 } from 'lucide-react';
 import type { F4ExpenseDraft, F4SummaryDraft } from '../../lib/f4/mapOcrToDrafts';
 import {
@@ -103,6 +105,7 @@ export default function F4WizardFlow({
   onAutoStartFailed,
   onStepChange,
 }: Props) {
+  const { t: tx } = useTranslation('app');
   const [step, setStep] = useState<F4WizardFlowStep>(
     autoStart && initialFile ? 'preparing' : 'upload'
   );
@@ -215,7 +218,7 @@ export default function F4WizardFlow({
     async (fileOverride?: File | null) => {
       const selected = fileOverride ?? file;
       if (!selected) {
-        setError('Choose a PDF or image first');
+        setError(tx('x.chooseAPdfOrImageFirst'));
         return;
       }
       setFile(selected);
@@ -247,7 +250,7 @@ export default function F4WizardFlow({
         setStep('wizard');
       } catch (e: any) {
         console.error(e);
-        const msg = e?.message || 'Upload failed';
+        const msg = e?.message || tx('x.uploadFailed');
         setError(msg);
         if (autoStart && onAutoStartFailed) {
           onAutoStartFailed(msg);
@@ -270,7 +273,7 @@ export default function F4WizardFlow({
   const parseSnips = async (kind: WizardKind, files: File[]) => {
     if (kind !== expectedKind) return;
     if (!files.length) {
-      setError('Highlight at least one region first.');
+      setError(tx('x.highlightAtLeastOneRegionFirst'));
       return;
     }
     setError('');
@@ -340,7 +343,7 @@ export default function F4WizardFlow({
       }
     } catch (e: any) {
       console.error(e);
-      setError(e?.message || 'Could not read the selected regions. Try again.');
+      setError(e?.message || tx('x.couldNotReadTheSelectedRegions'));
     } finally {
       setWizardLoading(null);
     }
@@ -355,7 +358,7 @@ export default function F4WizardFlow({
       );
       await parseSnips(kind, files);
     } catch (e: any) {
-      setError(e?.message || 'Could not prepare the selected regions');
+      setError(e?.message || tx('x.couldNotPrepareTheSelectedRegions'));
     }
   };
 
@@ -416,15 +419,15 @@ export default function F4WizardFlow({
   const handleSave = async () => {
     if (!summary || saveInFlight.current) return;
     if (!summary.report_date) {
-      setError('Report date is required');
+      setError(tx('x.reportDateIsRequired'));
       return;
     }
     if (!fx) {
-      setError('Enter the exchange rate (SDG per 1 USD) before saving');
+      setError(tx('x.enterTheExchangeRateSdgPer'));
       return;
     }
     if (!receiptConfirmed) {
-      setError('Confirm the receipt check before saving');
+      setError(tx('x.confirmTheReceiptCheckBeforeSaving'));
       return;
     }
     setError('');
@@ -456,7 +459,7 @@ export default function F4WizardFlow({
       setStep('done');
     } catch (e: any) {
       console.error(e);
-      setError(e?.message || 'Save failed');
+      setError(e?.message || tx('x.saveFailed'));
       setStep('review');
     } finally {
       saveInFlight.current = false;
@@ -485,12 +488,12 @@ export default function F4WizardFlow({
   if (step === 'done') {
     return (
       <div className="space-y-4 text-center py-8">
-        <p className="text-lg font-bold text-white mb-1">F4 report submitted</p>
+        <p className="text-lg font-bold text-white mb-1">{tx('x.f4ReportSubmitted')}</p>
         <p className="text-sm text-[#a8b6cc]">
-          {summaryId != null ? `Summary #${summaryId} created for this project.` : 'Report saved.'}
+          {summaryId != null ? tx('x.summaryCreatedForThisProject', { v0: summaryId }) : tx('x.reportSaved')}
         </p>
         <button type="button" onClick={onReturnToMenu} className={primaryBtn}>
-          Back
+          {tx('x.back')}
         </button>
       </div>
     );
@@ -501,7 +504,7 @@ export default function F4WizardFlow({
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-[#a8b6cc]">
         <Loader2 className="h-8 w-8 animate-spin text-brand-orange" />
         <p className="text-sm">
-          {step === 'preparing' ? 'Uploading your file…' : 'Saving report…'}
+          {step === 'preparing' ? tx('x.uploadingYourFile') : tx('x.savingReport')}
         </p>
       </div>
     );
@@ -511,10 +514,10 @@ export default function F4WizardFlow({
     return (
       <div className="space-y-4">
         <div>
-          <p className="app-section-label mb-1">F4 · Guided upload</p>
-          <h3 className="text-lg font-bold text-white mb-1">Upload financial report</h3>
+          <p className="app-section-label mb-1">{tx('x.f4GuidedUpload')}</p>
+          <h3 className="text-lg font-bold text-white mb-1">{tx('x.uploadFinancialReport')}</h3>
           <p className="text-sm text-[#a8b6cc] mb-0">
-            Upload your report, highlight the table, questions and receipts, then review and submit.
+            {tx('x.uploadYourReportHighlightTheTable')}
           </p>
         </div>
         {errorBox}
@@ -524,6 +527,8 @@ export default function F4WizardFlow({
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           className="block w-full text-sm text-[#a8b6cc] file:mr-3 file:rounded-lg file:border-0 file:bg-brand-orange file:px-3 file:py-2 file:text-sm file:font-bold file:text-[#152238]"
         />
+        <CameraButton onChange={(e) => setFile(e.target.files?.[0] || null)} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand-orange/60 text-brand-orange px-3 py-2 text-sm font-bold" />
+        {file && <p className="text-xs text-[#a8b6cc] mb-0 truncate">{file.name}</p>}
         <div className="flex gap-2">
           <button
             type="button"
@@ -531,10 +536,10 @@ export default function F4WizardFlow({
             disabled={!file}
             className={primaryBtn}
           >
-            Upload & scan
+            {tx('x.uploadScan')}
           </button>
           <button type="button" onClick={onReturnToMenu} className={ghostBtn}>
-            Cancel
+            {tx('x.cancel')}
           </button>
         </div>
       </div>
@@ -549,7 +554,7 @@ export default function F4WizardFlow({
     ];
     return (
       <WizardFullscreenShell
-        title="F4 financial report"
+        title={tx('x.f4FinancialReport')}
         steps={pills}
         expectedStepId={expectedKind}
         expectedStepLabel={STEP_LABEL[expectedKind]}
@@ -568,12 +573,12 @@ export default function F4WizardFlow({
           <>
             {expectedKind !== 'table' && (
               <span className="text-[11px] text-[#8a97ab] whitespace-nowrap">
-                Rows: {expenses.length}
+                {tx('x.rows')} {expenses.length}
               </span>
             )}
             {receiptStats && (
               <span className="text-[11px] text-[#8a97ab] whitespace-nowrap">
-                Receipts total (SDG): {receiptStats.total.toLocaleString()} ({receiptStats.count} found)
+                {tx('x.receiptsTotalSdg')} {receiptStats.total.toLocaleString()} ({receiptStats.count} {tx('x.found')}
               </span>
             )}
           </>
@@ -594,7 +599,7 @@ export default function F4WizardFlow({
         unsupportedBanner={
           viewerMode === 'unsupported' && !isRenderingPages ? (
             <div className="shrink-0 text-sm text-amber-300 bg-amber-500/10 border border-amber-400/30 rounded-xl p-3">
-              This file type cannot be shown for highlighting. Please upload a PDF or image.
+              {tx('x.thisFileTypeCannotBeShown')}
             </div>
           ) : undefined
         }
@@ -626,7 +631,7 @@ export default function F4WizardFlow({
         disabled={!receiptConfirmed || !summary.report_date || !fx}
         className={`${primaryBtn} w-full`}
       >
-        Submit report
+        {tx('x.submitReport')}
       </button>
       <div className="grid grid-cols-3 gap-1.5">
         <button
@@ -637,21 +642,21 @@ export default function F4WizardFlow({
           }}
           className={`${ghostBtn} px-1.5 py-2 text-xs leading-tight`}
         >
-          Back to highlighting
+          {tx('x.backToHighlighting')}
         </button>
         <button
           type="button"
           onClick={startOver}
           className={`${ghostBtn} px-1.5 py-2 text-xs leading-tight`}
         >
-          Start over
+          {tx('x.startOver')}
         </button>
         <button
           type="button"
           onClick={onReturnToMenu}
           className={`${ghostBtn} px-1.5 py-2 text-xs leading-tight`}
         >
-          Cancel
+          {tx('x.cancel')}
         </button>
       </div>
     </div>
@@ -660,10 +665,10 @@ export default function F4WizardFlow({
   return (
     <div className="space-y-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div>
-        <p className="app-section-label mb-1">F4 · Review</p>
-        <h3 className="text-lg font-bold text-white mb-1">Check the extracted details</h3>
+        <p className="app-section-label mb-1">{tx('x.f4Review')}</p>
+        <h3 className="text-lg font-bold text-white mb-1">{tx('x.checkTheExtractedDetails')}</h3>
         <p className="text-sm text-[#a8b6cc] mb-0">
-          Edit fields as needed, confirm receipts, then submit.
+          {tx('x.editFieldsAsNeededConfirmReceipts')}
         </p>
       </div>
 
@@ -681,13 +686,13 @@ export default function F4WizardFlow({
           rel="noreferrer"
           className="inline-flex text-xs font-semibold text-brand-orange hover:underline"
         >
-          Open original file
+          {tx('x.openOriginalFile')}
         </a>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-xs text-[#8a97ab]">
-          Report date *
+          {tx('x.reportDate')}
           <input
             type="date"
             value={summary.report_date || ''}
@@ -697,7 +702,7 @@ export default function F4WizardFlow({
           />
         </label>
         <label className="block text-xs text-[#8a97ab]">
-          <span className="font-bold text-red-300">Exchange rate (SDG per 1 USD) *</span>
+          <span className="font-bold text-red-300">{tx('x.exchangeRateSdgPer1Usd')}</span>
           <input
             type="number"
             inputMode="decimal"
@@ -712,7 +717,7 @@ export default function F4WizardFlow({
           />
         </label>
         <label className="block text-xs text-[#8a97ab] sm:col-span-2">
-          Beneficiaries
+          {tx('x.beneficiaries')}
           <input
             value={summary.beneficiaries || ''}
             onChange={(e) => setSummary({ ...summary, beneficiaries: e.target.value })}
@@ -723,23 +728,23 @@ export default function F4WizardFlow({
 
       <div className="rounded-xl border border-white/10 overflow-hidden">
         <div className="flex items-center justify-between bg-[#1c2d48] px-3 py-2">
-          <p className="text-xs font-semibold text-[#a8b6cc] mb-0">Expenses</p>
+          <p className="text-xs font-semibold text-[#a8b6cc] mb-0">{tx('x.expenses3')}</p>
           <button type="button" onClick={addExpense} className="text-xs font-semibold text-brand-orange">
-            + Add row
+            {tx('x.addRow')}
           </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs min-w-[860px]">
             <thead className="text-[#8a97ab]">
               <tr className="border-b border-white/10">
-                <th className="px-2 py-2 text-start">Activity</th>
-                <th className="px-2 py-2 text-start">Description</th>
-                <th className="px-2 py-2 text-start">SDG</th>
-                <th className="px-2 py-2 text-start">USD</th>
-                <th className="px-2 py-2 text-start">Date</th>
-                <th className="px-2 py-2 text-start">Method</th>
-                <th className="px-2 py-2 text-start">Receipt no.</th>
-                <th className="px-2 py-2 text-start">Seller</th>
+                <th className="px-2 py-2 text-start">{tx('x.activity')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.description')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.sdg')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.usd')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.date')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.method')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.receiptNo')}</th>
+                <th className="px-2 py-2 text-start">{tx('x.seller')}</th>
                 <th className="px-2 py-2 w-8" />
               </tr>
             </thead>
@@ -788,7 +793,7 @@ export default function F4WizardFlow({
                     <input
                       value={row.payment_date || ''}
                       onChange={(e) => updateExpense(i, { payment_date: e.target.value })}
-                      placeholder="YYYY-MM-DD"
+                      placeholder={tx('x.yyyyMmDd')}
                       className={`${cellInputCls} w-28`}
                     />
                   </td>
@@ -827,7 +832,7 @@ export default function F4WizardFlow({
               {expenses.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-3 py-4 text-center text-[#8a97ab]">
-                    No expense rows yet. Add one manually or go back and re-run the table step.
+                    {tx('x.noExpenseRowsYetAddOne')}
                   </td>
                 </tr>
               )}
@@ -835,15 +840,15 @@ export default function F4WizardFlow({
           </table>
         </div>
         <p className="px-3 py-2 text-[11px] text-[#8a97ab] mb-0">
-          Totals — SDG: {totals.sdg.toLocaleString()} · USD: {totals.usd.toLocaleString()}
+          {tx('x.totalsSdg')} {totals.sdg.toLocaleString()} {tx('x.usd2')} {totals.usd.toLocaleString()}
         </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {(
           [
-            ['total_grant', 'Total grant'],
-            ['total_other_sources', 'Total other sources'],
+            ['total_grant', tx('x.totalGrant')],
+            ['total_other_sources', tx('x.totalOtherSources')],
           ] as const
         ).map(([key, label]) => (
           <label key={key} className="block text-xs text-[#8a97ab]">
@@ -865,10 +870,10 @@ export default function F4WizardFlow({
 
       {(
         [
-          ['excess_expenses', 'Excess expenses'],
-          ['surplus_use', 'Surplus use'],
-          ['lessons', 'Lessons learned'],
-          ['training', 'Training needs'],
+          ['excess_expenses', tx('x.excessExpenses')],
+          ['surplus_use', tx('x.surplusUse')],
+          ['lessons', tx('x.lessonsLearned')],
+          ['training', tx('x.trainingNeeds')],
         ] as const
       ).map(([key, label]) => (
         <label key={key} className="block text-xs text-[#8a97ab]">
@@ -883,28 +888,28 @@ export default function F4WizardFlow({
       ))}
 
       <div className="rounded-xl border border-white/10 bg-[#152238] p-3 space-y-3">
-        <p className="text-sm font-semibold text-white mb-0">Receipt check</p>
+        <p className="text-sm font-semibold text-white mb-0">{tx('x.receiptCheck')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
           <div>
-            <div className="text-[#8a97ab] text-xs">Expense table total (SDG)</div>
+            <div className="text-[#8a97ab] text-xs">{tx('x.expenseTableTotalSdg')}</div>
             <div className="font-semibold text-white">{totals.sdg.toLocaleString()}</div>
           </div>
           <div>
-            <div className="text-[#8a97ab] text-xs">Receipts total (SDG)</div>
+            <div className="text-[#8a97ab] text-xs">{tx('x.receiptsTotalSdg2')}</div>
             <div className="font-semibold text-white">{receiptsTotalSdg.toLocaleString()}</div>
           </div>
           <div>
-            <div className="text-[#8a97ab] text-xs">Variance (SDG)</div>
+            <div className="text-[#8a97ab] text-xs">{tx('x.varianceSdg')}</div>
             <div className="font-semibold text-white">
               {(totals.sdg - receiptsTotalSdg).toLocaleString()}
             </div>
           </div>
         </div>
         <p className="text-[11px] text-[#8a97ab] mb-0">
-          Edit receipt amounts, add missing receipts manually, or mark unreadable receipts as missing.
+          {tx('x.editReceiptAmountsAddMissingReceipts')}
         </p>
         {receiptRows.length === 0 ? (
-          <p className="text-sm text-[#8a97ab] mb-0">No receipt rows yet. Add rows manually if needed.</p>
+          <p className="text-sm text-[#8a97ab] mb-0">{tx('x.noReceiptRowsYetAddRows')}</p>
         ) : (
           <div className="space-y-2">
             {receiptRows.map((row, idx) => (
@@ -934,7 +939,7 @@ export default function F4WizardFlow({
                     };
                     setReceiptRows(next);
                   }}
-                  placeholder="Amount (SDG)"
+                  placeholder={tx('x.amountSdg')}
                   className={`${cellInputCls} disabled:opacity-40`}
                 />
                 <label className="flex items-center gap-1.5 text-xs text-[#a8b6cc]">
@@ -958,7 +963,7 @@ export default function F4WizardFlow({
                   onClick={() => setReceiptRows(receiptRows.filter((_, i) => i !== idx))}
                   className="text-xs font-semibold text-red-300 hover:underline"
                 >
-                  Delete
+                  {tx('x.delete')}
                 </button>
               </div>
             ))}
@@ -979,7 +984,7 @@ export default function F4WizardFlow({
           }
           className="text-xs font-semibold text-brand-orange"
         >
-          + Add receipt row
+          {tx('x.addReceiptRow')}
         </button>
         <label className="flex items-start gap-2 text-sm text-[#a8b6cc]">
           <input
@@ -996,7 +1001,7 @@ export default function F4WizardFlow({
             }
             className="mt-1"
           />
-          I confirm the receipts total has been reviewed against the expense table total.
+          {tx('x.iConfirmTheReceiptsTotalHas')}
         </label>
       </div>
 

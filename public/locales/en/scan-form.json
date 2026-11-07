@@ -107,5 +107,6 @@
     "form_submitted": "Form submitted successfully!",
     "all_forms_processed": "All selected forms have been processed"
   },
-  "saveDraft": "Save Draft"
+  "saveDraft": "Save Draft",
+  "review_extracted": "Review the extracted F4 fields, correct anything needed, then submit."
 }
