@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import Button from '../components/ui/Button';
@@ -24,6 +24,9 @@ const MainApp = ({ onLogout }) => {
     }
     return 0.6; // Default fall back
   });
+
+  // Load the offline page's code while there's a connection, so offline mode opens later with no network.
+  useEffect(() => { router.prefetch('/offline-mode').catch(() => { /* not critical */ }); }, [router]);
 
   const handleLogin = () => {
     router.push('/login');

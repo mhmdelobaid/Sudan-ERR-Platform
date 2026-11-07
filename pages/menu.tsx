@@ -23,6 +23,8 @@ import { newSupabase } from '../services/newSupabaseClient';
 import { signOutAndLock } from '../services/appLock';
 import { fetchMySignatures } from '../components/signatures/signApi';
 import Icon from '../components/ui/Icon';
+import { cacheForOffline } from '../services/offlineReports';
+import { sendQueuedReports } from '../services/offlineSync';
 
 /**
  * Chat-style menu.
@@ -149,6 +151,34 @@ const Menu = () => {
 
         checkAuth();
     }, [router]);
+
+    // Offline mode: keep this person's projects and the expense types on the phone, so the offline F4 form can
+    // offer them with no internet; load the offline page's code now so it opens later with no network; and send
+    // any F4 reports saved offline (services/offlineReports.ts, services/offlineSync.ts). Never blocks the menu.
+    useEffect(() => {
+        if (!userRole || ['state_rep', 'lcc_wg'].includes(userRole)) return;
+        let cancelled = false;
+        router.prefetch('/offline-mode').catch(() => { /* not critical */ });
+        (async () => {
+            try {
+                const { data: { session } } = await newSupabase.auth.getSession();
+                if (!session || cancelled) return;
+                const [projRes, catRes] = await Promise.all([
+                    fetch('/api/get-projects', { headers: { Authorization: `Bearer ${session.access_token}` } }).then(r => r.json()),
+                    newSupabase.from('expense_categories').select('expense_name, language'),
+                ]);
+                if (cancelled || !projRes?.success) return;
+                const names = (catRes.data || [])
+                    .filter((c: any) => !c.language || c.language === 'en')
+                    .map((c: any) => String(c.expense_name || '').trim())
+                    .filter(Boolean);
+                cacheForOffline(session.user.id, projRes.projects || [], Array.from(new Set(names)));
+            } catch { /* offline mode keeps the list saved last time */ }
+            if (!cancelled) sendQueuedReports().catch(() => { /* shown in offline mode */ });
+        })();
+        return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userRole]);
 
     // Signatures waiting for me (only room officers get the card). Never blocks the menu.
     useEffect(() => {

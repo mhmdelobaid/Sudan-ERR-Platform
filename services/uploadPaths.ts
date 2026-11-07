@@ -25,6 +25,17 @@ function sanitizeName(name: string): string {
 }
 
 /**
+ * A file name storage accepts: Latin letters, digits and hyphens, with its extension kept
+ * (an Arabic name, or one with spaces, would otherwise be refused).
+ */
+function safeFileName(name: string): string {
+    const dot = name.lastIndexOf('.');
+    const ext = dot > 0 ? name.slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) : '';
+    const base = sanitizeName(dot > 0 ? name.slice(0, dot) : name) || 'file';
+    return ext ? `${base}.${ext}` : base;
+}
+
+/**
  * Gets the current month folder name in YYYY-MM format
  */
 function getCurrentMonthFolder(): string {
@@ -43,11 +54,12 @@ export async function constructUploadPath({
     reportType,
     reportId
 }: PathOptions): Promise<string> {
-    const sanitizedErrName = sanitizeName(errName);
-    const sanitizedProjectName = sanitizeName(projectName);
+    // An Arabic room or project name has no Latin letters left after sanitizing: never leave an empty folder
+    const sanitizedErrName = sanitizeName(errName) || 'room';
+    const sanitizedProjectName = sanitizeName(projectName) || 'project';
     const monthFolder = getCurrentMonthFolder();
     const timestamp = Date.now();
-    const finalFileName = `${timestamp}-${fileName}`;
+    const finalFileName = `${timestamp}-${safeFileName(fileName)}`;
 
     const basePath = `projects/${sanitizedErrName}/${sanitizedProjectName}/${reportType}/${monthFolder}`;
     return reportId ? `${basePath}/${reportId}/${finalFileName}` : `${basePath}/${finalFileName}`;
@@ -83,7 +95,7 @@ export async function getErrName(): Promise<string> {
             throw new Error('Failed to get ERR name');
         }
 
-        return sanitizeName(errData.name);
+        return sanitizeName(errData.name) || String(userData.err_id);
     } catch (error) {
         console.error('Error getting ERR name:', error);
         throw error;
@@ -105,7 +117,7 @@ export async function getProjectName(projectId: string): Promise<string> {
             throw new Error('Failed to get project name');
         }
 
-        return sanitizeName(project.project_objectives);
+        return sanitizeName(project.project_objectives || '') || projectId;
     } catch (error) {
         console.error('Error getting project name:', error);
         throw error;

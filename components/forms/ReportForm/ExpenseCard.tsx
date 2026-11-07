@@ -54,7 +54,7 @@ const ExpenseCard = ({ expense, index, arrayHelpers, categories, projectId, repo
                         >
                             <option value="">{t('pleaseSelect')}</option>
                             {categories?.map((activityOption) => (
-                                <option key={activityOption.id} value={activityOption.id}>
+                                <option key={activityOption.id} value={activityOption.name}>
                                     {t(`categories.${activityOption.name}`)}
                                 </option>
                             ))}

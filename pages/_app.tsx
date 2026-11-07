@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import Head from 'next/head';
 import '../styles/globals.css';
 import { registerServiceWorker } from '../services/serviceWorkerRegistration';
-import { handleOnline } from '../services/handleOnline';
+import { sendQueuedReports } from '../services/offlineSync';
 import { appWithTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 import i18n from '../services/i18n'; // Import i18n initialization
@@ -19,11 +19,14 @@ function MyApp({ Component, pageProps }) {
     // Register service worker
     registerServiceWorker();
 
-    // Handle online and offline events
+    // F4 reports saved in offline mode are sent when the phone comes back online, and once when the app
+    // opens online (services/offlineSync.ts). They need a signed-in person; until then they wait on the phone.
+    const sendSaved = () => { sendQueuedReports().catch(() => { /* shown in offline mode */ }); };
     const onOnline = () => {
-      console.log('Network connectivity restored. Processing queued submissions.');
-      handleOnline();
+      console.log('Network connectivity restored. Sending reports saved offline.');
+      sendSaved();
     };
+    const firstTry = window.setTimeout(() => { if (navigator.onLine) sendSaved(); }, 4000);
 
     const onOffline = () => {
       console.log('App is now offline. Queued submissions will sync when online.');
@@ -36,6 +39,7 @@ function MyApp({ Component, pageProps }) {
     return () => {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
+      window.clearTimeout(firstTry);
     };
   }, []);
 

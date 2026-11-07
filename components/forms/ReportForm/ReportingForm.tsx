@@ -390,8 +390,8 @@ const submitEntireForm = async (values, reportId: string, project: Project, setI
         if (summaryError) throw summaryError;
 
         // Then submit the new records
-        await submitSummary(values, reportId, project);
-        await submitExpenses(values.expenses, reportId, project.id);
+        const summary = await submitSummary(values, reportId, project);
+        await submitExpenses(values.expenses, reportId, project.id, summary?.id);
         setIsFormSubmitted(true);
     }
     catch(e) {
@@ -446,7 +446,7 @@ const submitSummary = async (values, reportId: string, project: Project) => {
 };
 
 
-const submitExpenses = async (expenses, reportId: string, projectId: string) => {
+const submitExpenses = async (expenses, reportId: string, projectId: string, summaryId?: number) => {
     console.log('Submitting expenses:', expenses);
     const expensePromises = expenses.map(async (expense) => {
         try {
@@ -455,6 +455,7 @@ const submitExpenses = async (expenses, reportId: string, projectId: string) => 
                 .from('err_expense')
                 .insert([{
                     project_id: projectId,
+                    summary_id: summaryId ?? null, // which report this expense belongs to
                     created_at: new Date().toISOString(),
                     expense_activity: expense.activity,
                     expense_description: expense.description,

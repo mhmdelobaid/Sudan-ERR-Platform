@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next'; // Import translation hook
 import Image from 'next/image';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import OfflineForm from '../components/forms/OfflineForm';
 import { newSupabase } from '../services/newSupabaseClient';
 import { appAccess } from '../services/appAccess';
 import Link from 'next/link';
@@ -29,27 +28,12 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
-    const [showOfflineForm, setShowOfflineForm] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [isOffline, setIsOffline] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const router = useRouter();
     const { t } = useTranslation('login'); // Load translations for the "login" namespace
-
-    // Effect to handle custom offline form submission event
-    useEffect(() => {
-        const handleOfflineFormSubmitted = (event: CustomEvent) => {
-            setSuccessMessage(event.detail.message);
-            setTimeout(() => setSuccessMessage(''), 3000); // Hide after 3 seconds
-        };
-
-        window.addEventListener('offlineFormSubmitted', handleOfflineFormSubmitted);
-
-        return () => {
-            window.removeEventListener('offlineFormSubmitted', handleOfflineFormSubmitted);
-        };
-    }, []);
 
     // Back from the "set new password" page
     useEffect(() => {
@@ -146,10 +130,6 @@ const Login = () => {
             setIsLoading(false);
         }
     };
-
-    // Handlers for offline mode modal
-    const handleOfflineModeClick = () => setShowOfflineForm(true);
-    const closeOfflineForm = () => setShowOfflineForm(false);
 
     // Navigate back to the home page
     const handleBackToHome = () => {
@@ -269,23 +249,6 @@ const Login = () => {
                 </button>
             </div>
 
-            {/* Offline Form Modal */}
-            {showOfflineForm && (
-                <div className="modal-container fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center">
-                    <div className="bg-white p-4 rounded-lg shadow-md w-11/12 max-w-2xl max-h-screen overflow-y-auto">
-                        <button
-                            onClick={closeOfflineForm}
-                            className="text-red-500 float-right mb-2 inline-flex items-center justify-center gap-1.5"
-                        ><Icon name="close" size={20} />
-                            {t('closeButton')}
-                        </button>
-                        <OfflineForm
-                            onClose={closeOfflineForm}
-                            onSubmitSuccess={() => console.log('Submit success')}
-                        />
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
