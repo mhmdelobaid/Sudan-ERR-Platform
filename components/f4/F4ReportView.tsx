@@ -84,7 +84,9 @@ export default function F4ReportView({ reportId, token, onBack }: Props) {
                 maximumFractionDigits: 2,
               })}`
             : '—'}
-          {summary?.review_status ? ` · ${summary.review_status}` : ''}
+          {summary?.review_status
+            ? ` · ${tx(`x.reviewStatus.${summary.review_status}`, { defaultValue: summary.review_status })}`
+            : ''}
         </p>
       </div>
 

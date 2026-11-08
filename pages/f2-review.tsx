@@ -592,7 +592,7 @@ const F2Review: React.FC = () => {
                                         <div className="border-t border-gray-100 pt-2">
                                             <span className="block text-xs text-gray-500 mb-1">{t('lines.otherVotes')}</span>
                                             {others.length === 0 ? (
-                                                <span className="text-xs text-gray-400">{t('lines.noVotesYet')}</span>
+                                                <span className="text-xs text-gray-500">{t('lines.noVotesYet')}</span>
                                             ) : (
                                                 <ul className="space-y-1">
                                                     {others.map((o, i) => (

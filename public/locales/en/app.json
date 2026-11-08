@@ -437,6 +437,12 @@
     "remaining": "Remaining:",
     "chooseRoomThenContinue": "Choose the ERR room, then continue to the form.",
     "selectErrRoomToContinue": "Choose an ERR room to continue.",
-    "grantSegmentOptional": "Grant segment (optional)"
+    "grantSegmentOptional": "Grant segment (optional)",
+    "reviewStatus": {
+      "approved": "Approved",
+      "pending_review": "Under review",
+      "returned": "Returned for changes",
+      "rejected": "Rejected"
+    }
   }
 }

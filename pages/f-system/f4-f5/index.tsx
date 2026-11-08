@@ -409,10 +409,10 @@ export default function F4F5ReportingIndexPage() {
                                   </span>
                                   <span className="block text-xs text-[#8a97ab]">
                                     {isF5
-                                      ? `Activities: ${r.activities_count ?? 0}`
-                                      : `Expenses: ${formatUsd(r.total_expenses)}`}
+                                      ? `${tx('x.activities')} ${r.activities_count ?? 0}`
+                                      : `${tx('x.expenses')} ${formatUsd(r.total_expenses)}`}
                                     {!isF5 && r.review_status
-                                      ? ` · ${r.review_status}`
+                                      ? ` · ${tx(`x.reviewStatus.${r.review_status}`, { defaultValue: r.review_status })}`
                                       : ''}
                                   </span>
                                 </span>

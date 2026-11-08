@@ -51,6 +51,40 @@ p {
   line-height: 1.55;
 }
 
+/*
+ * Screens built for the light theme (F2, F3, project status, user management…) sit
+ * inside the dark app. On their white and pale cards, text that has no colour of its
+ * own would inherit the dark theme's near-white and become unreadable. These rules
+ * give that text dark colours again. :where() keeps their weight as low as the
+ * global h1/p rules above, so any text-* class on an element still wins.
+ */
+:where(
+  .bg-white, .bg-gray-50, .bg-gray-100, .bg-slate-50, .bg-slate-100,
+  .bg-red-50, .bg-red-100, .bg-emerald-50, .bg-emerald-100, .bg-amber-50, .bg-amber-100,
+  .bg-blue-50, .bg-blue-100, .bg-green-50, .bg-green-100, .bg-yellow-50, .bg-yellow-100,
+  .bg-orange-50, .bg-indigo-50, .bg-purple-50, .bg-sky-50, .bg-rose-50, .bg-teal-50
+) {
+  color: #1f2937;
+}
+
+:where(
+  .bg-white, .bg-gray-50, .bg-gray-100, .bg-slate-50, .bg-slate-100,
+  .bg-red-50, .bg-red-100, .bg-emerald-50, .bg-emerald-100, .bg-amber-50, .bg-amber-100,
+  .bg-blue-50, .bg-blue-100, .bg-green-50, .bg-green-100, .bg-yellow-50, .bg-yellow-100,
+  .bg-orange-50, .bg-indigo-50, .bg-purple-50, .bg-sky-50, .bg-rose-50, .bg-teal-50
+) :is(h1, h2, h3, h4, h5, h6) {
+  color: #111827;
+}
+
+:where(
+  .bg-white, .bg-gray-50, .bg-gray-100, .bg-slate-50, .bg-slate-100,
+  .bg-red-50, .bg-red-100, .bg-emerald-50, .bg-emerald-100, .bg-amber-50, .bg-amber-100,
+  .bg-blue-50, .bg-blue-100, .bg-green-50, .bg-green-100, .bg-yellow-50, .bg-yellow-100,
+  .bg-orange-50, .bg-indigo-50, .bg-purple-50, .bg-sky-50, .bg-rose-50, .bg-teal-50
+) p {
+  color: #4b5563;
+}
+
 .modal-container {
   max-height: 80vh;
   overflow-y: auto;

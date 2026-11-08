@@ -437,6 +437,12 @@
     "remaining": "المتبقي:",
     "chooseRoomThenContinue": "اختر غرفة الطوارئ، وبعدها واصل للنموذج.",
     "selectErrRoomToContinue": "اختر غرفة الطوارئ عشان تواصل.",
-    "grantSegmentOptional": "شريحة المنحة (اختياري)"
+    "grantSegmentOptional": "شريحة المنحة (اختياري)",
+    "reviewStatus": {
+      "approved": "معتمد",
+      "pending_review": "قيد المراجعة",
+      "returned": "أُعيد للتعديل",
+      "rejected": "مرفوض"
+    }
   }
 }

@@ -602,7 +602,7 @@ export default function F4F5ProjectPage() {
                                 <span className="block text-xs text-[#8a97ab]">
                                   {tx('x.expenses')} {formatUsd(r.total_expenses)}
                                   {r.review_status
-                                    ? ` · ${r.review_status}`
+                                    ? ` · ${tx(`x.reviewStatus.${r.review_status}`, { defaultValue: r.review_status })}`
                                     : ''}
                                 </span>
                               </span>
