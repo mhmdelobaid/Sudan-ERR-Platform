@@ -1,11 +1,9 @@
-import { newSupabase } from "./newSupabaseClient";
-import { constructUploadPath, getErrName, getProjectName } from "./uploadPaths";
+import { secureUpload, SecureUploadError } from "./secureUpload";
 
 /**
- * Upload to private bucket
- * 
- * TODO See if we can get project ID for everything
-*/
+ * Upload report files through the secure flow (quarantine -> check -> clean copy).
+ * `url` in each result is the clean file's storage path, which is what reports store.
+ */
 
 export enum ImageCategory {
   FORM_CUSTOM,
@@ -19,104 +17,27 @@ export enum ImageCategory {
 export interface UploadResult {
   filename?: string;
   success: boolean;
-  errorMessage?: string;
+  errorMessage?: string;   // an uploads:errors.<code> code when the upload was refused
   url?: string;
 }
-
-const BUCKET_NAME = "images";
 
 export const uploadImages = async (
     files: File[],
     projectId: string,
     reportType: 'financial' | 'program'
-) => {
+): Promise<UploadResult[]> => {
     const results: UploadResult[] = [];
-
-    try {
-        // Get ERR name and project name once for all files
-        const errName = await getErrName();
-        const projectName = await getProjectName(projectId);
-
-        for (const file of files) {
-            try {
-                // Construct the new path
-                const path = await constructUploadPath({
-                    errName,
-                    projectName,
-                    fileName: file.name,
-                    reportType
-                });
-
-                // Upload the file
-                const { data, error } = await newSupabase.storage
-                    .from(BUCKET_NAME)
-                    .upload(path, file, {
-                        cacheControl: '3600',
-                        upsert: false
-                    });
-
-                if (error) throw error;
-
-                // Get public URL
-                const { data: { publicUrl } } = newSupabase.storage
-                    .from(BUCKET_NAME)
-                    .getPublicUrl(path);
-
-                results.push({
-                    filename: file.name,
-                    success: true,
-                    url: publicUrl
-                });
-            } catch (error) {
-                console.error('Upload error:', error);
-                results.push({
-                    filename: file.name,
-                    success: false,
-                    errorMessage: error.message
-                });
-            }
+    for (const file of files) {
+        try {
+            const clean = await secureUpload(file, { projectId, kind: reportType === 'program' ? 'f5' : 'f4' });
+            results.push({ filename: clean.name, success: true, url: clean.path });
+        } catch (error: any) {
+            results.push({
+                filename: file?.name,
+                success: false,
+                errorMessage: error instanceof SecureUploadError ? error.code : 'server_error',
+            });
         }
-    } catch (error) {
-        console.error('Error getting project/ERR info:', error);
-        return files.map(file => ({
-            filename: file.name,
-            success: false,
-            errorMessage: 'Failed to get project information'
-        }));
     }
-
     return results;
-}
-
-
-const getNewFilename = (file: File) => {
-    const fileExt = file.name.split('.').pop();
-    return`${crypto.randomUUID()}.${fileExt}`;
-}
-
-const getPath = (filename: String, category: ImageCategory) => {
-  let base:string;
-  switch(category) {
-    case ImageCategory.FORM_CUSTOM:
-      base = "forms/custom";
-      break;
-    case ImageCategory.FORM_FILLED:
-      base = "forms/filled";
-      break;
-    case ImageCategory.FORM_SCANNED:
-      base = "forms/scanned";
-      break;
-    case ImageCategory.REPORT_EXPENSES_FORM:
-      base = "reports/expenses";
-      break;
-    case ImageCategory.REPORT_EXPENSES_SUPPORTING_IMAGE:
-      base = "reports/expenses";
-      break;
-    case ImageCategory.REPORT_EXPENSES_RECEIPT:
-      base = "reports/expenses";
-    default: 
-      throw new Error("To upload, we needed a valid image category.");
-   }
-  const path = `${base}/${filename}`;
-  return path;
-}
+};

@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileWithProgress } from './UploadInterfaces';
 import CameraButton from '../../../ui/CameraButton';
+import { ACCEPT_FILES, precheckFile } from '../../../../services/secureUpload';
 
 interface UploadChooserSupportingProps {
     onFilesSelected: (files: FileWithProgress[]) => void;
@@ -13,20 +14,27 @@ const UploadChooserSupporting: React.FC<UploadChooserSupportingProps> = React.me
     disabled 
 }) => {
     const { t } = useTranslation('program-report');
+    const [refused, setRefused] = useState<string[]>([]);
     const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const fileList = event.target.files;
         if (!fileList) return;
 
-        const files: FileWithProgress[] = Array.from(fileList).map(file => ({
-            file,
-            progress: 0
-        }));
+        const chosen = Array.from(fileList);
+        const notes: string[] = [];
+        const files: FileWithProgress[] = chosen
+            .filter(file => {
+                const problem = precheckFile(file);
+                if (problem) notes.push(t('uploads:rejected', { name: file.name, reason: t(`uploads:errors.${problem}`) }));
+                return !problem;
+            })
+            .map(file => ({ file, progress: 0 }));
+        setRefused(notes);
 
-        onFilesSelected(files);
+        if (files.length) onFilesSelected(files);
         
         // Reset the input value so the same file can be selected again if needed
         event.target.value = '';
-    }, [onFilesSelected]);
+    }, [onFilesSelected, t]);
 
     return (
         <div className="mb-4 space-y-2">
@@ -41,7 +49,7 @@ const UploadChooserSupporting: React.FC<UploadChooserSupportingProps> = React.me
                 onChange={handleFileChange}
                 disabled={disabled}
                 multiple
-                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                accept={ACCEPT_FILES}
                 className="block w-full text-sm text-gray-500
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-full file:border-0
@@ -49,6 +57,10 @@ const UploadChooserSupporting: React.FC<UploadChooserSupportingProps> = React.me
                     file:bg-blue-50 file:text-blue-700
                     hover:file:bg-blue-100"
             />
+            <p className="text-xs text-gray-500">{t('uploads:allowed')}</p>
+            {refused.map((note, i) => (
+                <p key={i} className="text-xs text-red-600">{note}</p>
+            ))}
         </div>
     );
 });

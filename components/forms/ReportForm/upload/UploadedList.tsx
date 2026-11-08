@@ -20,7 +20,12 @@ export const UploadedList: React.FC<UploadedListProps> = ({ files, removeFile })
           <ul className="space-y-2">
             {files.map((fileWithProgress, index) => (
             <li key={`${index}`} className="flex items-center justify-between gap-4 p-2 border rounded-md">
-                <span className="truncate">{fileWithProgress.file.name}</span>
+                <span className="truncate">
+                  {fileWithProgress.file.name}
+                  {fileWithProgress.error && (
+                    <span className="block text-xs text-red-600">{t(`uploads:errors.${typeof fileWithProgress.error === 'string' ? fileWithProgress.error : 'server_error'}`)}</span>
+                  )}
+                </span>
                 <div className="flex items-center gap-2">
                   <div className="w-20 h-2 bg-gray-200 rounded">
                     <div className="h-2 bg-blue-500 rounded transition transition-width ease-in-out" style={{ width: `${fileWithProgress.progress}%` }}></div>

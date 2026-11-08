@@ -1,0 +1,22 @@
+{
+  "errors": {
+    "empty": "This file is empty.",
+    "too_large": "This file is larger than 10 MB. Take the photo again or send a smaller file.",
+    "unsupported_type": "Only photos (JPG, PNG, WebP) and PDF files can be uploaded.",
+    "corrupt": "This file is damaged or could not be read. Take the photo again or save the PDF again.",
+    "image_too_large": "This picture is too large. Take it again with the phone camera.",
+    "encrypted_pdf": "This PDF is locked with a password. Send a copy without a password.",
+    "too_many_pages": "This PDF has more than 60 pages. Split it into smaller files.",
+    "active_content": "This PDF has parts that could not be made safe, so it was refused. Save it as a PDF again, or send photos of the pages.",
+    "timeout": "Checking this file took too long. Try again or send a smaller file.",
+    "too_many_uploads": "Too many files in the last hour. Wait a little and try again.",
+    "not_allowed": "You can't add files to this project.",
+    "not_signed_in": "Your session has ended. Sign in again.",
+    "network": "The connection dropped while sending. Try again.",
+    "server_error": "The file could not be saved. Try again.",
+    "not_configured": "File upload isn't set up on the server yet.",
+    "file_not_found": "This file could not be found."
+  },
+  "rejected": "{{name}}: {{reason}}",
+  "allowed": "Photos (JPG, PNG, WebP) or PDF, up to 10 MB each."
+}

@@ -6,7 +6,7 @@ import PrefilledForm from "../components/forms/PrefilledForm";
 import FileUploader from "../components/uploads/FileUploader";
 import Button from "../components/ui/Button";
 import BulkPdfProcessor from "../components/forms/BulkPdfProcessor";
-import { supabase } from "../services/supabaseClient";
+import { secureUpload, SecureUploadError, precheckFile, ACCEPT_IMAGES } from "../services/secureUpload";
 import { authFetch } from '../services/authFetch';
 import Icon from '../components/ui/Icon';
 import CameraButton from '../components/ui/CameraButton';
@@ -34,7 +34,14 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+      const chosen = e.target.files[0];
+      const problem = precheckFile(chosen, { imagesOnly: true });
+      if (problem) {
+        alert(t(`uploads:errors.${problem}`));
+        e.target.value = '';
+        return;
+      }
+      setFile(chosen);
     }
   };
 
@@ -53,8 +60,8 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(t("errors.server_error", { status: response.status }));
+        const body = await response.json().catch(() => ({}));
+        throw body?.code ? new SecureUploadError(body.code) : new Error(t("errors.server_error", { status: response.status }));
       }
 
       const data = await response.json();
@@ -71,7 +78,7 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
         </ScanBubble>
       ]);
     } catch (error) {
-      alert(t("errors.scan_failed"));
+      alert(error instanceof SecureUploadError ? t(`uploads:errors.${error.code}`) : t("errors.scan_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -133,29 +140,15 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
 
     setPdfProcessing(true);
     try {
-      // Upload to Supabase Storage first
-      const fileExt = pdfFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-      const filePath = `single/${fileName}`; // Put single uploads in their own folder
+      // Checked and cleaned first (quarantine -> check -> clean copy); only the clean copy is read
+      const clean = await secureUpload(pdfFile, { projectId: project?.id, kind: 'scan' });
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('pdf-uploads')
-        .upload(filePath, pdfFile);
-
-      if (uploadError) throw uploadError;
-
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('pdf-uploads')
-        .getPublicUrl(filePath);
-
-      // Send URL to our API
       const response = await authFetch("/api/scan-single-pdf", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ fileUrl: publicUrl }),
+        body: JSON.stringify({ fileId: clean.id }),
       });
 
       const result = await response.json();
@@ -176,14 +169,9 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
         setChatSteps(prev => [...prev, newChatStep]);
       }
 
-      // Clean up: Delete the file from storage
-      await supabase.storage
-        .from('pdf-uploads')
-        .remove([filePath]);
-
     } catch (error) {
       console.error("Failed to scan the form.", error);
-      setError(t("errors.scan_failed"));
+      setError(error instanceof SecureUploadError ? t(`uploads:errors.${error.code}`) : t("errors.scan_failed"));
     } finally {
       setPdfProcessing(false);
       setPdfFile(null);
@@ -286,7 +274,7 @@ const ScanForm: React.FC<ScanFormProps> = ({ onReturnToMenu, onSubmitAnotherForm
                       {t("choose_file")}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept={ACCEPT_IMAGES}
                         onChange={handleFileChange}
                         className="hidden"
                       />

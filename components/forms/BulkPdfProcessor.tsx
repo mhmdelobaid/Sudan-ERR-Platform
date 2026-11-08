@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PrefilledForm from './PrefilledForm';
-import { supabase } from '../../services/supabaseClient';
+import { secureUpload, SecureUploadError } from '../../services/secureUpload';
 import { authFetch } from '../../services/authFetch';
 import Icon from '../ui/Icon';
 
@@ -57,29 +57,15 @@ const BulkPdfProcessor: React.FC<BulkPdfProcessorProps> = ({ project, onFormSubm
     setIsProcessing(true);
 
     try {
-      // Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-      const filePath = `${project.id}/${fileName}`;
+      // Checked and cleaned first (quarantine -> check -> clean copy); only the clean copy is read
+      const clean = await secureUpload(file, { projectId: project.id, kind: 'scan' });
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('pdf-uploads')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('pdf-uploads')
-        .getPublicUrl(filePath);
-
-      // Send URL to our API
       const response = await authFetch('/api/scan-pdf-form', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ fileUrl: publicUrl }),
+        body: JSON.stringify({ fileId: clean.id }),
       });
 
       if (!response.ok) {
@@ -97,14 +83,9 @@ const BulkPdfProcessor: React.FC<BulkPdfProcessorProps> = ({ project, onFormSubm
         selected: false
       })));
 
-      // Clean up: Delete the file from storage
-      await supabase.storage
-        .from('pdf-uploads')
-        .remove([filePath]);
-
     } catch (error) {
       console.error('Upload error:', error);
-      alert(error.message);
+      alert(error instanceof SecureUploadError ? t(`uploads:errors.${error.code}`) : error.message);
     } finally {
       setIsProcessing(false);
     }
