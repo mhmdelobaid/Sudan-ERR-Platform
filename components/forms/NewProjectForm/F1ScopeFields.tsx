@@ -69,6 +69,10 @@ export default function F1ScopeFields({
   const [states, setStates] = useState<string[]>([]);
   const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [organizations, setOrganizations] = useState<OrgOption[]>([]);
+  // The database clears grant_segment on F1s sent by anyone below admin
+  // (guard_err_projects); the portal or an admin assigns it later. So only
+  // admins see the picker, and only when segments exist.
+  const [canSetSegment, setCanSetSegment] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,6 +101,10 @@ export default function F1ScopeFields({
 
         setNeedsRoomPicker(!!data.needsRoomPicker);
         setSegments(data.grant_segments || []);
+        setCanSetSegment(
+          (data.grant_segments || []).length > 0 &&
+            ['admin', 'superadmin'].includes(data.role)
+        );
         setStates(data.states || []);
         setRooms(data.rooms || []);
 
@@ -263,8 +271,9 @@ export default function F1ScopeFields({
 
       {showOrganization ? (
         <div className={`grid grid-cols-2 ${gap}`}>
+          {canSetSegment && (
           <div className="min-w-0">
-            <label className={labelClass}>{tx('x.grantSegment')}</label>
+            <label className={labelClass}>{tx('x.grantSegmentOptional')}</label>
             <select
               className={selectClass}
               value={value.grant_segment}
@@ -278,6 +287,7 @@ export default function F1ScopeFields({
               ))}
             </select>
           </div>
+          )}
           <div className="min-w-0">
             <label className={labelClass}>{tx('x.organization')}</label>
             <select
@@ -302,9 +312,9 @@ export default function F1ScopeFields({
             </select>
           </div>
         </div>
-      ) : (
+      ) : canSetSegment ? (
         <div>
-          <label className={labelClass}>{tx('x.grantSegment')}</label>
+          <label className={labelClass}>{tx('x.grantSegmentOptional')}</label>
           <select
             className={selectClass}
             value={value.grant_segment}
@@ -318,7 +328,7 @@ export default function F1ScopeFields({
             ))}
           </select>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -347,7 +357,7 @@ export function scopeIsReady(
   scope: F1ScopeValue,
   opts?: { requireOrganization?: boolean }
 ) {
-  if (!scope.grant_segment) return false;
+  // Grant segment is optional: the portal or an admin assigns it after screening
   if (!scope.emergency_room_id) return false;
   if (opts?.requireOrganization && !scope.organization_id) return false;
   return true;

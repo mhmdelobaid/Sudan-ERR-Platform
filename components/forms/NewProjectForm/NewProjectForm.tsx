@@ -733,26 +733,8 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
                        ))}
                      </div>
                    </div>
-
-                   {/* Budget currency (no conversion: the USD grant balance only counts USD budgets) */}
-                   <div className="mb-2 pt-2">
-                     <RequiredLabel required>{t('currency.label')}</RequiredLabel>
-                     <div className="inline-flex rounded-lg border overflow-hidden" role="radiogroup" aria-label={t('currency.label')}>
-                       {CURRENCIES.map((code) => (
-                         <button
-                           key={code}
-                           type="button"
-                           role="radio"
-                           aria-checked={values.currency === code}
-                           onClick={() => setFieldValue('currency', code)}
-                           className={`px-4 py-2 text-sm font-semibold ${values.currency === code ? 'bg-brand-blue text-white' : 'bg-white text-gray-700'}`}
-                         >
-                           {t(`currency.${code.toLowerCase()}`)}
-                         </button>
-                       ))}
-                     </div>
-                     <p className="text-xs text-gray-500 mt-1">{t('currency.hint')}</p>
-                   </div>
+                   {/* No conversion: the USD grant balance only counts USD budgets */}
+                   <p className="text-xs text-[#8a97ab] -mt-1 mb-2">{t('currency.hint')}</p>
 
                    <NewProjectActivities optionsActivities={optionsActivities} optionsExpenses={optionsExpenses} />
 

@@ -303,9 +303,6 @@
     "noActivityRowsYetAddOne": "ما في صفوف أنشطة لسه. أضف صف بنفسك أو ارجع وأعد خطوة الأنشطة.",
     "f1ManualEntry": "F1 · إدخال يدوي",
     "scope": "النطاق",
-    "chooseGrantSegment": "اختر شريحة المنحة",
-    "thenContinueToTheForm": "، وبعدها واصل للنموذج.",
-    "selectGrantSegmentAndErrRoom": "اختر شريحة المنحة وغرفة الطوارئ عشان تواصل.",
     "continueToForm": "واصل للنموذج",
     "f1WorkPlans": "F1 · خطط العمل",
     "createAnF1": "اعمل F1",
@@ -437,6 +434,9 @@
     "unknownError": "حصل خطأ",
     "committed": "الملتزم به:",
     "pending2": "قيد الانتظار:",
-    "remaining": "المتبقي:"
+    "remaining": "المتبقي:",
+    "chooseRoomThenContinue": "اختر غرفة الطوارئ، وبعدها واصل للنموذج.",
+    "selectErrRoomToContinue": "اختر غرفة الطوارئ عشان تواصل.",
+    "grantSegmentOptional": "شريحة المنحة (اختياري)"
   }
 }

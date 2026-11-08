@@ -303,9 +303,6 @@
     "noActivityRowsYetAddOne": "No activity rows yet. Add one manually or go back and re-run the activities step.",
     "f1ManualEntry": "F1 · Manual entry",
     "scope": "Scope",
-    "chooseGrantSegment": "Choose grant segment",
-    "thenContinueToTheForm": ", then continue to the form.",
-    "selectGrantSegmentAndErrRoom": "Select grant segment and ERR room to continue.",
     "continueToForm": "Continue to form",
     "f1WorkPlans": "F1 · Work Plans",
     "createAnF1": "Create an F1",
@@ -437,6 +434,9 @@
     "unknownError": "Unknown error",
     "committed": "Committed:",
     "pending2": "Pending:",
-    "remaining": "Remaining:"
+    "remaining": "Remaining:",
+    "chooseRoomThenContinue": "Choose the ERR room, then continue to the form.",
+    "selectErrRoomToContinue": "Choose an ERR room to continue.",
+    "grantSegmentOptional": "Grant segment (optional)"
   }
 }

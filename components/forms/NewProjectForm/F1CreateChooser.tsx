@@ -30,7 +30,7 @@ export default function F1CreateChooser({
           <p className="app-section-label mb-1">{tx('x.f1ManualEntry')}</p>
           <h2 className="text-xl font-bold text-white leading-snug mb-1">{tx('x.scope')}</h2>
           <p className="text-sm text-[#a8b6cc] mb-0">
-            {tx('x.chooseGrantSegment')}{scope.emergency_room_id ? '' : ', state and ERR'}{tx('x.thenContinueToTheForm')}
+            {tx('x.chooseRoomThenContinue')}
           </p>
         </div>
 
@@ -49,7 +49,7 @@ export default function F1CreateChooser({
           className="app-action-primary"
           onClick={() => {
             if (!scopeIsReady(scope)) {
-              setScopeError(tx('x.selectGrantSegmentAndErrRoom'));
+              setScopeError(tx('x.selectErrRoomToContinue'));
               return;
             }
             setScopeError(null);
