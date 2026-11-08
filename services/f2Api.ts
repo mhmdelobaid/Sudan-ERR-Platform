@@ -103,6 +103,14 @@ const KNOWN_ERRORS: Record<string, number> = {
     invalid_signature: 400,
     invalid_document: 400,
     already_signed: 409,
+    // National projects (working groups)
+    superadmin_only: 403,
+    unknown_state: 400,
+    invalid_function: 400,
+    not_a_working_group_account: 400,
+    project_not_open: 409,
+    project_required: 400,
+    project_not_found: 404,
     // keep last: other codes contain it
     not_found: 404,
 };

@@ -69,6 +69,8 @@ export default function F1WorkPlansPage() {
   const scopeFromChooser = (scope: F1ScopeValue): F1RoomScope => ({
     emergency_room_id: scope.emergency_room_id,
     grant_segment: scope.grant_segment,
+    working_group_id: scope.working_group_id,
+    working_group_label: scope.working_group_label,
     state_name: scope.state_name,
     locality: scope.locality,
     room_label: scope.room_label,
@@ -150,6 +152,8 @@ export default function F1WorkPlansPage() {
                 ? {
                     emergency_room_id: draft.emergency_room_id,
                     grant_segment: draft.grant_segment || '',
+                    working_group_id: draft.working_group_id || '',
+                    working_group_label: '',
                     state_name: draft.state || '',
                     locality: draft.locality || '',
                     room_label: '',

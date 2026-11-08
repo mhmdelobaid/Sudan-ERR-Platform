@@ -163,7 +163,10 @@
     "status_change_not_allowed": "That status change isn't allowed.",
     "status_not_allowed": "A new project must be a draft or sent for screening.",
     "protected_field": "A field here can't be changed by you (funding, grant or contract). Those are set at a later step.",
-    "report_locked": "This report has been approved, so it can't be changed."
+    "report_locked": "This report has been approved, so it can't be changed.",
+    "project_required": "Choose the project you are requesting funds from.",
+    "project_not_open": "This project isn’t open to new requests in this state. Choose another project, or ask the national team.",
+    "project_not_found": "That project no longer exists. Choose another one."
   },
   "Womens Activities": "Women's activities",
   "Childrens Activities": "Children's activities",

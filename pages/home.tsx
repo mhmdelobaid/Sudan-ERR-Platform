@@ -117,6 +117,10 @@ export default function HomePage() {
         <HomeSection title={t('home.workingGroup')} href="/wg-projects">
           <HomeCard href="/wg-projects" title={t('cards.wg.title')} subtitle={t('cards.wg.sub')}
             illustration={WorkPlanScene} wash="bg-[#BCCBE3]" size="md" />
+          {role === 'superadmin' && (
+            <HomeCard href="/projects-admin" title={t('cards.fundProjects.title')} subtitle={t('cards.fundProjects.sub')}
+              illustration={ApprovalsScene} wash="bg-brand-orangeSoft" size="md" />
+          )}
         </HomeSection>
       )}
 

@@ -63,6 +63,9 @@ interface UserDataResponse {
 export type F1RoomScope = {
   emergency_room_id: string;
   grant_segment: string;
+  /** National project the room requests funds from (working group) */
+  working_group_id?: string;
+  working_group_label?: string;
   state_name?: string;
   locality?: string;
   room_label?: string;
@@ -121,6 +124,7 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
     roomScope = null,
 }) => {
    const { t, i18n } = useTranslation('project-application');
+   const { t: tx } = useTranslation('app');
    const [availableRegions, setAvailableRegions] = useState([]);
    const [localitiesDict, setLocalitiesDict] = useState({});
    const [relevantLocalities, setRelevantLocalities] = useState([]);
@@ -456,12 +460,19 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
         (initialValues as any)?.grant_segment ||
         null;
 
+      const workingGroupId =
+        (otherValues as any).working_group_id ||
+        roomScope?.working_group_id ||
+        (initialValues as any)?.working_group_id ||
+        undefined;
+
       // Room-linked; funding cycle/grant call still assigned later in portal
       const projectData = {
         ...otherValues,
         err_id: roomId,
         emergency_room_id: roomId,
         grant_segment: grantSegment,
+        working_group_id: workingGroupId,
         funding_cycle_id: null,
         cycle_state_allocation_id: null,
         grant_call_id: null,
@@ -567,6 +578,7 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
                err: roomScope?.emergency_room_id || (initialValues as any)?.emergency_room_id || userErrId,
                emergency_room_id: roomScope?.emergency_room_id || (initialValues as any)?.emergency_room_id || userErrId,
                grant_segment: roomScope?.grant_segment || (initialValues as any)?.grant_segment || '',
+               working_group_id: roomScope?.working_group_id || (initialValues as any)?.working_group_id || '',
                state: editingProject?.state || initialValues?.state || roomScope?.state_name || roomState || '',
                locality: editingProject?.locality || initialValues?.locality || roomScope?.locality || (editingProject?.state || initialValues?.state ? '' : roomLocality) || '',
                currency: editingProject?.currency || (initialValues as any)?.currency || 'USD',
@@ -612,6 +624,12 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
                        <Field name="err" type="hidden" />
                        <Field name="emergency_room_id" type="hidden" />
                        <Field name="grant_segment" type="hidden" />
+                       <Field name="working_group_id" type="hidden" />
+                       {roomScope?.working_group_label && (
+                         <p className="text-[11px] text-[#f4b183] mt-0.5 mb-0 truncate">
+                           {tx('x.fundProject')}: {roomScope.working_group_label}
+                         </p>
+                       )}
                        {(values as any).grant_segment && (
                          <p className="text-[11px] text-[#8a97ab] mt-0.5 mb-0 truncate">
                            {(values as any).grant_segment}

@@ -123,6 +123,8 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
         },
         emergency_room_id: scope.emergency_room_id,
         grant_segment: scope.grant_segment,
+        working_group_id: scope.working_group_id,
+        working_group_label: scope.working_group_label,
         organization_id: scope.organization_id,
         organization_label: scope.organization_label,
         state_name: scope.state_name,

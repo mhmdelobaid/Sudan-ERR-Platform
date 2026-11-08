@@ -209,6 +209,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
       await submitMapOcrWorkplan(edited, {
         emergency_room_id: payload.emergency_room_id,
         grant_segment: payload.grant_segment,
+        working_group_id: payload.working_group_id,
         organization_id: payload.organization_id,
         temp_file_key: payload.temp_file_key,
         initialExtracted: initialSnapshot,
@@ -216,7 +217,9 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
       });
       setDone(true);
     } catch (e: any) {
-      setValidationError(e?.message || tx('x.submitFailed'));
+      const msg = String(e?.message || '');
+      const guard = ['project_not_open', 'project_required', 'project_not_found'].find((c) => msg.includes(c));
+      setValidationError(guard ? tx(`project-application:locked.${guard}`) : msg || tx('x.submitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -241,7 +244,7 @@ export default function F1OcrReview({ payload, onBack, onSubmitted }: Props) {
         <p className="app-section-label mb-0.5">{tx('x.f1Review')}</p>
         <h2 className="text-lg font-bold text-white leading-snug">{tx('x.reviewExtractedF1')}</h2>
         <p className="text-xs text-[#8a97ab] mt-0.5 mb-0">
-          {[payload.room_label, payload.grant_segment].filter(Boolean).join(' · ')}
+          {[payload.room_label, payload.working_group_label, payload.grant_segment].filter(Boolean).join(' · ')}
         </p>
       </div>
 

@@ -21,7 +21,9 @@ export function stripProtected<T extends Record<string, unknown>>(data: T): T {
 export const EDITABLE_STATUSES = ['draft', 'feedback'];
 
 // Error codes raised by the database guard
-export const GUARD_ERRORS = ['project_locked', 'status_change_not_allowed', 'status_not_allowed', 'protected_field', 'report_locked'];
+export const GUARD_ERRORS = ['project_locked', 'status_change_not_allowed', 'status_not_allowed', 'protected_field', 'report_locked',
+    // national project on the F1 (guard_err_projects_wg)
+    'project_required', 'project_not_open', 'project_not_found'];
 
 /** The guard code in a database error message, if any. */
 export function guardCode(message?: string | null): string | null {

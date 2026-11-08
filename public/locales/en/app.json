@@ -111,6 +111,10 @@
     "offline": {
       "title": "Offline mode",
       "sub": "F4 reports with no internet"
+    },
+    "fundProjects": {
+      "title": "Projects and working groups",
+      "sub": "Which states each project is open to, and who is in its working group"
     }
   },
   "f1": {
@@ -443,6 +447,63 @@
       "pending_review": "Under review",
       "returned": "Returned for changes",
       "rejected": "Rejected"
+    },
+    "fundProject": "Project",
+    "fundProjectHint": "The national project you are requesting funds from.",
+    "noProjectOpen": "No project is open in this state yet, so this work plan can’t be sent. Ask the national team."
+  },
+  "fp": {
+    "title": "Projects and working groups",
+    "intro": "Each national project, such as Direct Fund, has one working group. Base ERRs in the states you open a project to can choose it on their F1 and request funds from it. Its working group follows only that project’s F1s after F2.",
+    "onlySuperadmin": "Only the superadmin manages projects and working groups.",
+    "open": "Open to new requests",
+    "closed": "Closed to new requests",
+    "statesCount_one": "{{count}} state",
+    "statesCount_other": "{{count}} states",
+    "membersCount_one": "{{count}} member",
+    "membersCount_other": "{{count}} members",
+    "f1Count_one": "{{count}} F1",
+    "f1Count_other": "{{count}} F1s",
+    "nameAr": "Name in Arabic",
+    "nameEn": "Name in English",
+    "acceptsF1": "Open to new requests",
+    "acceptsF1Hint": "When closed, rooms can’t choose this project on a new F1. F1s already sent stay with it, and its working group still follows them.",
+    "states": "States it’s open to",
+    "statesHint": "Base ERRs in these states see this project on their F1.",
+    "allStates": "All",
+    "noStates": "None",
+    "save": "Save",
+    "create": "Create project",
+    "saved": "Saved.",
+    "added": "Member added.",
+    "removed": "Member removed.",
+    "members": "Working group",
+    "membersHint": "Each member has one function. Members follow this project’s F1s after F2 and acknowledge them.",
+    "noMembers": "No members yet.",
+    "noPeople": "Every working-group account is already in this group. New accounts are added in User management with the role “Working group”.",
+    "addMember": "Add a member",
+    "add": "Add",
+    "function": "Function",
+    "chooseFunction": "Choose a function",
+    "lead": "Lead",
+    "functions": {
+      "program": "Program",
+      "finance": "Finance",
+      "reporting": "Reporting",
+      "comms": "External comms"
+    },
+    "remove": "Remove from the group",
+    "removeConfirm": "Remove {{name}} from this working group?",
+    "newProject": "New project",
+    "accountsHint": "Working-group members need an account with the role “Working group” (User management). They never sign a room’s F1, F3, F4 or F5.",
+    "errors": {
+      "name_required": "Write the name in Arabic and in English.",
+      "unknown_state": "One of the states isn’t on the list.",
+      "invalid_function": "Choose a function.",
+      "not_a_working_group_account": "That account doesn’t have the role “Working group”.",
+      "superadmin_only": "Only the superadmin can do this.",
+      "not_found": "Not found. Reload the page.",
+      "server_error": "Something went wrong. Try again."
     }
   }
 }

@@ -163,5 +163,9 @@
   "localityAck": {
     "yes": "Locality acknowledged",
     "no": "Locality didn't acknowledge"
-  }
+  },
+  "fundProject": "Project",
+  "allProjects": "All projects",
+  "moveConfirm": "Move this F1 to the other project? That project’s working group will follow it instead.",
+  "moved": "Moved to the other project."
 }

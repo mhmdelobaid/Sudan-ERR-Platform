@@ -172,6 +172,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     current_feedback_id: undefined,
                     emergency_room_id: roomId,
                     grant_segment: grantSegment,
+                    // National project the room requests funds from (checked by guard_err_projects_wg)
+                    working_group_id: typeof formData.working_group_id === 'string' && formData.working_group_id
+                        ? formData.working_group_id
+                        : undefined,
                     // Donor and funding are assigned later by the portal, never by the form; an edit keeps them (audit C1)
                     donor_id: id ? undefined : null,
                     funding_status: id ? undefined : 'unassigned',

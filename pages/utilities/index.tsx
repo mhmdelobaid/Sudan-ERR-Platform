@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/layout/AppShell';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { isRoomRole } from '../../services/me';
-import { MessageSquare, WifiOff, UserCircle, UserCog } from 'lucide-react';
+import { MessageSquare, WifiOff, UserCircle, UserCog, FolderKanban } from 'lucide-react';
 
 export default function UtilitiesPage() {
   const { t } = useTranslation('app');
@@ -13,6 +13,7 @@ export default function UtilitiesPage() {
   const items = [
     { href: '/profile', title: t('cards.profile.title'), desc: t('cards.profile.sub'), icon: UserCircle, accent: 'bg-surface-muted text-brand-deep', show: true },
     { href: '/user-management', title: t('cards.users.title'), desc: t('cards.users.sub'), icon: UserCog, accent: 'bg-surface-muted text-brand-deep', show: role === 'superadmin' },
+    { href: '/projects-admin', title: t('cards.fundProjects.title'), desc: t('cards.fundProjects.sub'), icon: FolderKanban, accent: 'bg-surface-warm text-brand-darker', show: role === 'superadmin' },
     { href: '/feedback', title: t('cards.feedback.title'), desc: t('cards.feedback.sub'), icon: MessageSquare, accent: 'bg-surface-muted text-brand-deep', show: true },
     { href: '/offline-mode', title: t('cards.offline.title'), desc: t('cards.offline.sub'), icon: WifiOff, accent: 'bg-surface-warm text-brand-darker', show: isRoomRole(role) },
   ].filter((i) => i.show);

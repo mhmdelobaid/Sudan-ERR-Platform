@@ -22,6 +22,8 @@ interface Core {
     version: number; currency: string | null; submitted_at: string | null; total_budget: number | string;
     room_name: string | null; room_name_ar: string | null; estimated_beneficiaries: number | null;
     project_objectives?: string | null;
+    // National project (working group) the F1 requests funds from
+    fund_project_id?: string | null; fund_project_en?: string | null; fund_project_ar?: string | null;
 }
 interface Lcc { decision: 'approved' | 'returned'; note: string | null; decided_at: string; decided_by_name: string | null }
 interface ListRow extends Core {
@@ -107,6 +109,9 @@ const WgProjects: React.FC = () => {
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [confirmNote, setConfirmNote] = useState('');
     const [noteFor, setNoteFor] = useState<string | null>(null);   // list: project whose feedback box is open
+    const [projectFilter, setProjectFilter] = useState<string>('');   // national project shown ('' = all)
+    const [isSuper, setIsSuper] = useState(false);
+    const [allFundProjects, setAllFundProjects] = useState<{ id: string; name_en: string; name_ar: string | null }[]>([]);
 
     useEffect(() => {
         (async () => {
@@ -116,6 +121,11 @@ const WgProjects: React.FC = () => {
             if (!res.ok) { router.push('/login'); return; }
             const data = await res.json();
             setAuth(data.success && ['lcc_wg', 'superadmin'].includes(data.user?.role) ? 'ok' : 'denied');
+            if (data.success && data.user?.role === 'superadmin') {
+                setIsSuper(true);
+                const fp = await fetch('/api/fund-projects', { headers }).then(r => r.json()).catch(() => null);
+                if (fp?.success) setAllFundProjects(fp.projects || []);
+            }
         })().catch(() => router.push('/login'));
     }, [router]);
 
@@ -231,10 +241,18 @@ const WgProjects: React.FC = () => {
         );
     }
 
+    // National projects in the list: a member sees only their own; the superadmin can filter
+    const fundLabel = (r: { fund_project_en?: string | null; fund_project_ar?: string | null }) =>
+        (isAr ? r.fund_project_ar || r.fund_project_en : r.fund_project_en || r.fund_project_ar) || '—';
+    const fundProjects = Array.from(new Map(rows.filter(r => r.fund_project_id).map(r => [r.fund_project_id as string, fundLabel(r)])).entries())
+        .map(([id, label]) => ({ id, label }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+    const shownRows = projectFilter ? rows.filter(r => r.fund_project_id === projectFilter) : rows;
+
     // Group by state, states with projects waiting for confirmation first
     const stateLabel = (r: { state: string | null; state_ar?: string | null }) => (isAr ? r.state_ar || r.state : r.state) || '—';
     const byState = new Map<string, ListRow[]>();
-    rows.forEach(r => {
+    shownRows.forEach(r => {
         const k = r.state || '—';
         byState.set(k, [...(byState.get(k) || []), r]);
     });
@@ -251,7 +269,7 @@ const WgProjects: React.FC = () => {
             return { key, label: stateLabel(items[0]), items, localities, ...counts(items) };
         })
         .sort((a, b) => (b.waiting - a.waiting) || a.label.localeCompare(b.label));
-    const totalWaiting = rows.filter(r => r.needs_my_decision).length;
+    const totalWaiting = shownRows.filter(r => r.needs_my_decision).length;
 
     return (
         <div dir={isAr ? 'rtl' : 'ltr'} className="text-start">
@@ -259,6 +277,19 @@ const WgProjects: React.FC = () => {
                 <header className="bg-white rounded-2xl shadow-md p-4">
                     <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
                     <p className="text-sm text-gray-600 mb-0">{t('subtitle')}</p>
+                    {fundProjects.length === 1 && (
+                        <p className="text-sm mt-2 mb-0"><span className="text-gray-500">{t('fundProject')}: </span><b className="text-gray-900">{fundProjects[0].label}</b></p>
+                    )}
+                    {fundProjects.length > 1 && !selectedId && (
+                        <div className="flex flex-wrap gap-2 mt-3" role="group" aria-label={t('fundProject')}>
+                            {[{ id: '', label: t('allProjects') }, ...fundProjects].map(g => (
+                                <button key={g.id || 'all'} type="button" onClick={() => setProjectFilter(g.id)} aria-pressed={projectFilter === g.id}
+                                    className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition ${projectFilter === g.id ? 'bg-brand-blue text-white border-brand-blue' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}>
+                                    {g.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </header>
 
                 {message && (
@@ -272,7 +303,7 @@ const WgProjects: React.FC = () => {
                     <>
                         {loadingList ? (
                             <div className="bg-white rounded-2xl shadow-md p-4 text-gray-600">{t('loading')}</div>
-                        ) : rows.length === 0 ? (
+                        ) : shownRows.length === 0 ? (
                             <div className="bg-white rounded-2xl shadow-md p-4 text-gray-600">{t('empty.all')}</div>
                         ) : (
                             <>
@@ -399,6 +430,35 @@ const WgProjects: React.FC = () => {
                                 <div>
                                     <h2 className="text-lg font-bold mb-0">{detail.project.project_name || '—'}</h2>
                                     <p className="text-sm text-gray-600 mb-0">{roomName(detail.project)} · {detail.project.locality || '—'} · {detail.project.state || '—'} · {t('card.version')} {detail.project.version}</p>
+                                    {detail.project.fund_project_id && !isSuper && <p className="text-sm mt-1 mb-0"><span className="text-gray-500">{t('fundProject')}: </span><b className="text-gray-900">{fundLabel(detail.project)}</b></p>}
+                                    {isSuper && allFundProjects.length > 0 && (
+                                        <label className="flex flex-wrap items-center gap-2 text-sm mt-1">
+                                            <span className="text-gray-500">{t('fundProject')}:</span>
+                                            <select className="border border-gray-300 rounded-lg px-2 py-1 text-sm bg-white text-gray-900" disabled={busy}
+                                                value={detail.project.fund_project_id || ''}
+                                                onChange={async e => {
+                                                    const group = e.target.value;
+                                                    if (!group || group === detail.project.fund_project_id) return;
+                                                    if (!window.confirm(t('moveConfirm'))) return;
+                                                    setBusy(true);
+                                                    try {
+                                                        const headers = await authHeaders();
+                                                        const res = await fetch('/api/fund-projects/admin', { method: 'POST', headers: { ...(headers || {}), 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'move_f1', project_id: detail.project.id, group_id: group }) });
+                                                        const data = await res.json();
+                                                        if (!res.ok || !data.success) throw new Error(data.code);
+                                                        setMessage({ kind: 'ok', text: t('moved') });
+                                                        await loadDetail(detail.project.id);
+                                                        await loadList();
+                                                    } catch (err: any) {
+                                                        setMessage({ kind: 'error', text: errorText(err?.message) });
+                                                    } finally {
+                                                        setBusy(false);
+                                                    }
+                                                }}>
+                                                {allFundProjects.map(g => <option key={g.id} value={g.id}>{isAr ? g.name_ar || g.name_en : g.name_en}</option>)}
+                                            </select>
+                                        </label>
+                                    )}
                                     <p className={`text-sm mt-1 mb-0 ${detail.locality_ack ? 'text-emerald-700' : 'text-gray-500'}`}>{detail.locality_ack ? <><Icon name="check_circle" size={16} className="inline-block align-text-bottom me-1" />{t('localityAck.yes')}</> : t('localityAck.no')}</p>
                                     <ProjectFileLink projectId={detail.project.id} className="mt-2" />
                                 </div>

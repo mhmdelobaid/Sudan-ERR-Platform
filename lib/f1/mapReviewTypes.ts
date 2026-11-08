@@ -46,6 +46,9 @@ export type F1OcrReviewPayload = {
   extracted: MapExtractedData;
   emergency_room_id: string;
   grant_segment: string;
+  /** National project the room requests funds from */
+  working_group_id: string;
+  working_group_label: string;
   organization_id: string;
   organization_label: string;
   state_name: string;

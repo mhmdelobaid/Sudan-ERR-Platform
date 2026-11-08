@@ -103,6 +103,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ? null
         : String(v.grant_segment).trim() || null;
 
+    // National project: required, and must be open in the room's state (the database checks it too)
+    const workingGroupId = typeof v.working_group_id === 'string' && /^[0-9a-f-]{36}$/i.test(v.working_group_id)
+      ? v.working_group_id
+      : null;
+    if (!workingGroupId) {
+      return res.status(400).json({ error: 'Choose the project', code: 'project_required' });
+    }
+
     const dbDate = normalizeF1DateForDb(emptyToNull(v.date) ?? undefined);
     const localityClean = emptyToNull(v.locality);
 
@@ -151,6 +159,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       original_text: v.original_text ?? null,
       language: emptyToNull(v.language) || 'en',
       grant_segment: grantSegment,
+      working_group_id: workingGroupId,
       ocr_edited_fields_count:
         v.mode === 'ocr'
           ? v.ocr_edited_fields_count == null
@@ -167,6 +176,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (insertError) {
       console.error('f1/workplan prod insert:', insertError);
+      const guard = ['project_not_open', 'project_required', 'project_not_found'].find((c) =>
+        insertError.message?.includes(c)
+      );
+      if (guard) return res.status(409).json({ error: guard, code: guard });
       const msg = insertError.message?.includes('grant_segment')
         ? 'Invalid grant segment'
         : insertError.message || 'Insert failed';

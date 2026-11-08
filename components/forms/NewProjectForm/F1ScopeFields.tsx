@@ -5,6 +5,9 @@ import { newSupabase } from '../../../services/newSupabaseClient';
 export type F1ScopeValue = {
   emergency_room_id: string;
   grant_segment: string;
+  /** National project the room requests funds from (a working group, e.g. Direct Fund) */
+  working_group_id: string;
+  working_group_label: string;
   state_name: string;
   locality: string;
   room_label: string;
@@ -12,6 +15,8 @@ export type F1ScopeValue = {
   organization_id: string;
   organization_label: string;
 };
+
+type FundProject = { id: string; name_en: string; name_ar: string | null };
 
 type GrantSegment = {
   id: string;
@@ -73,6 +78,9 @@ export default function F1ScopeFields({
   // (guard_err_projects); the portal or an admin assigns it later. So only
   // admins see the picker, and only when segments exist.
   const [canSetSegment, setCanSetSegment] = useState(false);
+  // National projects open in the chosen room's state
+  const [projects, setProjects] = useState<FundProject[] | null>(null);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,6 +153,48 @@ export default function F1ScopeFields({
   }, [showOrganization]);
 
   const isAr = !!locale?.startsWith('ar');
+  const projectLabel = (g: FundProject) => (isAr && g.name_ar ? g.name_ar : g.name_en);
+
+  useEffect(() => {
+    const roomId = value.emergency_room_id;
+    if (!roomId) {
+      setProjects(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setProjectsError(null);
+      try {
+        const {
+          data: { session },
+        } = await newSupabase.auth.getSession();
+        if (!session) throw new Error(tx('x.notSignedIn'));
+        const res = await fetch(`/api/fund-projects?room=${encodeURIComponent(roomId)}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(tx('x.failedToLoadOptions'));
+        if (cancelled) return;
+        const list: FundProject[] = data.projects || [];
+        setProjects(list);
+        const current = list.find((g) => g.id === value.working_group_id);
+        // One open project (stage 1: Direct Fund) is chosen for the room; a choice no longer open is cleared
+        const pick = current || (list.length === 1 ? list[0] : null);
+        if ((pick?.id || '') !== value.working_group_id || (pick && projectLabel(pick) !== value.working_group_label)) {
+          onChange({ ...value, working_group_id: pick?.id || '', working_group_label: pick ? projectLabel(pick) : '' });
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          setProjects([]);
+          setProjectsError(e.message || tx('x.failedToLoadOptions'));
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value.emergency_room_id, isAr]);
 
   const roomsInState = useMemo(() => {
     if (!value.state_name) return rooms;
@@ -269,6 +319,42 @@ export default function F1ScopeFields({
         </div>
       )}
 
+      {value.emergency_room_id && (
+        <div>
+          <label className={labelClass}>{tx('x.fundProject')}</label>
+          {projects === null ? (
+            <p className="text-sm text-[#a8b6cc]">{tx('x.loadingOptions')}</p>
+          ) : projectsError ? (
+            <div className="rounded-xl bg-red-500/10 border border-red-400/30 text-red-300 px-3 py-2 text-sm">
+              {projectsError}
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="rounded-xl bg-amber-500/10 border border-amber-400/30 text-amber-200 px-3 py-2 text-sm">
+              {tx('x.noProjectOpen')}
+            </div>
+          ) : (
+            <>
+              <select
+                className={selectClass}
+                value={value.working_group_id}
+                onChange={(e) => {
+                  const g = projects.find((x) => x.id === e.target.value);
+                  onChange({ ...value, working_group_id: g?.id || '', working_group_label: g ? projectLabel(g) : '' });
+                }}
+              >
+                {projects.length > 1 && <option value="">{tx('x.select2')}</option>}
+                {projects.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {projectLabel(g)}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-[#8a97ab] mt-1 mb-0">{tx('x.fundProjectHint')}</p>
+            </>
+          )}
+        </div>
+      )}
+
       {showOrganization ? (
         <div className={`grid grid-cols-2 ${gap}`}>
           {canSetSegment && (
@@ -359,6 +445,8 @@ export function scopeIsReady(
 ) {
   // Grant segment is optional: the portal or an admin assigns it after screening
   if (!scope.emergency_room_id) return false;
+  // The national project the F1 requests funds from (required by the database when it is sent)
+  if (!scope.working_group_id) return false;
   if (opts?.requireOrganization && !scope.organization_id) return false;
   return true;
 }
@@ -367,6 +455,8 @@ export function emptyF1Scope(): F1ScopeValue {
   return {
     emergency_room_id: '',
     grant_segment: '',
+    working_group_id: '',
+    working_group_label: '',
     state_name: '',
     locality: '',
     room_label: '',

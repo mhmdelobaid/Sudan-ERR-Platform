@@ -98,6 +98,8 @@ async function translateFields(data: MapExtractedData, sourceLanguage: string) {
 export type SubmitMapOcrOptions = {
   emergency_room_id: string;
   grant_segment?: string | null;
+  /** National project (working group) the F1 requests funds from */
+  working_group_id?: string | null;
   organization_id: string;
   temp_file_key: string;
   /** Snapshot from OCR before user edits (for ocr_edited_fields_count) */
@@ -113,6 +115,7 @@ export async function submitMapOcrWorkplan(
   const {
     emergency_room_id,
     grant_segment,
+    working_group_id,
     organization_id,
     temp_file_key,
     initialExtracted,
@@ -137,6 +140,7 @@ export async function submitMapOcrWorkplan(
     emergency_room_id,
     organization_id,
     grant_segment: grant_segment ? String(grant_segment) : null,
+    working_group_id: working_group_id ? String(working_group_id) : null,
     date: typeof translatedData.date === 'string' ? translatedData.date : null,
     locality: translatedData.locality ?? null,
     project_objectives: translatedData.project_objectives ?? null,
