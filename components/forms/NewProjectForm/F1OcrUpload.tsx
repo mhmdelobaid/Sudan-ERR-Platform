@@ -37,7 +37,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete, showCurrency = true
   const locale = router.locale || 'en';
   const [scope, setScope] = useState<F1ScopeValue>(emptyF1Scope);
   const [currency, setCurrency] = useState<'USD' | 'SDG'>('SDG');
-  // The rate is set per state by admins (/state-rates); the F1 has no rate field (decision 10 Nov 2026)
+  // The rate is set per state by the partner (/state-rates); the F1 has no rate field (decision 10 Nov 2026)
   const [stateRates, setStateRates] = useState<Record<string, number>>({});
   const [stateNamesAr, setStateNamesAr] = useState<Record<string, string>>({});
   const [file, setFile] = useState<File | null>(null);
@@ -226,7 +226,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete, showCurrency = true
         </div>
 
         {showCurrency && currency === 'SDG' && scope.state_name && (
-          // The rate comes from the state (set by admins on the State exchange rates page), not typed here
+          // The rate comes from the state (set by the partner on the State exchange rates page), not typed here
           <p className="text-xs text-[#8a97ab] mb-0">
             {stateRate
               ? tx('x.stateRate', { state: stateShown, rate: new Intl.NumberFormat('en-US').format(stateRate) })

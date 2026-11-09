@@ -1,74 +1,111 @@
 -- State exchange rates, and the national project on F2 (10 Nov 2026).
 --
--- 1. Exchange rate at state level (decision: admins only). Each state has one current rate, SDG per 1 USD,
---    set by admins and superadmins on the "State exchange rates" page. Every change is kept in a history.
---    The F1 has no rate field any more: AI uploads use the state's rate, and every F1 records the rate of its
---    state when it is sent (err_projects.exchange_rate), so later screens and the portal use the same number.
+-- 1. Exchange rate at state level. Decision (Yung, 10 Nov): the PARTNER sets each state's rate (SDG per 1 USD),
+--    and a FINANCE member of a national working group acknowledges it. A new rate applies right away; the
+--    acknowledgement records that the working group checked it. Every rate and acknowledgement is kept.
+--    The F1 has no rate field: AI uploads use the state's rate, and every F1 records the rate of its state when it
+--    is sent (err_projects.exchange_rate), so later screens and the portal use the same number.
 -- 2. The national project (Direct Fund, ...) on F2: the queue and the project screen carry its name.
 --    (The portal feed and the working-group pages already carry it: wg_project_core, 9 Nov.)
 
 -- 1a. Current rate per state, and its history --------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.state_exchange_rates (
-  state_name   text PRIMARY KEY,
-  sdg_per_usd  numeric NOT NULL CHECK (sdg_per_usd > 0 AND sdg_per_usd < 1000000),
-  set_by       uuid REFERENCES public.users(id) ON DELETE SET NULL,
-  set_at       timestamptz NOT NULL DEFAULT now()
+  state_name       text PRIMARY KEY,
+  sdg_per_usd      numeric NOT NULL CHECK (sdg_per_usd > 0 AND sdg_per_usd < 1000000),
+  set_by           uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  set_at           timestamptz NOT NULL DEFAULT now(),
+  acknowledged_by  uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  acknowledged_at  timestamptz
 );
 CREATE TABLE IF NOT EXISTS public.state_exchange_rate_history (
-  id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  state_name   text NOT NULL,
-  sdg_per_usd  numeric NOT NULL,
-  set_by       uuid REFERENCES public.users(id) ON DELETE SET NULL,
-  set_at       timestamptz NOT NULL DEFAULT now()
+  id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  state_name       text NOT NULL,
+  sdg_per_usd      numeric NOT NULL,
+  set_by           uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  set_at           timestamptz NOT NULL DEFAULT now(),
+  acknowledged_by  uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  acknowledged_at  timestamptz
 );
 CREATE INDEX IF NOT EXISTS state_exchange_rate_history_state_idx
   ON public.state_exchange_rate_history (state_name, set_at DESC);
 
 ALTER TABLE public.state_exchange_rates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.state_exchange_rate_history ENABLE ROW LEVEL SECURITY;
--- Any active app account may read the current rates (they're not secret). Changes only through state_rate_set.
+-- Any active app account may read the current rates (they're not secret). Changes only through the functions below.
 DROP POLICY IF EXISTS state_rates_read ON public.state_exchange_rates;
 CREATE POLICY state_rates_read ON public.state_exchange_rates FOR SELECT TO authenticated
   USING (public.local_my_role() IS NOT NULL);
+-- History: the partner, the working groups and admins. (local_my_role() leaves partner accounts out by design,
+-- so this has its own check.)
+CREATE OR REPLACE FUNCTION public.rate_can_see_history()
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT EXISTS (SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.status = 'active'
+                   AND u.role IN ('partner', 'lcc_wg', 'admin', 'superadmin'))
+$$;
+REVOKE ALL ON FUNCTION public.rate_can_see_history() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rate_can_see_history() TO authenticated, service_role;
 DROP POLICY IF EXISTS state_rate_history_read ON public.state_exchange_rate_history;
 CREATE POLICY state_rate_history_read ON public.state_exchange_rate_history FOR SELECT TO authenticated
-  USING (public.local_my_role() IN ('admin', 'superadmin'));
+  USING (public.rate_can_see_history());
 REVOKE ALL ON public.state_exchange_rates, public.state_exchange_rate_history FROM anon;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.state_exchange_rates, public.state_exchange_rate_history FROM authenticated;
 
--- 1b. Every state with its current rate (null when not set yet) ------------------------------------------
-CREATE OR REPLACE FUNCTION public.state_rates()
+-- Who may do what (active accounts only)
+CREATE OR REPLACE FUNCTION public.rate_can_set()
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT EXISTS (SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.status = 'active' AND u.role = 'partner')
+$$;
+CREATE OR REPLACE FUNCTION public.rate_can_acknowledge()
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.working_group_members m
+    JOIN public.working_groups g ON g.id = m.working_group_id AND g.is_active
+    JOIN public.users u ON u.id = m.user_id AND u.status = 'active'
+    WHERE m.user_id = auth.uid() AND m.member_function = 'finance')
+$$;
+REVOKE ALL ON FUNCTION public.rate_can_set(), public.rate_can_acknowledge() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.rate_can_set(), public.rate_can_acknowledge() TO authenticated, service_role;
+
+-- 1b. Every state with its current rate (null when not set yet), and what the caller may do -----------------
+DROP FUNCTION IF EXISTS public.state_rates();
+CREATE FUNCTION public.state_rates()
 RETURNS jsonb
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT coalesce(jsonb_agg(jsonb_build_object(
+  SELECT jsonb_build_object(
+    'can_set', public.rate_can_set(),
+    'can_acknowledge', public.rate_can_acknowledge(),
+    'states', coalesce(jsonb_agg(jsonb_build_object(
            'state_name', s.state_name, 'state_name_ar', s.state_name_ar,
-           'sdg_per_usd', r.sdg_per_usd, 'set_at', r.set_at, 'set_by_name', u.display_name)
-         ORDER BY s.state_name), '[]'::jsonb)
+           'sdg_per_usd', r.sdg_per_usd, 'set_at', r.set_at, 'set_by_name', u.display_name,
+           'acknowledged_at', r.acknowledged_at, 'acknowledged_by_name', a.display_name)
+         ORDER BY s.state_name), '[]'::jsonb))
   FROM (SELECT DISTINCT ON (state_name) state_name, state_name_ar
           FROM public.states WHERE state_name IS NOT NULL ORDER BY state_name, state_name_ar NULLS LAST) s
   LEFT JOIN public.state_exchange_rates r ON r.state_name = s.state_name
   LEFT JOIN public.users u ON u.id = r.set_by
+  LEFT JOIN public.users a ON a.id = r.acknowledged_by
   WHERE EXISTS (SELECT 1 FROM public.f2_me())
 $$;
 REVOKE ALL ON FUNCTION public.state_rates() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.state_rates() TO authenticated, service_role;
 
--- 1c. Set a state's rate: admins and superadmins only ------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.state_rate_set(p_state text, p_rate numeric)
+-- 1c. The partner sets a state's rate (it applies at once and waits for the working group's acknowledgement) --
+DROP FUNCTION IF EXISTS public.state_rate_set(text, numeric);
+CREATE FUNCTION public.state_rate_set(p_state text, p_rate numeric)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-DECLARE
-  me public.users;
 BEGIN
-  SELECT * INTO me FROM public.users WHERE id = auth.uid() AND status = 'active';
-  IF me.id IS NULL OR me.role NOT IN ('admin', 'superadmin') THEN
+  IF NOT public.rate_can_set() THEN
     RAISE EXCEPTION 'not_allowed' USING ERRCODE = '42501';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.states WHERE state_name = p_state) THEN
@@ -77,15 +114,48 @@ BEGIN
   IF p_rate IS NULL OR p_rate <= 0 OR p_rate >= 1000000 THEN
     RAISE EXCEPTION 'invalid_rate' USING ERRCODE = '22023';
   END IF;
-  INSERT INTO public.state_exchange_rates (state_name, sdg_per_usd, set_by, set_at)
-  VALUES (p_state, p_rate, me.id, now())
-  ON CONFLICT (state_name) DO UPDATE SET sdg_per_usd = EXCLUDED.sdg_per_usd, set_by = EXCLUDED.set_by, set_at = EXCLUDED.set_at;
-  INSERT INTO public.state_exchange_rate_history (state_name, sdg_per_usd, set_by) VALUES (p_state, p_rate, me.id);
+  INSERT INTO public.state_exchange_rates (state_name, sdg_per_usd, set_by, set_at, acknowledged_by, acknowledged_at)
+  VALUES (p_state, p_rate, auth.uid(), now(), NULL, NULL)
+  ON CONFLICT (state_name) DO UPDATE SET sdg_per_usd = EXCLUDED.sdg_per_usd, set_by = EXCLUDED.set_by,
+    set_at = EXCLUDED.set_at, acknowledged_by = NULL, acknowledged_at = NULL;
+  INSERT INTO public.state_exchange_rate_history (state_name, sdg_per_usd, set_by, set_at)
+  VALUES (p_state, p_rate, auth.uid(), now());
   RETURN jsonb_build_object('state_name', p_state, 'sdg_per_usd', p_rate, 'set_at', now());
 END
 $$;
 REVOKE ALL ON FUNCTION public.state_rate_set(text, numeric) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.state_rate_set(text, numeric) TO authenticated, service_role;
+
+-- 1c'. A finance member of a national working group acknowledges the current rate ---------------------------
+CREATE OR REPLACE FUNCTION public.state_rate_acknowledge(p_state text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  r public.state_exchange_rates;
+BEGIN
+  IF NOT public.rate_can_acknowledge() THEN
+    RAISE EXCEPTION 'not_allowed' USING ERRCODE = '42501';
+  END IF;
+  SELECT * INTO r FROM public.state_exchange_rates WHERE state_name = p_state FOR UPDATE;
+  IF r.state_name IS NULL THEN
+    RAISE EXCEPTION 'rate_not_set' USING ERRCODE = 'P0002';
+  END IF;
+  IF r.acknowledged_at IS NOT NULL THEN
+    RAISE EXCEPTION 'already_acknowledged' USING ERRCODE = '23505';
+  END IF;
+  UPDATE public.state_exchange_rates SET acknowledged_by = auth.uid(), acknowledged_at = now()
+   WHERE state_name = p_state;
+  UPDATE public.state_exchange_rate_history SET acknowledged_by = auth.uid(), acknowledged_at = now()
+   WHERE id = (SELECT id FROM public.state_exchange_rate_history
+                WHERE state_name = p_state AND set_at = r.set_at ORDER BY id DESC LIMIT 1);
+  RETURN jsonb_build_object('state_name', p_state, 'sdg_per_usd', r.sdg_per_usd, 'acknowledged_at', now());
+END
+$$;
+REVOKE ALL ON FUNCTION public.state_rate_acknowledge(text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.state_rate_acknowledge(text) TO authenticated, service_role;
 
 -- 1d. Each F1 records its state's rate when it is sent ------------------------------------------------------
 ALTER TABLE public.err_projects ADD COLUMN IF NOT EXISTS exchange_rate numeric;

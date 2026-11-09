@@ -139,6 +139,10 @@ export default function HomePage() {
           <HomeCard href="/user-management" title={t('cards.users.title')} subtitle={t('cards.users.sub')}
             illustration={DashboardScene} wash="bg-[#BCCBE3]" />
         )}
+        {['partner', 'lcc_wg', 'admin', 'superadmin'].includes(role || '') && (
+          <HomeCard href="/state-rates" title={t('cards.rates.title')} subtitle={t('cards.rates.sub')}
+            illustration={DashboardScene} wash="bg-brand-orangeSoft" />
+        )}
         <HomeCard href="/feedback" title={t('cards.feedback.title')} subtitle={t('cards.feedback.sub')}
           illustration={FeedbackScene} wash="bg-[#4A6798]" />
         {room && (

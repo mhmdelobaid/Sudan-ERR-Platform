@@ -15,7 +15,7 @@ export default function UtilitiesPage() {
     { href: '/profile', title: t('cards.profile.title'), desc: t('cards.profile.sub'), icon: UserCircle, accent: 'bg-surface-muted text-brand-deep', show: true },
     { href: '/user-management', title: t('cards.users.title'), desc: t('cards.users.sub'), icon: UserCog, accent: 'bg-surface-muted text-brand-deep', show: role === 'superadmin' },
     { href: '/projects-admin', title: t('cards.fundProjects.title'), desc: t('cards.fundProjects.sub'), icon: FolderKanban, accent: 'bg-surface-warm text-brand-darker', show: role === 'superadmin' },
-    { href: '/state-rates', title: t('cards.rates.title'), desc: t('cards.rates.sub'), icon: Banknote, accent: 'bg-surface-muted text-brand-deep', show: role === 'admin' || role === 'superadmin' },
+    { href: '/state-rates', title: t('cards.rates.title'), desc: t('cards.rates.sub'), icon: Banknote, accent: 'bg-surface-muted text-brand-deep', show: ['partner', 'lcc_wg', 'admin', 'superadmin'].includes(role || '') },
     { href: '/feedback', title: t('cards.feedback.title'), desc: t('cards.feedback.sub'), icon: MessageSquare, accent: 'bg-surface-muted text-brand-deep', show: true },
     { href: '/offline-mode', title: t('cards.offline.title'), desc: t('cards.offline.sub'), icon: WifiOff, accent: 'bg-surface-warm text-brand-darker', show: isRoomRole(role) },
   ].filter((i) => i.show);

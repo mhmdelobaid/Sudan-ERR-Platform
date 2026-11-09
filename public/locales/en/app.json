@@ -476,7 +476,7 @@
     "couldNotReadRegions": "Couldn’t read the selected parts. Try again, or fill in the form by hand.",
     "chooseFile": "Choose file",
     "noFileChosen": "No file chosen",
-    "stateRate": "Exchange rate for {{state}}: 1 USD = {{rate}} SDG (set by admins).",
+    "stateRate": "Exchange rate for {{state}}: 1 USD = {{rate}} SDG (set by the partner).",
     "stateRateMissing": "No exchange rate set for {{state}} yet: the default {{rate}} SDG is used."
   },
   "fp": {
@@ -558,18 +558,25 @@
   },
   "rates": {
     "title": "State exchange rates",
-    "intro": "The exchange rate of each state, in Sudanese pounds for 1 US dollar. F1 uploads use the rate of the room's state, and every F1 records its state's rate when it is sent. Only admins can change a rate; every change is kept.",
-    "onlyAdmins": "Only admins can set the state exchange rates.",
+    "intro": "The exchange rate of each state, in Sudanese pounds for 1 US dollar. The partner sets it and it applies at once; a finance member of a national working group then acknowledges it. F1 uploads use the rate of the room's state, and every F1 records its state's rate when it is sent. Every rate is kept.",
+    "onlyAllowed": "This page is for the partner, the national working groups and admins.",
     "notSet": "Not set yet: F1 uploads use the default rate.",
     "setOn": "set {{date}} by {{name}}",
+    "acknowledged": "Acknowledged by {{name}}, {{date}}",
+    "waiting": "Waiting for a working-group finance member to acknowledge",
+    "acknowledge": "Acknowledge",
+    "acknowledging": "Acknowledging…",
+    "acknowledgedOk": "Rate for {{state}} acknowledged.",
     "newRate": "New rate for {{state}}",
     "save": "Save",
     "saving": "Saving…",
-    "saved": "Rate saved for {{state}}.",
+    "saved": "Rate saved for {{state}}. It applies now and waits for the working group to acknowledge it.",
     "errors": {
       "invalid_rate": "Type a rate above zero, for example 2700.",
-      "not_allowed": "Only admins can set the state exchange rates.",
+      "not_allowed": "You can't do this: the partner sets rates, and finance members of a national working group acknowledge them.",
       "state_not_found": "This state was not found.",
+      "rate_not_set": "No rate is set for this state yet.",
+      "already_acknowledged": "This rate is already acknowledged.",
       "server_error": "Could not save. Try again."
     }
   }
