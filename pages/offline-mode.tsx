@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic';
 import OfflineForm from '../components/forms/OfflineForm';
 import Icon from '../components/ui/Icon';
 import {
-    CHANGED_EVENT, OfflineReport, deleteReport, getCachedProjects, getReports, reportTotal, updateReport,
+    CHANGED_EVENT, OfflineReport, deleteReport, getCachedProjects, getReports, reportTotal, updateReport, sealWaitingReports,
 } from '../services/offlineReports';
 import { sendQueuedReports } from '../services/offlineSync';
 import { newSupabase } from '../services/newSupabaseClient';
@@ -45,6 +45,8 @@ const OfflineMode: React.FC = () => {
 
     useEffect(() => {
         refresh();
+        // Seal anything still kept readable on this phone (no-op until the phone has the key)
+        sealWaitingReports().then(refresh).catch(() => { /* try again next time */ });
         setIsOnline(navigator.onLine);
         newSupabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session)).catch(() => setSignedIn(false));
         const on = () => setIsOnline(true);
@@ -87,7 +89,8 @@ const OfflineMode: React.FC = () => {
     const chooseProject = (r: OfflineReport, projectId: string) => {
         const p = projects.find(x => x.id === projectId);
         if (!p) return;
-        updateReport(r.id, { project_id: p.id, project_name: p.name, err_id: p.err_id, reason: undefined, status: 'waiting' });
+        // A sealed report keeps no project name on the phone: the list shows it from the saved project list
+        updateReport(r.id, { project_id: p.id, project_name: r.sealed ? '' : p.name, err_id: p.err_id, reason: undefined, status: 'waiting' });
     };
 
     const statusText = (r: OfflineReport) => {
@@ -154,9 +157,12 @@ const OfflineMode: React.FC = () => {
                                 <li key={r.id} className="border border-gray-200 rounded-xl p-3">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
-                                            <p className="font-semibold text-gray-900 mb-0 truncate"><bdi>{r.project_name || (r.legacy_err_code ? `${t('page.old_form')} · ${r.legacy_err_code}` : t('page.old_form'))}</bdi></p>
+                                            <p className="font-semibold text-gray-900 mb-0 truncate"><bdi>{r.project_name || projects.find(p => p.id === r.project_id)?.name || (r.legacy_err_code ? `${t('page.old_form')} · ${r.legacy_err_code}` : t('page.old_form'))}</bdi></p>
                                             <p className="text-xs text-gray-600 mb-0">
-                                                {fmtDate(r.report_date)} · {t('page.expenses_count', { count: r.expenses.length })} · <span className="tabular-nums">{reportTotal(r).toLocaleString('en-US')}</span>
+                                                {fmtDate(r.report_date || r.saved_at)} · {t('page.expenses_count', { count: r.n_expenses ?? r.expenses.length })}
+                                                {r.sealed
+                                                    ? <> · <Icon name="visibility_off" size={14} className="align-[-2px]" /> {t('page.sealed')}</>
+                                                    : <> · <span className="tabular-nums">{reportTotal(r).toLocaleString('en-US')}</span></>}
                                             </p>
                                         </div>
                                         <span className={`shrink-0 text-xs font-semibold border rounded-full px-2 py-0.5 ${STATUS_STYLE[!r.project_id && r.status !== 'sent' ? 'waiting' : r.status]}`}>

@@ -16,7 +16,8 @@ import {
 import { isRoomRole } from '../services/me';
 import { newSupabase } from '../services/newSupabaseClient';
 import { fetchMySignatures } from '../components/signatures/signApi';
-import { cacheForOffline } from '../services/offlineReports';
+import { cacheForOffline, sealWaitingReports } from '../services/offlineReports';
+import { fetchSealKey } from '../services/offlineCrypto';
 import { sendQueuedReports } from '../services/offlineSync';
 
 /**
@@ -55,6 +56,8 @@ export default function HomePage() {
           .map((c: any) => String(c.expense_name || '').trim())
           .filter(Boolean);
         cacheForOffline(session.user.id, projRes.projects || [], Array.from(new Set(names)));
+        // The key offline reports are sealed with on this phone; then seal anything still kept readable
+        if (await fetchSealKey(session.access_token)) await sealWaitingReports();
       } catch { /* offline mode keeps the list saved last time */ }
       if (!cancelled) sendQueuedReports().catch(() => {});
     })();

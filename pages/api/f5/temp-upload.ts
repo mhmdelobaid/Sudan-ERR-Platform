@@ -5,7 +5,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import fs from 'fs';
-import { sniffUploadType, UPLOAD_NOT_ALLOWED } from '../../../lib/uploadRules';
+import { UPLOAD_NOT_ALLOWED } from '../../../lib/uploadRules';
+import { cleanBeforeStore, withCleanExt } from '../../../services/cleanBeforeStore';
 import { validateSession } from '../../../services/auth';
 import {
   createProdSupabaseAdmin,
@@ -96,23 +97,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const buffer = fs.readFileSync(uploaded.filepath);
 
-    // Photos and PDF only, checked from the file's bytes (lib/uploadRules.ts)
-
-    const sniffed = sniffUploadType(buffer);
-
-    if (!sniffed) {
-
+    // Photos and PDF only, rebuilt clean before storing (services/cleanBeforeStore.ts)
+    const checked = await cleanBeforeStore(buffer);
+    if (!checked.ok) {
       try { fs.unlinkSync(uploaded.filepath); } catch { /* ignore */ }
-
-      return res.status(415).json({ success: false, error: UPLOAD_NOT_ALLOWED, message: UPLOAD_NOT_ALLOWED });
-
+      return res.status(checked.status).json({ success: false, code: checked.code, error: checked.code, message: UPLOAD_NOT_ALLOWED });
     }
+    fileKeyTemp = withCleanExt(fileKeyTemp, checked.file!.ext);
 
-    const mime: string = sniffed;
-    const { error: uploadError } = await prod.storage.from('images').upload(fileKeyTemp, buffer, {
+    const { error: uploadError } = await prod.storage.from('images').upload(fileKeyTemp, checked.file!.data, {
       cacheControl: '3600',
       upsert: false,
-      contentType: mime,
+      contentType: checked.file!.mime,
     });
 
     try {

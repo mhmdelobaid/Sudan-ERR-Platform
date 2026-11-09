@@ -10,6 +10,7 @@ import formidable from 'formidable';
 import { franc } from 'franc';
 import os from 'os';
 import { requireAppUser } from '../../services/requireAppUser';
+import { cleanUpload, FileRejected, MAX_BYTES } from '../../services/fileSafety';
 
 // Disable Next.js's default body parsing to allow for file uploads
 export const config = {
@@ -39,8 +40,10 @@ async function parseForm(req: NextApiRequest): Promise<{ filePath: string }> {
 
   const form = formidable({
     multiples: false,
-    keepExtensions: true,
+    keepExtensions: false,
     uploadDir,
+    maxFiles: 1,
+    maxFileSize: MAX_BYTES,
     filename: (name, ext) => `${Date.now()}-${name}${ext}`
   });
 
@@ -61,10 +64,8 @@ async function parseForm(req: NextApiRequest): Promise<{ filePath: string }> {
 }
 
 // Function to preprocess the image and convert to binary for Google Vision
-async function preprocessImageToBuffer(imagePath: string): Promise<Buffer> {
-  console.log('Attempting to process image at path:', imagePath);
-
-  const processedImageBuffer = await sharp(imagePath)
+async function preprocessImageToBuffer(image: Buffer): Promise<Buffer> {
+  const processedImageBuffer = await sharp(image)
   .grayscale()
   .modulate({ brightness: 1.2 }) // Remove 'contrast'
   .linear(1.5, -128 * 1.5 + 128) // Apply contrast adjustment
@@ -274,15 +275,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { filePath: parsedFilePath } = await parseForm(req);
     filePath = parsedFilePath;
 
-    const processedImageBuffer = await preprocessImageToBuffer(filePath);
+    // Photos only; checked by content and rebuilt clean (no hidden data, size and pixel limits)
+    const clean = await cleanUpload(fs.readFileSync(filePath), { imagesOnly: true });
+    const processedImageBuffer = await preprocessImageToBuffer(clean.data);
     const rawText = await googleVisionOCR(processedImageBuffer);
     const structuredData = await chatGPTClassification(rawText);
 
     res.status(200).json({ message: 'Data processed successfully', data: structuredData });
 
   } catch (error: any) {
-    console.error(`Processing error: ${error.message}`);
-    res.status(500).json({ error: `Error processing scan: ${error.message}` });
+    if (error instanceof FileRejected) return res.status(422).json({ error: error.code, code: error.code });
+    if (error?.httpCode === 413 || /maxFileSize/i.test(String(error?.message))) return res.status(413).json({ error: 'too_large', code: 'too_large' });
+    console.error('Processing error:', error?.message);
+    res.status(500).json({ error: 'Error processing scan' });
   } finally {
     // Clean up: Delete the temporary file
     if (filePath && fs.existsSync(filePath)) {

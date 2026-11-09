@@ -288,78 +288,37 @@ const PrefilledForm: React.FC<PrefilledFormProps> = ({ data, onFormSubmit, proje
 
   const handleFormSubmit = async (formData: any) => {
     try {
-      // Structure the summary data
-      const summaryDataToInsert = {
-        err_id: formData.err_id,
-        project_id: project.id,
-        report_date: formData.date,
-        total_expenses: formData.financial_summary.total_expenses,
-        total_grant: formData.financial_summary.total_grant_received,
-        total_other_sources: formData.financial_summary.total_other_sources,
-        remainder: formData.financial_summary.remainder,
-        excess_expenses: formData.additional_questions.excess_expenses,
-        surplus_use: formData.additional_questions.surplus_use,
-        lessons: formData.additional_questions.lessons_learned,
-        training: formData.additional_questions.training_needs,
-        language: formData.language || 'en',
-        beneficiaries: formData.beneficiaries || '',
-        project_name: project.project_name,
-        project_objectives: project.project_objectives
-      };
-
-      // Submit summary
-      const { data: summaryData, error: summaryError } = await newSupabase
-        .from('err_summary')
-        .insert([summaryDataToInsert])
-        .select()
-        .single();
-
-      if (summaryError) throw summaryError;
-
-      // Submit expenses with their associated files
-      const expensePromises = formData.expenses.map(async (expense: any, index: number) => {
-        const expenseToInsert = {
+      // Saved on the server, into the same tables and with the same checks as the F4 wizard
+      // (/api/submit-prefilled-form → services/f4SaveCore.ts). Receipts are the clean paths from the secure upload.
+      const { data: { session } } = await newSupabase.auth.getSession();
+      if (!session) throw new Error('Not signed in');
+      const response = await fetch('/api/submit-prefilled-form', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
           project_id: project.id,
-          expense_activity: expense.activity,
-          expense_description: expense.description,
-          expense_amount: expense.amount,
-          payment_date: expense.payment_date,
-          payment_method: expense.payment_method,
-          receipt_no: expense.receipt_no,
-          seller: expense.seller,
-          language: formData.language || 'en'
-        };
-
-        // Insert expense record
-        const { data: expenseData, error: expenseError } = await newSupabase
-          .from('err_expense')
-          .insert([expenseToInsert])
-          .select()
-          .single();
-
-        if (expenseError) throw expenseError;
-
-        // If there's a file upload for this expense, create receipt record
-        if (fileUploads[index]?.uploadedUrl) {
-          const { error: receiptError } = await newSupabase
-            .from('receipts')
-            .insert([{
-              expense_id: expenseData.expense_id,
-              image_url: fileUploads[index].uploadedUrl,
-              created_at: new Date().toISOString()
-            }]);
-
-          if (receiptError) throw receiptError;
-        }
+          date: formData.date,
+          err_id: formData.err_id,
+          language: formData.language || 'en',
+          beneficiaries: formData.beneficiaries || '',
+          financial_summary: formData.financial_summary,
+          additional_questions: formData.additional_questions,
+          expenses: (formData.expenses || []).map((expense: any, index: number) => ({
+            ...expense,
+            receipt_upload: fileUploads[index]?.uploadedUrl || null,
+          })),
+        }),
       });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body?.error || `HTTP ${response.status}`);
+      }
 
-      await Promise.all(expensePromises);
-      
       // Call onFormSubmit without parameters to let parent handle flow control
       onFormSubmit();
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Failed to submit form');
+      alert(t('errors.submit_failed', { defaultValue: 'Failed to submit form' }));
     }
   };
 

@@ -65,7 +65,8 @@
     "expenses_count": "{{count}} expense(s)",
     "delete": "Delete",
     "delete_confirm": "Delete this report from the phone? It hasn't been sent.",
-    "delete_yes": "Yes, delete"
+    "delete_yes": "Yes, delete",
+    "sealed": "sealed"
   },
   "notice": {
     "offline": "No internet. The reports stay on this phone and are sent once you're online.",

@@ -9,6 +9,12 @@
 // - Reports saved by the old offline form (key 'offlineSessionQueue': a typed ERR code, no project) are moved
 //   into the new list once, marked "choose the project", so nothing a room saved earlier is lost.
 // Sign-out (services/appLock.ts) leaves all of this on the phone: a report saved offline is never lost.
+// Sealed (decision 10 Nov 2026, services/offlineCrypto.ts): once the phone has the server's public key, every report
+// and receipt photo is kept encrypted. Only what the list screen needs stays readable: the report's id, status,
+// dates, number of expenses, and the project/room ids (no names, amounts or text). The phone itself can't open a
+// sealed report: the signed-in owner gets its key from the server when sending.
+
+import { canSeal, sealOwner, sealText, sealBytes, openText, openBytes, SealedText, SealedBytes } from './offlineCrypto';
 
 export const REPORTS_KEY = 'offlineReportsV2';
 export const PROJECTS_KEY = 'offlineProjects';
@@ -19,6 +25,7 @@ export const CHANGED_EVENT = 'offlineReportsChanged';
 const DB_NAME = 'err-offline';
 const PHOTO_STORE = 'photos';
 const SENT_KEEP_DAYS = 14;
+const PHOTO_NAME = 'receipt.jpg'; // sealed photos keep no file name
 
 export type ReportStatus = 'waiting' | 'sending' | 'failed' | 'sent';
 export type FailReason = 'no_access' | 'photo_upload' | 'network' | 'not_signed_in' | 'no_project' | 'unknown';
@@ -55,6 +62,11 @@ export interface OfflineReport {
     tries: number;
     sent_at?: string;
     legacy_err_code?: string; // what was typed in the old form's ERR field
+    // Sealed reports: everything above except id, status, dates and ids is inside `sealed`
+    sealed?: SealedText;
+    n_expenses?: number;
+    photo_ids?: string[];
+    owner?: string;
 }
 
 export interface CachedProject {
@@ -120,10 +132,65 @@ function saveReports(list: OfflineReport[]) {
     notifyChanged();
 }
 
-export function addReport(report: OfflineReport) {
+/** Saves a new report on the phone, sealed when the phone can seal (otherwise sealed later, see sealWaitingReports). */
+export async function addReport(report: OfflineReport) {
+    let stored = report;
+    try { if (canSeal()) stored = await sealReport(report); } catch { /* keep it readable rather than lose it */ }
     const list = getReports();
-    list.push(report);
+    list.push(stored);
     saveReports(list);
+}
+
+const photoIdsOf = (r: OfflineReport) =>
+    r.photo_ids || r.expenses.map(e => e.photo_id).filter((x): x is string => !!x);
+
+/** Seal one readable report: only ids, status and dates stay readable. */
+async function sealReport(r: OfflineReport): Promise<OfflineReport> {
+    if (r.sealed) return r;
+    const { id, version, saved_at, status, reason, tries, sent_at, project_id, err_id } = r;
+    const content = { ...r };
+    return {
+        id, version, saved_at, status, reason, tries, sent_at, project_id, err_id,
+        project_name: '', report_date: '', total_grant: '', total_other_sources: '',
+        excess_expenses: '', surplus_use: '', training: '', lessons: '', expenses: [],
+        n_expenses: r.expenses.length,
+        photo_ids: photoIdsOf(r),
+        owner: sealOwner() || undefined,
+        sealed: await sealText(content),
+    };
+}
+
+/**
+ * Seal every report and photo still kept readable (saved before the phone had the key, or from the old form).
+ * Safe to call often; does nothing until the phone has the server's public key.
+ */
+export async function sealWaitingReports(): Promise<void> {
+    if (!canSeal()) return;
+    const list = getReports();
+    let changed = false;
+    for (let i = 0; i < list.length; i++) {
+        const r = list[i];
+        if (r.sealed || r.status === 'sent') continue;
+        try {
+            for (const pid of photoIdsOf(r)) await sealStoredPhoto(pid);
+            list[i] = await sealReport(r);
+            changed = true;
+        } catch { /* try again next time */ }
+    }
+    if (changed) {
+        // Merge with what's on the phone now (another screen may have changed a status meanwhile)
+        const byId = new Map(list.map(r => [r.id, r]));
+        saveReports(getReports().map(r => (byId.get(r.id)?.sealed && !r.sealed ? { ...byId.get(r.id)!, status: r.status, reason: r.reason, tries: r.tries, project_id: r.project_id, err_id: r.err_id } : r)));
+    }
+}
+
+/** The full report, for sending. Sealed reports are opened through the server (signed-in owner only). */
+export async function openReport(r: OfflineReport): Promise<OfflineReport> {
+    if (!r.sealed) return r;
+    const content = await openText<OfflineReport>(r.sealed);
+    // Readable fields changed since sealing (status, the project chosen later) win over the sealed copy
+    return { ...content, id: r.id, status: r.status, reason: r.reason, tries: r.tries,
+        project_id: r.project_id || content.project_id, err_id: r.err_id || content.err_id, sealed: undefined };
 }
 
 export function updateReport(id: string, patch: Partial<OfflineReport>) {
@@ -135,17 +202,18 @@ export function updateReport(id: string, patch: Partial<OfflineReport>) {
 export async function markSent(id: string) {
     const r = getReports().find(x => x.id === id);
     if (!r) return;
-    await Promise.all(r.expenses.map(e => (e.photo_id ? deletePhoto(e.photo_id) : Promise.resolve())));
+    await Promise.all(photoIdsOf(r).map(deletePhoto));
     updateReport(id, {
         status: 'sent', reason: undefined, sent_at: new Date().toISOString(),
-        excess_expenses: '', surplus_use: '', training: '', lessons: '',
+        excess_expenses: '', surplus_use: '', training: '', lessons: '', sealed: undefined, photo_ids: [],
+        n_expenses: r.n_expenses ?? r.expenses.length,
         expenses: r.expenses.map(e => ({ ...e, description: '', seller: '', receipt_no: '', photo_id: undefined })),
     });
 }
 
 export async function deleteReport(id: string) {
     const r = getReports().find(x => x.id === id);
-    if (r) await Promise.all(r.expenses.map(e => (e.photo_id ? deletePhoto(e.photo_id) : Promise.resolve())));
+    if (r) await Promise.all(photoIdsOf(r).map(deletePhoto));
     saveReports(getReports().filter(x => x.id !== id));
 }
 
@@ -240,7 +308,8 @@ async function withStore<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) =
     }
 }
 
-interface StoredPhoto { blob: Blob; name: string; type: string }
+// A photo is kept either readable ({ blob, name, type }) or sealed ({ sealed, type }).
+interface StoredPhoto { blob?: Blob; name?: string; type: string; sealed?: SealedBytes }
 
 /** Shrinks a photo (longest side 1600 px, JPEG 0.8). Anything that isn't a photo, or can't be read, is kept as it is. */
 export async function shrinkPhoto(file: File): Promise<{ blob: Blob; name: string; type: string }> {
@@ -271,18 +340,33 @@ export async function shrinkPhoto(file: File): Promise<{ blob: Blob; name: strin
 export async function savePhoto(file: File): Promise<{ id: string; name: string }> {
     const small = await shrinkPhoto(file);
     const id = newId();
-    await withStore<IDBValidKey>('readwrite', s => s.put({ blob: small.blob, name: small.name, type: small.type } as StoredPhoto, id));
-    return { id, name: small.name };
+    let value: StoredPhoto = { blob: small.blob, name: small.name, type: small.type };
+    try {
+        if (canSeal()) value = { type: small.type, sealed: await sealBytes(await small.blob.arrayBuffer()) };
+    } catch { /* keep it readable; sealed later */ }
+    await withStore<IDBValidKey>('readwrite', s => s.put(value, id));
+    return { id, name: value.sealed ? PHOTO_NAME : small.name };
 }
 
+/** Seal a photo that was kept readable. */
+async function sealStoredPhoto(id: string): Promise<void> {
+    const v = await withStore<StoredPhoto | undefined>('readonly', s => s.get(id));
+    if (!v || v.sealed || !v.blob) return;
+    const sealed = await sealBytes(await v.blob.arrayBuffer());
+    await withStore<IDBValidKey>('readwrite', s => s.put({ type: v.type, sealed } as StoredPhoto, id));
+}
+
+/** A receipt photo, for sending. Sealed photos are opened through the server (signed-in owner only). */
 export async function getPhoto(id: string): Promise<File | null> {
+    let v: StoredPhoto | undefined;
     try {
-        const v = await withStore<StoredPhoto | undefined>('readonly', s => s.get(id));
-        if (!v) return null;
-        return new File([v.blob], v.name, { type: v.type });
+        v = await withStore<StoredPhoto | undefined>('readonly', s => s.get(id));
     } catch {
         return null;
     }
+    if (!v) return null;
+    if (v.sealed) return new File([await openBytes(v.sealed)], PHOTO_NAME, { type: v.type || 'image/jpeg' });
+    return v.blob ? new File([v.blob], v.name || PHOTO_NAME, { type: v.type }) : null;
 }
 
 export async function deletePhoto(id: string): Promise<void> {

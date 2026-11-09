@@ -6,13 +6,15 @@ import vision from '@google-cloud/vision';
 import OpenAI from 'openai';
 import { franc } from 'franc';
 import pdf from 'pdf-parse';
-import { supabase } from '../../services/supabaseClient';
+import { createAuthenticatedClient } from '../../services/createAuthenticatedClient';
+import { getAdminClient } from '../../services/supabaseAdmin';
+import { readCleanFile, UploadError } from '../../services/secureFiles';
 import { requireAppUser } from '../../services/requireAppUser';
 
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: process.env.MAX_BODY_SIZE || '10mb'
+      sizeLimit: '8kb', // the body is only { fileId }; the PDF itself comes from the clean store
     }
   },
 };
@@ -30,34 +32,15 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
-async function downloadFile(url: string): Promise<string> {
-  try {
-    // Get the file path from the URL
-    const pathMatch = url.match(/\/storage\/v1\/object\/public\/pdf-uploads\/(.*)/);
-    if (!pathMatch) throw new Error('Invalid Supabase storage URL format');
-    
-    const filePath = pathMatch[1];
-    console.log('Attempting to download:', filePath);
-
-    const { data, error } = await supabase
-      .storage
-      .from('pdf-uploads')
-      .download(filePath);
-
-    if (error) throw error;
-    if (!data) throw new Error('No data received from storage');
-
-    const tmpDir = os.tmpdir();
-    const tmpFile = path.join(tmpDir, `${Date.now()}.pdf`);
-    
-    fs.writeFileSync(tmpFile, new Uint8Array(await data.arrayBuffer()));
-    console.log('File downloaded successfully to:', tmpFile);
-    
-    return tmpFile;
-  } catch (error) {
-    console.error('Download error:', error);
-    throw new Error(`Failed to download file: ${error.message}`);
-  }
+// The PDF was checked and rebuilt clean by /api/files/finalize. Read that copy, as the caller.
+async function downloadFile(fileId: string, token: string): Promise<string> {
+  const admin = getAdminClient();
+  if (!admin) throw new UploadError(503, 'not_configured');
+  const { data, mime } = await readCleanFile({ admin, userClient: createAuthenticatedClient(token), fileId, kind: 'scan' });
+  if (mime !== 'application/pdf') throw new UploadError(400, 'unsupported_type');
+  const tmpFile = path.join(os.tmpdir(), `${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`);
+  fs.writeFileSync(tmpFile, data);
+  return tmpFile;
 }
 
 async function extractTextFromPdf(pdfPath: string): Promise<string> {
@@ -139,19 +122,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Signed-in, active app users only (this route calls paid AI services or writes reports)
-  const user = await requireAppUser(req, res);
-  if (!user) return;
+  const caller = await requireAppUser(req, res);
+  if (!caller) return;
 
   let filePath: string | null = null;
-
+  
   try {
-    const { fileUrl } = req.body;
-    if (!fileUrl) {
-      throw new Error('No file URL provided');
+    const { fileId } = req.body || {};
+    if (typeof fileId !== 'string' || !fileId) {
+      return res.status(400).json({ error: 'No file provided' });
     }
 
-    // Download file from Supabase
-    filePath = await downloadFile(fileUrl);
+    filePath = await downloadFile(fileId, caller.token);
 
     const extractedText = await extractTextFromPdf(filePath);
     const structuredData = await processText(extractedText);
@@ -162,8 +144,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error: any) {
-    console.error(`Processing error:`, error);
-    res.status(500).json({ error: `Error processing PDF: ${error.message}` });
+    if (error instanceof UploadError) return res.status(error.status).json({ error: error.code, code: error.code });
+    console.error('Processing error:', error?.message);
+    res.status(500).json({ error: 'Error processing PDF' });
   } finally {
     if (filePath && fs.existsSync(filePath)) {
       try {

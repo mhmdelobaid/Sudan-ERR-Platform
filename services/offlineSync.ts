@@ -10,7 +10,7 @@
 import { newSupabase } from './newSupabaseClient';
 import { uploadImages } from './uploadImages';
 import {
-    getReports, updateReport, markSent, getPhoto, toNumber, reportTotal,
+    getReports, updateReport, markSent, getPhoto, toNumber, reportTotal, openReport,
     OfflineReport, FailReason,
 } from './offlineReports';
 
@@ -59,7 +59,8 @@ async function run(): Promise<SyncResult> {
         for (const r of ready) {
             updateReport(r.id, { status: 'sending', reason: undefined });
             try {
-                await sendOne(r);
+                // A sealed report is opened here, through the server, for its owner only
+                await sendOne(await openReport(r));
                 await markSent(r.id);
                 result.sent++;
             } catch (e) {
@@ -79,6 +80,8 @@ async function run(): Promise<SyncResult> {
 function classify(e: any): FailReason {
     const msg = String(e?.message || e || '');
     if (e?.code === 'photo_upload') return 'photo_upload';
+    if (e?.code === 'no_access') return 'no_access';           // sealed by another account on this phone
+    if (e?.code === 'not_signed_in') return 'not_signed_in';
     if (e?.code === '42501' || /row-level security|permission denied|not_allowed|protected/i.test(msg)) return 'no_access';
     if (e?.name === 'TypeError' || /failed to fetch|network|load failed/i.test(msg)) return 'network';
     return 'unknown';

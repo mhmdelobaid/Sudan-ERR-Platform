@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { uploadImages } from "../../services/uploadImages";
+import { ACCEPT_FILES } from "../../services/secureUpload";
 import Icon from "../ui/Icon";
 import CameraButton from "../ui/CameraButton";
 
@@ -22,7 +23,7 @@ interface FileUploaderProps {
 */
 
 const FileUploader: React.FC<FileUploaderProps> = ({ projectId, onUploadComplete }) => {
-  const { t } = useTranslation("scanForm"); // Use scanForm namespace for translations
+  const { t, i18n } = useTranslation("scanForm"); // Use scanForm namespace for translations
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
 
@@ -55,7 +56,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ projectId, onUploadComplete
         setFiles([]);
       } catch (error) {
         console.error('Failed to upload files.', error);
-        alert(t("errors.upload_failed"));
+        const code = error instanceof Error ? error.message : '';
+        alert(i18n.exists(`uploads:errors.${code}`) ? t(`uploads:errors.${code}`) : t("errors.upload_failed"));
       } finally {
         setUploading(false);
       }
@@ -73,6 +75,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ projectId, onUploadComplete
           {uploading ? t("uploading") : t("choose_files")}
           <input
             type="file"
+            accept={ACCEPT_FILES}
             multiple
             onChange={handleFileChange}
             className="hidden"

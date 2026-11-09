@@ -37,7 +37,11 @@ export async function f5TempUpload(
     body: form,
   });
   const upJson = await upRes.json().catch(() => ({}));
-  if (!upRes.ok) throw new Error((upJson as any).message || 'Upload failed');
+  if (!upRes.ok) {
+    const code = (upJson as any).code as string | undefined;
+    // The server refused or could not clean the file: say why, in the app's language
+    throw new Error(code ? i18n.t(`uploads:errors.${code}`) : (upJson as any).message || 'Upload failed');
+  }
   return {
     file_key_temp: (upJson as any).file_key_temp,
     signed_url: (upJson as any).signed_url || null,

@@ -1,8 +1,9 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileWithProgress } from './UploadInterfaces';
 import CameraButton from '../../../ui/CameraButton';
 import Icon from '../../../ui/Icon';
+import { ACCEPT_FILES, precheckFile } from '../../../../services/secureUpload';
 
 interface UploadChooserSupportingProps {
     onFilesSelected: (files: FileWithProgress[]) => void;
@@ -14,20 +15,27 @@ const UploadChooserSupporting: React.FC<UploadChooserSupportingProps> = React.me
     disabled 
 }) => {
     const { t } = useTranslation('program-report');
+    const [refused, setRefused] = useState<string[]>([]);
     const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const fileList = event.target.files;
         if (!fileList) return;
 
-        const files: FileWithProgress[] = Array.from(fileList).map(file => ({
-            file,
-            progress: 0
-        }));
+        const chosen = Array.from(fileList);
+        const notes: string[] = [];
+        const files: FileWithProgress[] = chosen
+            .filter(file => {
+                const problem = precheckFile(file);
+                if (problem) notes.push(t('uploads:rejected', { name: file.name, reason: t(`uploads:errors.${problem}`) }));
+                return !problem;
+            })
+            .map(file => ({ file, progress: 0 }));
+        setRefused(notes);
 
-        onFilesSelected(files);
+        if (files.length) onFilesSelected(files);
         
         // Reset the input value so the same file can be selected again if needed
         event.target.value = '';
-    }, [onFilesSelected]);
+    }, [onFilesSelected, t]);
 
     return (
         <div className="mb-4 space-y-2">
@@ -47,12 +55,15 @@ const UploadChooserSupporting: React.FC<UploadChooserSupportingProps> = React.me
                         onChange={handleFileChange}
                         disabled={disabled}
                         multiple
-                        accept="image/jpeg,image/png,image/webp,application/pdf"
+                        accept={ACCEPT_FILES}
                         className="sr-only"
                     />
                 </label>
             </div>
             <p className="text-xs text-[#8a97ab] m-0">{t('fileTypesHint')}</p>
+            {refused.map((note, i) => (
+                <p key={i} className="text-xs text-red-400 m-0">{note}</p>
+            ))}
         </div>
     );
 });

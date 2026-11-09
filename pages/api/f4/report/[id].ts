@@ -2,6 +2,7 @@
  * GET /api/f4/report/[id] — F4 summary + expenses + signed attachment URLs (Prod).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { signStoredFile } from '../../../../services/secureFiles';
 import { validateSession } from '../../../../services/auth';
 import {
   createProdSupabaseAdmin,
@@ -78,13 +79,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         files.push({ id: att.id, file_type: att.file_type, signed_url: null });
         continue;
       }
-      const { data: signed } = await prod.storage
-        .from('images')
-        .createSignedUrl(String(key), 60 * 30);
       files.push({
         id: att.id,
         file_type: att.file_type,
-        signed_url: signed?.signedUrl || null,
+        signed_url: await signStoredFile(prod, String(key), 60 * 30),
       });
     }
 

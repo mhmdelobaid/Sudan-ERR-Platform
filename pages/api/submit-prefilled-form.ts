@@ -1,117 +1,37 @@
 // pages/api/submit-prefilled-form.ts
-
-import { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
-import i18n from '../../services/i18n'; // Import i18n for translations
+// Saves the prefilled F4 form (scan form, bulk PDF, prefill page) into the launch tables, through the same
+// checked path as the F4 wizard (services/f4SaveCore.ts). Receipts are attached only if they went through
+// the secure upload for this project. The old "MAG F4" tables are no longer written.
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireAppUser } from '../../services/requireAppUser';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { saveF4 } from '../../services/f4SaveCore';
+import { f4InputFromForm, attachCleanReceipts } from '../../services/f4FromForm';
+import { createProdSupabaseAdmin } from '../../services/prodSupabaseAdmin';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Ensure the request method is POST
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    const errorMessage = i18n.t('errors.method_not_allowed', { lng: req.headers['accept-language'] || 'en' });
-    return res.status(405).json({ error: errorMessage });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Signed-in, active app users only (this route calls paid AI services or writes reports)
-  if (!(await requireAppUser(req, res))) return;
+  // Signed-in, active app users only
+  const caller = await requireAppUser(req, res);
+  if (!caller) return;
+
+  const body = req.body || {};
+  const projectId = String(body.project_id || body.projectId || '').trim();
+  if (!projectId) return res.status(400).json({ error: 'project_id is required' });
 
   try {
-    const {
-      err_id,
-      date,
-      total_grant,
-      total_other_sources,
-      additional_excess_expenses,
-      additional_surplus_use,
-      lessons_learned,
-      additional_training_needs,
-      expenses,
-      files = [],
-      projectId,
-    } = req.body;
+    const { input, receiptPaths } = f4InputFromForm(projectId, body, { uploadedBy: caller.user.id });
+    const out = await saveF4({ accessToken: caller.token, user: caller.user, input });
+    if (out.status !== 200) return res.status(out.status).json(out.json);
 
-    const err_report_id = `${err_id || 'UNKNOWN'}-${Date.now()}`;
-
-    // Calculate total expenses
-    const total_expenses = expenses.reduce((acc: number, exp: any) => acc + (parseFloat(exp.amount) || 0), 0);
-
-    // Insert summary data into the MAG F4 Summary table
-    const { error: summaryError } = await supabase.from('MAG F4 Summary').insert([
-      {
-        err_id,
-        err_report_id,
-        report_date: date || new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        total_grant,
-        total_other_sources,
-        total_expenses,
-        excess_expenses: additional_excess_expenses,
-        surplus_use: additional_surplus_use,
-        lessons: lessons_learned,
-        training: additional_training_needs,
-        files: files.length ? JSON.stringify(files) : null,
-      },
-    ]);
-
-    if (summaryError) {
-      console.error('Error inserting summary:', summaryError.message);
-      const errorMessage = i18n.t('errors.summary_insert_failed', { lng: req.headers['accept-language'] || 'en' });
-      throw new Error(errorMessage);
-    }
-
-    // Insert expense items into MAG F4 Expenses table
-    for (const expense of expenses) {
-      const { 
-        activity, 
-        description, 
-        payment_date, 
-        seller, 
-        payment_method, 
-        receipt_no, 
-        amount,
-        receipt_upload 
-      } = expense;
-
-      if (!(activity && description && payment_date && seller && receipt_no && amount)) {
-        console.warn('Skipping an incomplete expense entry');
-        continue;
-      }
-
-      const { error: expenseError } = await supabase.from('MAG F4 Expenses').insert([
-        {
-          err_report_id,
-          err_id,
-          expense_activity: activity,
-          expense_description: description,
-          payment_date,
-          seller,
-          payment_method,
-          receipt_no,
-          expense_amount: parseFloat(amount) || 0,
-          receipt_id: receipt_upload,
-          project_id: projectId
-        },
-      ]);
-
-      if (expenseError) {
-        console.error('Error inserting expense:', expenseError.message);
-        const errorMessage = i18n.t('errors.expense_insert_failed', { lng: req.headers['accept-language'] || 'en' });
-        throw new Error(errorMessage);
-      }
-    }
-
-    const successMessage = i18n.t('messages.form_submission_success', { lng: req.headers['accept-language'] || 'en' });
-    res.status(200).json({ message: successMessage });
-  } catch (error: any) {
-    console.error('Error submitting form:', error.message);
-    const errorMessage = i18n.t('errors.internal_server_error', { lng: req.headers['accept-language'] || 'en' });
-    res.status(500).json({ error: errorMessage });
+    const expenseIds: number[] = out.json.expense_ids || [];
+    const receipts = await attachCleanReceipts(createProdSupabaseAdmin(), projectId, expenseIds, receiptPaths);
+    return res.status(200).json({ ...out.json, receipts });
+  } catch (e: any) {
+    console.error('[submit-prefilled-form]', e?.message || e);
+    return res.status(500).json({ error: 'Failed to save the report' });
   }
 }
-

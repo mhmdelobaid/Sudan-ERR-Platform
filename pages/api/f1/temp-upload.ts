@@ -5,7 +5,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import fs from 'fs';
-import { sniffUploadType, UPLOAD_NOT_ALLOWED } from '../../../lib/uploadRules';
+import { UPLOAD_NOT_ALLOWED } from '../../../lib/uploadRules';
+import { cleanBeforeStore } from '../../../services/cleanBeforeStore';
 import { randomUUID } from 'crypto';
 import { validateSession } from '../../../services/auth';
 import {
@@ -67,25 +68,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
-    const original = uploaded.originalFilename || 'document';
-    const ext = original.includes('.') ? original.split('.').pop() : 'bin';
-    const tempKey = `f1-forms/_incoming/${randomUUID()}.${ext}`;
     const buffer = fs.readFileSync(uploaded.filepath);
-    // Photos and PDF only, checked from the file's bytes (lib/uploadRules.ts)
-    const sniffed = sniffUploadType(buffer);
-    if (!sniffed) {
+    // Photos and PDF only, rebuilt clean before storing (services/cleanBeforeStore.ts)
+    const checked = await cleanBeforeStore(buffer);
+    if (!checked.ok) {
       try { fs.unlinkSync(uploaded.filepath); } catch { /* ignore */ }
-      return res.status(415).json({ success: false, error: UPLOAD_NOT_ALLOWED, message: UPLOAD_NOT_ALLOWED });
+      return res.status(checked.status).json({ success: false, code: checked.code, error: checked.code, message: UPLOAD_NOT_ALLOWED });
     }
-    const mime: string = sniffed;
+    const tempKey = `f1-forms/_incoming/${randomUUID()}.${checked.file!.ext}`;
 
     const prod = createProdSupabaseAdmin();
     const { error: uploadError } = await prod.storage
       .from('images')
-      .upload(tempKey, buffer, {
+      .upload(tempKey, checked.file!.data, {
         cacheControl: '3600',
         upsert: false,
-        contentType: mime,
+        contentType: checked.file!.mime,
       });
 
     try {

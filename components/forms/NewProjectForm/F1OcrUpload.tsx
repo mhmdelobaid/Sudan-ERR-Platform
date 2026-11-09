@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { ChevronRight } from 'lucide-react';
 import F1ScopeFields, { emptyF1Scope, F1ScopeValue, scopeIsReady } from './F1ScopeFields';
 import { newSupabase } from '../../../services/newSupabaseClient';
+import i18n from '../../../services/i18n';
 import type { F1OcrReviewPayload, MapExtractedData } from '../../../lib/f1/mapReviewTypes';
 
 const MAX_FILE_SIZE = 40 * 1024 * 1024;
@@ -66,7 +67,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete, showCurrency = true
       });
       const result = await res.json();
       if (!res.ok || !result.success || !result.temp_file_key) {
-        throw new Error(result.message || tx('x.failedToUploadFileToProd'));
+        throw new Error(result.code ? i18n.t(`uploads:errors.${result.code}`) : result.message || tx('x.failedToUploadFileToProd'));
       }
       setFile(selected);
       setTempFileKey(result.temp_file_key);

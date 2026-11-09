@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { postImageRecordToDb } from './postImageRecordToDb';
 import Icon from '../../../ui/Icon';
 import CameraButton from '../../../ui/CameraButton';
+import { ACCEPT_FILES } from '../../../../services/secureUpload';
 
 const TILE = 'flex-1 min-w-[9rem] flex items-center justify-center gap-2 p-4 border rounded-md bg-white hover:bg-gray-50 text-gray-800';
 
@@ -82,7 +83,7 @@ export const UploadChooserSupporting: React.FC<UploadChooserProps> = ({
             }
           },
           onError: (error) => {
-            console.error('Upload failed:', error);
+            console.error('Upload refused:', error);
             setFilesWithProgress((prev) =>
               prev.map((f) =>
                 f.id === fileWithProgress.id ? { ...f, error } : f
@@ -133,7 +134,7 @@ const UploadBox: React.FC<UploadBoxProps> = ({ onFileChange, uploadType, uploadI
       <input
         type="file"
         multiple
-        accept="image/jpeg,image/png,image/webp,application/pdf"
+        accept={ACCEPT_FILES}
         id={inputId}
         className="hidden"
         onChange={onFileChange}

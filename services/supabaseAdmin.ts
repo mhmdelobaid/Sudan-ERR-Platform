@@ -10,7 +10,11 @@ const url = process.env.NEXT_PUBLIC_NEW_SUPABASE_URL;
  * Never import this into a page or component.
  */
 export function getAdminClient(): SupabaseClient | null {
-    const key = process.env.NEW_SUPABASE_SERVICE_ROLE_KEY;
+    // Same order as services/prodSupabaseAdmin.ts, so the secure uploads work wherever the F4/F5 wizards do
+    const key =
+        process.env.NEW_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+        process.env.SUPABASE_SERVICE_KEY?.trim() ||
+        process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
     if (!url || !key) return null;
     return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
 }

@@ -2,6 +2,7 @@
  * GET /api/f5/report/[id] — F5 program report + reach rows + files with signed URLs (Prod).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { signStoredFile } from '../../../../services/secureFiles';
 import { validateSession } from '../../../../services/auth';
 import {
   createProdSupabaseAdmin,
@@ -65,10 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const key = (f as any)?.file_url;
       let signed_url: string | null = null;
       if (key && typeof key === 'string' && !/^https?:\/\//i.test(key)) {
-        const { data: signed } = await prod.storage
-          .from('images')
-          .createSignedUrl(key, 60 * 30);
-        signed_url = signed?.signedUrl || null;
+        signed_url = await signStoredFile(prod, key, 60 * 30);
       } else if (typeof key === 'string') {
         signed_url = key;
       }

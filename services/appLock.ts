@@ -31,9 +31,10 @@ export function lock() {
     } catch { /* ignore */ }
 }
 
-// Left on the phone after sign-out: F4 reports saved offline that haven't been sent yet (their photos are in
-// IndexedDB), the projects and expense types the offline form offers, and the language.
-const KEEP_KEYS = ['offlineReportsV2', 'offlineProjects', 'offlineCategories', 'offlineSessionQueue', 'offlineQueue', 'i18nextLng'];
+// Left on the phone after sign-out: F4 reports saved offline that haven't been sent yet (sealed: the phone can't
+// read them, their photos are sealed in IndexedDB), the server's public key they are sealed with, the projects and
+// expense types the offline form offers, and the language.
+const KEEP_KEYS = ['offlineReportsV2', 'offlineSealKey', 'offlineProjects', 'offlineCategories', 'offlineSessionQueue', 'offlineQueue', 'i18nextLng'];
 
 /** Remove every copy of the login and other personal data from this browser. */
 function clearLocalData() {

@@ -5,7 +5,6 @@ import PrefilledForm from "../components/forms/PrefilledForm";
 import FileUploader from "../components/uploads/FileUploader";
 import MessageBubble from "../components/ui/MessageBubble";
 import Button from "../components/ui/Button";
-import { authFetch } from '../services/authFetch';
 
 const ScanPrefillForm: React.FC<{ project?: any }> = ({ project }) => {
   const { t } = useTranslation("scan-form"); // Load translations from scan-form.json
@@ -34,29 +33,10 @@ const ScanPrefillForm: React.FC<{ project?: any }> = ({ project }) => {
     setLoading(false);
   }, [t]);
 
-  const handleFormSubmit = async (formData: any) => {
-    try {
-      const response = await authFetch("/api/submit-prefilled-form", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error(t("errors.submit_failed"));
-      }
-
-      const result = await response.json();
-      console.log(t("form_submit_success"), result);
-
-      setFormData(formData);  // Store the submitted form data
-      setShowFileUploader(true);
-    } catch (error) {
-      console.error(t("errors.submit_failed"), error);
-      alert(t("errors.submit_failed"));
-    }
+  // PrefilledForm saves the report itself (/api/submit-prefilled-form); this only moves to the next step.
+  const handleFormSubmit = async (submitted?: any) => {
+    setFormData(submitted ?? structuredData);
+    setShowFileUploader(true);
   };
 
   const handleUploadComplete = (urls: string[]) => {

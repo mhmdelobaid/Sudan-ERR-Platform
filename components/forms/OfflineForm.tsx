@@ -114,7 +114,7 @@ const OfflineForm: React.FC<OfflineFormProps> = ({ onClose, onSaved }) => {
         };
         setSaving(true);
         try {
-            addReport(report);
+            await addReport(report); // sealed on the phone when it has the key (services/offlineCrypto.ts)
             savedRef.current = true;
             // Online already? Send it straight away (it stays on the phone if that fails).
             if (navigator.onLine) sendQueuedReports().catch(() => { /* shown on the list */ });

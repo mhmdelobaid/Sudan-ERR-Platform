@@ -5,6 +5,7 @@ import { initReactI18next } from "react-i18next";
 i18n.use(initReactI18next).init({
   resources: {
     en: {
+      uploads: require("../public/locales/en/uploads.json"),
       login: require("../public/locales/en/login.json"),
       menu: require("../public/locales/en/menu.json"),
       chat: require("../public/locales/en/chat.json"),
@@ -34,6 +35,7 @@ i18n.use(initReactI18next).init({
       app: require("../public/locales/en/app.json"),
     },
     ar: {
+      uploads: require("../public/locales/ar/uploads.json"),
       login: require("../public/locales/ar/login.json"),
       menu: require("../public/locales/ar/menu.json"),
       chat: require("../public/locales/ar/chat.json"),
@@ -63,6 +65,7 @@ i18n.use(initReactI18next).init({
       app: require("../public/locales/ar/app.json"),
     },
     es: {
+      uploads: require("../public/locales/en/uploads.json"),
       login: require("../public/locales/es/login.json"),
       menu: require("../public/locales/es/menu.json"),
       chat: require("../public/locales/es/chat.json"),
