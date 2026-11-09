@@ -22,7 +22,8 @@
     "youVoted": "You voted",
     "notVoted": "Not voted yet",
     "version": "Version",
-    "ownLocality": "Your locality"
+    "ownLocality": "Your locality",
+    "rate": "State exchange rate"
   },
   "details": {
     "objectives": "Project objectives",
@@ -98,5 +99,6 @@
     "yes": "Locality acknowledged",
     "yesOn": "The locality acknowledged it on {{date}}",
     "no": "Locality hasn't acknowledged yet (voting can go ahead)"
-  }
+  },
+  "fundProject": "National project"
 }

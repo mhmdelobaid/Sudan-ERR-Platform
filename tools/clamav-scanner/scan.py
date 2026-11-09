@@ -15,6 +15,7 @@ Environment:
   SUPABASE_URL                 https://<project>.supabase.co
   SUPABASE_SERVICE_ROLE_KEY    service role key (keep it secret; only this job holds it)
   BATCH_SIZE                   optional, default 50
+  SKIP_FRESHCLAM               optional, '1' = don't update the signatures here (the caller already did)
 """
 import json
 import os
@@ -117,7 +118,8 @@ def run_once():
 def main():
     if not URL or not KEY:
         sys.exit("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY")
-    subprocess.run(["freshclam", "--quiet"], check=False)   # latest virus signatures
+    if os.environ.get("SKIP_FRESHCLAM") != "1":                 # the GitHub workflow updates them itself, once a day
+        subprocess.run(["freshclam", "--quiet"], check=False)   # latest virus signatures
     if "--loop" in sys.argv:
         while True:
             try:

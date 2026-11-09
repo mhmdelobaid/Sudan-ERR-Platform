@@ -94,6 +94,9 @@ const KNOWN_ERRORS: Record<string, number> = {
     user_not_lcc_wg: 400,
     program_lead_required: 400,
     not_allowed: 403,
+    // State exchange rates (admins only)
+    state_not_found: 404,
+    invalid_rate: 400,
     // Officer signatures (F1, F3, F4, F5) and officer positions
     invalid_position: 400,
     not_a_signer: 403,

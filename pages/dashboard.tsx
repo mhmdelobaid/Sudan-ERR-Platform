@@ -41,6 +41,8 @@ interface DashboardData {
     people: { individuals: number; households: number; male: number; female: number; under18_male: number; under18_female: number; disabilities?: number; reports: number; projects_reported: number };
     generated_at: string;
     state_labels_ar?: Record<string, string>;
+    fund_projects?: { id: string; name_en: string | null; name_ar: string | null }[];
+    project_filter?: string | null;
 }
 
 const fmt = (n: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n || 0);
@@ -165,7 +167,26 @@ export default function Dashboard() {
     const [error, setError] = useState('');
     const [allStates, setAllStates] = useState(false);
     const [openStates, setOpenStates] = useState<Record<string, boolean>>({});   // states expanded to show their localities
+    // National project filter (Direct Fund, ...): '' = all projects. Kept in the address (?project=) so it can be shared.
+    const [project, setProject] = useState<string | null>(null);
+    const [fundProjects, setFundProjects] = useState<{ id: string; name_en: string | null; name_ar: string | null }[]>([]);
     const isAr = i18n.language === 'ar';
+
+    useEffect(() => {
+        if (!router.isReady || project !== null) return;
+        const q = router.query.project;
+        setProject(typeof q === 'string' && /^[0-9a-f-]{36}$/i.test(q) ? q : '');
+    }, [router.isReady, router.query.project, project]);
+
+    const chooseProject = (id: string) => {
+        setProject(id);
+        setData(null);
+        const { project: _drop, ...rest } = router.query;
+        router.replace({ pathname: router.pathname, query: id ? { ...rest, project: id } : rest }, undefined, { shallow: true });
+    };
+    const fundName = (g?: { name_en: string | null; name_ar: string | null }) =>
+        g ? ((isAr ? g.name_ar || g.name_en : g.name_en || g.name_ar) || '') : '';
+    const chosenProject = fundProjects.find(g => g.id === project);
 
     useEffect(() => {
         document.documentElement.setAttribute('dir', isAr ? 'rtl' : 'ltr');
@@ -173,11 +194,13 @@ export default function Dashboard() {
     }, [isAr, i18n.language]);
 
     useEffect(() => {
+        if (project === null) return;   // wait until the filter is read from the address
         (async () => {
             try {
                 const { data: { session } } = await newSupabase.auth.getSession();
                 if (!session) { router.push('/login'); return; }
-                const res = await fetch('/api/dashboard', { headers: { Authorization: `Bearer ${session.access_token}` } });
+                const url = project ? `/api/dashboard?project=${encodeURIComponent(project)}` : '/api/dashboard';
+                const res = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
                 if (res.status === 401) { router.push('/login'); return; }
                 const json = await res.json();
                 if (!res.ok || !json.success) throw new Error(json.message || 'failed');
@@ -189,13 +212,15 @@ export default function Dashboard() {
                     ...r, counts: counts(r.counts),
                     localities: (r.localities || []).map((l: any) => ({ ...l, counts: counts(l.counts) })),
                 }));
+                if (Array.isArray(json.fund_projects)) setFundProjects(json.fund_projects);
                 setData(json);
             } catch (e) {
                 console.error('Dashboard load failed:', e);
                 setError(t('error'));
             }
         })();
-    }, [router, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [project, t]);
 
     const name = (n: NamedAmount) => (n.id === 'other' ? t('budgets.other') : (isAr && n.ar) || tPA(n.en, { defaultValue: n.en }));
     const statusLabel = (s: string) => (s === 'draft' ? t('status.draft') : tS(s, { defaultValue: s }));
@@ -206,7 +231,8 @@ export default function Dashboard() {
     const remainingUsd = data ? data.funding.reduce((s, f) => s + f.remaining, 0) : 0;
     const scopeLabel = data ? (data.scope === 'all' ? t('scope.all')
         : data.scope === 'locality' ? `${t('scope.locality')}: ${(isAr ? data.locality?.name_ar || data.locality?.name : data.locality?.name) || '—'}${data.states[0] ? ` · ${stateName(data.states[0])}` : ''}`
-        : data.scope === 'states' ? `${t('scope.states')}: ${data.states.map(stateName).join(isAr ? '، ' : ', ')}` : `${t('scope.room')}${data.states[0] ? ` · ${stateName(data.states[0])}` : ''}`) : '';
+        : data.scope === 'states' ? `${t('scope.states')}: ${data.states.map(stateName).join(isAr ? '، ' : ', ')}` : `${t('scope.room')}${data.states[0] ? ` · ${stateName(data.states[0])}` : ''}`)
+        + (chosenProject ? ` · ${fundName(chosenProject)}` : '') : '';
 
     return (
         <AppShell title={t('title')}>
@@ -239,6 +265,16 @@ export default function Dashboard() {
             {data && <p className="no-print text-xs text-[#a8b6cc] mb-3 truncate">{scopeLabel}</p>}
 
             <main className="max-w-3xl mx-auto print:p-4">
+                {fundProjects.length > 0 && (
+                    <div className="no-print mb-3">
+                        <label htmlFor="dash-project" className="block text-xs text-[#a8b6cc] mb-1">{t('project.label')}</label>
+                        <select id="dash-project" value={project || ''} onChange={e => chooseProject(e.target.value)}
+                            className="w-full sm:w-auto min-w-[14rem] px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 font-semibold">
+                            <option value="">{t('project.all')}</option>
+                            {fundProjects.map(g => <option key={g.id} value={g.id}>{fundName(g)}</option>)}
+                        </select>
+                    </div>
+                )}
                 <div className="no-print flex flex-wrap gap-2 mb-4">
                     <button onClick={() => window.print()} disabled={!data}
                         className="px-4 py-2 rounded-lg bg-brand-blue text-white font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-1.5"><Icon name="print" size={20} />{t('print')}</button>
@@ -298,7 +334,7 @@ export default function Dashboard() {
                             )}
                         </Section>
 
-                        <Section title={t('funding.title')} subtitle={t('funding.subtitle')}>
+                        <Section title={t('funding.title')} subtitle={project ? `${t('funding.subtitle')} ${t('project.fundingNote')}` : t('funding.subtitle')}>
                             {data.funding.length === 0 ? <p className="text-sm text-gray-500">{t('empty')}</p> : (
                                 <>
                                     <Legend items={[

@@ -115,6 +115,10 @@
     "fundProjects": {
       "title": "Projects and working groups",
       "sub": "Which states each project is open to, and who is in its working group"
+    },
+    "rates": {
+      "title": "Exchange rates",
+      "sub": "SDG per USD, by state"
     }
   },
   "f1": {
@@ -471,7 +475,9 @@
     "aiNotConfigured": "AI reading isn’t switched on yet. Fill in the form by hand for now.",
     "couldNotReadRegions": "Couldn’t read the selected parts. Try again, or fill in the form by hand.",
     "chooseFile": "Choose file",
-    "noFileChosen": "No file chosen"
+    "noFileChosen": "No file chosen",
+    "stateRate": "Exchange rate for {{state}}: 1 USD = {{rate}} SDG (set by admins).",
+    "stateRateMissing": "No exchange rate set for {{state}} yet: the default {{rate}} SDG is used."
   },
   "fp": {
     "title": "Projects and working groups",
@@ -549,5 +555,22 @@
     "save": "Save",
     "saved": "Saved on this phone.",
     "howTo": "Choose before adding the app to your home screen. If it is already there, remove it and add it again (Share → Add to Home Screen on iPhone; ⋮ → Add to Home screen on Android). Or just use it in the browser and close the tab after."
+  },
+  "rates": {
+    "title": "State exchange rates",
+    "intro": "The exchange rate of each state, in Sudanese pounds for 1 US dollar. F1 uploads use the rate of the room's state, and every F1 records its state's rate when it is sent. Only admins can change a rate; every change is kept.",
+    "onlyAdmins": "Only admins can set the state exchange rates.",
+    "notSet": "Not set yet: F1 uploads use the default rate.",
+    "setOn": "set {{date}} by {{name}}",
+    "newRate": "New rate for {{state}}",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Rate saved for {{state}}.",
+    "errors": {
+      "invalid_rate": "Type a rate above zero, for example 2700.",
+      "not_allowed": "Only admins can set the state exchange rates.",
+      "state_not_found": "This state was not found.",
+      "server_error": "Could not save. Try again."
+    }
   }
 }

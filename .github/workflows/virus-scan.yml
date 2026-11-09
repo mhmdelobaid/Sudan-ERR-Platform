@@ -1,0 +1,83 @@
+# Virus scan of uploaded files (decision 10 Nov 2026: run the ClamAV scanner on GitHub Actions).
+#
+# Every 15 minutes: downloads each upload that passed the app's file check and hasn't been scanned yet
+# (file_uploads.av_status = 'not_scanned'), scans it with ClamAV, marks it clean or infected, and deletes the
+# stored copy of an infected file. See tools/clamav-scanner/README.md.
+#
+# Note: the files are scanned on GitHub's machines (they are downloaded there, never uploaded anywhere else).
+# The repository is public, so the run logs are public too: the scanner prints only row ids and virus names,
+# never file names or contents.
+#
+# Needs two repository secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_URL                https://ygjwdoptcegapipnukgh.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY   the launch database's service role key
+# GitHub runs scheduled workflows only from the default branch, so this file must be on it.
+name: Virus scan of uploads
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: virus-scan
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: tools/clamav-scanner
+
+      - name: Install ClamAV
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clamav
+          sudo systemctl stop clamav-freshclam || true
+
+      # Virus signatures are downloaded once a day and kept in the Actions cache, so the ClamAV servers
+      # aren't asked every 15 minutes (they refuse clients that ask too often).
+      - name: Today's date
+        id: day
+        run: echo "day=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore virus signatures
+        id: sigs
+        uses: actions/cache/restore@v4
+        with:
+          path: clamav-db
+          key: clamav-${{ steps.day.outputs.day }}
+          restore-keys: clamav-
+
+      - name: Update virus signatures (once a day)
+        if: steps.sigs.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p clamav-db
+          sudo cp -a clamav-db/. /var/lib/clamav/ 2>/dev/null || true
+          sudo freshclam --quiet || echo "freshclam failed; using the signatures from the cache"
+          sudo cp -a /var/lib/clamav/. clamav-db/
+          sudo chown -R "$USER" clamav-db
+
+      - name: Save virus signatures
+        if: steps.sigs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: clamav-db
+          key: clamav-${{ steps.day.outputs.day }}
+
+      - name: Use the signatures
+        if: steps.sigs.outputs.cache-hit == 'true'
+        run: sudo cp -a clamav-db/. /var/lib/clamav/
+
+      - name: Scan new uploads
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SKIP_FRESHCLAM: '1'
+        run: python3 tools/clamav-scanner/scan.py

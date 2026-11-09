@@ -17,6 +17,8 @@ type Outcome = 'approved' | 'conditional' | 'rejected';
 interface QueueRow {
     id: string;
     project_name: string | null;
+    fund_project_en?: string | null;   // the national project (Direct Fund, ...)
+    fund_project_ar?: string | null;
     state: string | null;
     locality: string | null;
     room_name: string | null;
@@ -100,6 +102,9 @@ interface Detail {
         reporting_officer_name: string | null;
         room_name: string | null;
         room_name_ar: string | null;
+        fund_project_en?: string | null;
+        fund_project_ar?: string | null;
+        exchange_rate?: number | string | null;   // SDG per 1 USD, the state's rate when the F1 was sent
     };
     lines: Line[];
     quorum: number;
@@ -278,6 +283,15 @@ const F2Review: React.FC = () => {
     // --- Small pieces -------------------------------------------------------------------------
     const roomName = (r: { room_name: string | null; room_name_ar: string | null }) =>
         (isAr ? r.room_name_ar || r.room_name : r.room_name || r.room_name_ar) || '—';
+    // The national project the F1 asks to be funded from
+    const fundName = (r: { fund_project_en?: string | null; fund_project_ar?: string | null }) =>
+        (isAr ? r.fund_project_ar || r.fund_project_en : r.fund_project_en || r.fund_project_ar) || null;
+    const FundChip = ({ r }: { r: { fund_project_en?: string | null; fund_project_ar?: string | null } }) =>
+        fundName(r) ? (
+            <span className="inline-block mb-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-[#E7EEF9] text-[#24467E]" title={t('fundProject')}>
+                <bdi>{fundName(r)}</bdi>
+            </span>
+        ) : null;
     const activityName = (id?: string) =>
         (id && detail?.activityNames[id] && (isAr ? detail.activityNames[id].ar : detail.activityNames[id].en)) || '—';
     const expenseName = (e: LineExpense) => (e.expense && detail?.expenseNames[e.expense]) || e.description || '—';
@@ -371,6 +385,7 @@ const F2Review: React.FC = () => {
                                         >
                                             <div className="flex items-start justify-between gap-2">
                                                 <div>
+                                                    <FundChip r={q} />
                                                     <p className="font-bold text-gray-900 mb-0">{q.project_name || '—'}</p>
                                                     <p className="text-sm text-gray-600 mb-0">{roomName(q)} · {q.locality || '—'}</p>
                                                     <p className={`text-xs mb-0 ${q.locality_ack ? 'text-emerald-700' : 'text-gray-500'}`}>
@@ -426,6 +441,7 @@ const F2Review: React.FC = () => {
                         {/* Project summary */}
                         <section className="bg-white rounded-2xl shadow-md p-4 space-y-3">
                             <div>
+                                <FundChip r={detail.project} />
                                 <h2 className="text-lg font-bold mb-0">{detail.project.project_name || '—'}</h2>
                                 <p className="text-sm text-gray-600 mb-0">
                                     {roomName(detail.project)} · {detail.project.locality || '—'} · {t('card.version')} {detail.project.version}
@@ -450,6 +466,12 @@ const F2Review: React.FC = () => {
                                     <span className="block text-gray-500 text-xs">{t('card.submitted')}</span>
                                     <span>{fmtDate(detail.project.submitted_at)}</span>
                                 </div>
+                                {detail.project.exchange_rate != null && (
+                                    <div>
+                                        <span className="block text-gray-500 text-xs">{t('card.rate')}</span>
+                                        <bdi dir="ltr">1 USD = {fmt(detail.project.exchange_rate)} SDG</bdi>
+                                    </div>
+                                )}
                             </div>
                             {detail.project.project_objectives && (
                                 <div className="bg-gray-50 rounded-lg p-3 text-sm">

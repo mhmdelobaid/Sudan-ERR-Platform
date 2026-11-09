@@ -14,6 +14,16 @@ scans locally.
 - `SUPABASE_SERVICE_ROLE_KEY`: the service role key. Keep it only in this job's secret settings.
 - About 2 GB of memory (ClamAV's signature database is large).
 
+## Chosen (10 Nov 2026): GitHub Actions, every 15 minutes (free)
+
+`.github/workflows/virus-scan.yml`. The files are downloaded to GitHub's machines to be scanned.
+
+1. Repository Settings -> Secrets and variables -> Actions -> New repository secret:
+   `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+2. GitHub runs scheduled workflows only from the default branch. Make `launch-ui` the default branch
+   (Settings -> General -> Default branch), or merge the workflow file into the default branch.
+3. Actions tab -> "Virus scan of uploads" -> Run workflow, once, to check it.
+
 ## Option A: Google Cloud Run job, every 10 minutes (pay per run, usually a few dollars a month)
 
 ```

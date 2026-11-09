@@ -51,6 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const user = await validateSession(token);
     if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const db = createAuthenticatedClient(token);
+    // Optional filter: one national project (working_groups.id), e.g. Direct Fund. Empty = all projects.
+    const projectFilter = typeof req.query.project === 'string' && /^[0-9a-f-]{36}$/i.test(req.query.project) ? req.query.project : '';
 
     try {
         const scope = await getAccessScope(db, user.id);
@@ -63,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // 2) Submitted projects the user may see
         let projects: any[] = [];
         if (scope.all || scope.roomIds.length > 0) {
-            const select = 'id, status, funding_status, err_id, state, currency, planned_activities, expenses';
+            const select = 'id, status, funding_status, err_id, state, currency, planned_activities, expenses, working_group_id';
             projects = scope.all
                 ? await fetchAll((from, to) => db.from('err_projects').select(select).eq('is_draft', false).range(from, to))
                 : await fetchByIds(db, 'err_projects', select, 'err_id', scope.roomIds, q => q.eq('is_draft', false));
@@ -72,10 +74,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // F-1 work plans started but not yet submitted (drafts): counted only, never in totals or budgets
         let draftRows: any[] = [];
         if (scope.all) {
-            draftRows = await fetchAll((from, to) => db.from('err_projects').select('id, err_id, state').eq('is_draft', true).range(from, to));
+            draftRows = await fetchAll((from, to) => db.from('err_projects').select('id, err_id, state, working_group_id').eq('is_draft', true).range(from, to));
         } else if (scope.roomIds.length > 0) {
-            draftRows = await fetchByIds(db, 'err_projects', 'id, err_id, state', 'err_id', scope.roomIds, q => q.eq('is_draft', true));
+            draftRows = await fetchByIds(db, 'err_projects', 'id, err_id, state, working_group_id', 'err_id', scope.roomIds, q => q.eq('is_draft', true));
         }
+        if (projectFilter) {
+            projects = projects.filter(p => p.working_group_id === projectFilter);
+            draftRows = draftRows.filter(p => p.working_group_id === projectFilter);
+        }
+        // The national projects, for the picker at the top of the dashboard
+        const { data: fundList } = await db.rpc('fund_projects');
+        const fund_projects = (Array.isArray(fundList) ? fundList : []).map((g: any) => ({ id: g.id, name_en: g.name_en, name_ar: g.name_ar }));
 
         // State of each project comes from its room (err_projects.state may be Arabic or English)
         const rooms = await getRoomNames(db, [...projects, ...draftRows].map(p => String(p.err_id || '')));
@@ -176,6 +185,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({
             success: true,
             state_labels_ar,
+            fund_projects,
+            project_filter: projectFilter || null,
             scope: scope.all ? 'all' : user.role === 'locality_err' ? 'locality' : (scope.states.length > 0 && user.role !== 'base_err' ? 'states' : 'room'),
             states: (scope.all ? funding.map(f => f.state) : scope.states).filter(st => !hidden(st)),
             locality: user.role === 'locality_err' ? { name: scope.ownLocality, name_ar: scope.ownLocalityAr } : null,

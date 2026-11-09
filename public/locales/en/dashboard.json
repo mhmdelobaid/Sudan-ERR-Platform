@@ -83,5 +83,10 @@
     "feedback": "F-2 · back with the room",
     "approved": "F-3 · contract, transfer due",
     "rejected": "F-2 · not approved"
+  },
+  "project": {
+    "label": "National project",
+    "all": "All projects",
+    "fundingNote": "Grants are shared by all national projects, so this part is the same for every choice."
   }
 }

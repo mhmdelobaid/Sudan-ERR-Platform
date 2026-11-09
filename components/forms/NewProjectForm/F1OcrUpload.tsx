@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CameraButton from '../../ui/CameraButton';
 import { useRouter } from 'next/router';
@@ -37,8 +37,9 @@ export default function F1OcrUpload({ onBack, onOcrComplete, showCurrency = true
   const locale = router.locale || 'en';
   const [scope, setScope] = useState<F1ScopeValue>(emptyF1Scope);
   const [currency, setCurrency] = useState<'USD' | 'SDG'>('SDG');
-  /** Keep as string while editing so empty/partial values don't snap back to default */
-  const [exchangeRateInput, setExchangeRateInput] = useState(String(DEFAULT_SDG_RATE));
+  // The rate is set per state by admins (/state-rates); the F1 has no rate field (decision 10 Nov 2026)
+  const [stateRates, setStateRates] = useState<Record<string, number>>({});
+  const [stateNamesAr, setStateNamesAr] = useState<Record<string, string>>({});
   const [file, setFile] = useState<File | null>(null);
   const [tempFileKey, setTempFileKey] = useState<string | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -80,10 +81,27 @@ export default function F1OcrUpload({ onBack, onOcrComplete, showCurrency = true
     }
   };
 
-  const parsedExchangeRate = (() => {
-    const n = parseFloat(exchangeRateInput);
-    return Number.isFinite(n) && n > 0 ? n : DEFAULT_SDG_RATE;
-  })();
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { session } } = await newSupabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch('/api/state-rates', { headers: { Authorization: `Bearer ${session.access_token}` } });
+        const body = await res.json().catch(() => ({}));
+        const map: Record<string, number> = {};
+        const ar: Record<string, string> = {};
+        for (const r of body?.states || []) {
+          if (r?.sdg_per_usd != null) map[r.state_name] = Number(r.sdg_per_usd);
+          if (r?.state_name_ar) ar[r.state_name] = r.state_name_ar;
+        }
+        setStateRates(map);
+        setStateNamesAr(ar);
+      } catch { /* the default rate is used */ }
+    })();
+  }, []);
+  const stateRate = scope.state_name ? stateRates[scope.state_name] : undefined;
+  const stateShown = (scope.state_name && i18n.language?.startsWith('ar') && stateNamesAr[scope.state_name]) || scope.state_name;
+  const parsedExchangeRate = stateRate && stateRate > 0 ? stateRate : DEFAULT_SDG_RATE;
 
   const runOcr = async () => {
     if (!ready || !file || !tempFileKey) return;
@@ -95,9 +113,9 @@ export default function F1OcrUpload({ onBack, onOcrComplete, showCurrency = true
       } = await newSupabase.auth.getSession();
       if (!session) throw new Error(tx('x.notSignedIn'));
 
-      // Without the picker the AI detects the currency; SDG amounts use the default rate
+      // Without the picker the AI detects the currency; SDG amounts use the rate of the room's state
       const sentCurrency = showCurrency ? currency : 'auto';
-      const rate = !showCurrency ? DEFAULT_SDG_RATE : currency === 'SDG' ? parsedExchangeRate : 1;
+      const rate = !showCurrency ? parsedExchangeRate : currency === 'SDG' ? parsedExchangeRate : 1;
       const formData = new FormData();
       formData.append('file', file);
       formData.append('form_type', 'F1');
@@ -207,28 +225,13 @@ export default function F1OcrUpload({ onBack, onOcrComplete, showCurrency = true
           )}
         </div>
 
-        {showCurrency && currency === 'SDG' && (
-          <div>
-            <label className="font-semibold block text-xs text-[#a8b6cc] mb-1">
-              {tx('x.exchangeRateUsdSdg')}
-            </label>
-            <input
-              type="number"
-              min={1}
-              inputMode="decimal"
-              className="app-input !py-2 text-sm"
-              value={exchangeRateInput}
-              onChange={(e) => setExchangeRateInput(e.target.value)}
-              onBlur={() => {
-                const n = parseFloat(exchangeRateInput);
-                if (!Number.isFinite(n) || n <= 0) {
-                  setExchangeRateInput(String(DEFAULT_SDG_RATE));
-                } else {
-                  setExchangeRateInput(String(n));
-                }
-              }}
-            />
-          </div>
+        {showCurrency && currency === 'SDG' && scope.state_name && (
+          // The rate comes from the state (set by admins on the State exchange rates page), not typed here
+          <p className="text-xs text-[#8a97ab] mb-0">
+            {stateRate
+              ? tx('x.stateRate', { state: stateShown, rate: new Intl.NumberFormat('en-US').format(stateRate) })
+              : tx('x.stateRateMissing', { state: stateShown, rate: new Intl.NumberFormat('en-US').format(DEFAULT_SDG_RATE) })}
+          </p>
         )}
 
         {file && (
