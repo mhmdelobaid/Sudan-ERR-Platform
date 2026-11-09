@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/layout/AppShell';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { isRoomRole } from '../../services/me';
+import QuickLinks from '../../components/layout/QuickLinks';
 import { MessageSquare, WifiOff, UserCircle, UserCog, FolderKanban } from 'lucide-react';
 
 export default function UtilitiesPage() {
@@ -44,6 +45,7 @@ export default function UtilitiesPage() {
           })}
         </div>
       )}
+      <QuickLinks />
     </AppShell>
   );
 }

@@ -520,19 +520,19 @@ export default function F5WizardFlow({
     const pills: WizardStepPill[] = [
       {
         id: 'activities',
-        label: '1) Activities',
+        label: `1) ${tx('x.wizActivities')}`,
         completed: wizardProgress.activities,
         isCurrent: expectedKind === 'activities',
       },
       {
         id: 'demographics',
-        label: '2) Demographics',
+        label: `2) ${tx('x.wizDemographics')}`,
         completed: wizardProgress.demographics,
         isCurrent: expectedKind === 'demographics',
       },
       {
         id: 'questions',
-        label: '3) Questions',
+        label: `3) ${tx('x.wizQuestions')}`,
         completed: wizardProgress.questions,
         isCurrent: expectedKind === 'questions',
       },
@@ -542,7 +542,7 @@ export default function F5WizardFlow({
         title={tx('x.f5ProgramReport')}
         steps={pills}
         expectedStepId={expectedKind}
-        expectedStepLabel={STEP_LABEL[expectedKind]}
+        expectedStepLabel={tx(`x.wizKind.${expectedKind}`, { defaultValue: STEP_LABEL[expectedKind] })}
         selectionCount={selectionByKind[expectedKind].length}
         wizardLoading={wizardLoading != null}
         processDisabled={
@@ -585,7 +585,7 @@ export default function F5WizardFlow({
           setWizardExpanded(false);
           onReturnToMenu();
         }}
-        backLabel="Cancel"
+        backLabel={tx('x.cancel')}
         onContinue={() => {
           setWizardExpanded(false);
           setError('');

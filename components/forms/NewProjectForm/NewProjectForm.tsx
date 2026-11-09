@@ -78,6 +78,8 @@ interface NewProjectApplicationProps {
     onDraftSubmitted?: () => void;
     /** Selected room + grant segment from Create flow (OCR or manual scope) */
     roomScope?: F1RoomScope | null;
+    /** Currency picker: state level and staff only; others send USD */
+    showCurrency?: boolean;
 }
 
 interface ConfirmDialogProps {
@@ -121,8 +123,7 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
     initialValues,
     projectToEdit,
     onDraftSubmitted,
-    roomScope = null,
-}) => {
+    roomScope = null, showCurrency = true }) => {
    const { t, i18n } = useTranslation('project-application');
    const { t: tx } = useTranslation('app');
    const [availableRegions, setAvailableRegions] = useState([]);
@@ -734,6 +735,7 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
                      </div>
                    </div>
 
+                   {showCurrency && (<>
                    <div className="flex items-center justify-between gap-3 pt-0.5">
                      <RequiredLabel required>{t('currency.label')}</RequiredLabel>
                      <div className="inline-flex rounded-lg border border-white/15 overflow-hidden" role="radiogroup" aria-label={t('currency.label')}>
@@ -753,6 +755,7 @@ const NewProjectForm:React.FC<NewProjectApplicationProps> = ({
                    </div>
                    {/* No conversion: the USD grant balance only counts USD budgets */}
                    <p className="text-xs text-[#8a97ab] -mt-1 mb-2">{t('currency.hint')}</p>
+                   </>)}
 
                    <NewProjectActivities optionsActivities={optionsActivities} optionsExpenses={optionsExpenses} />
 

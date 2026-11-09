@@ -42,5 +42,6 @@
   "lockApp": "Lock app",
   "userGuide": "User guide",
   "lccWebsite": "LCC website",
-  "offlineMode": "Offline mode"
+  "offlineMode": "Offline mode",
+  "errWebsite": "ERR website"
 }

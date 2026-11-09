@@ -29,7 +29,9 @@ type View =
   | 'form';
 
 export default function F1WorkPlansPage() {
-  const { ready } = useRequireAuth();
+  const { ready, role } = useRequireAuth();
+  // Currency and exchange rate are set at state level (state rooms and national staff), not by base or locality rooms
+  const canSetCurrency = ['state_err', 'admin', 'superadmin', 'support'].includes(role || '');
   const { t } = useTranslation('app');
   const router = useRouter();
   const [view, setView] = useState<View>('menu');
@@ -187,6 +189,7 @@ export default function F1WorkPlansPage() {
 
       {view === 'ocr-upload' && (
         <F1OcrUpload
+          showCurrency={canSetCurrency}
           onBack={() => setView('create-method')}
           onOcrComplete={(payload) => {
             setOcrReviewPayload(payload);
@@ -224,6 +227,7 @@ export default function F1WorkPlansPage() {
           initialValues={currentDraft}
           projectToEdit={projectToEdit}
           roomScope={roomScope}
+          showCurrency={canSetCurrency}
           onDraftSubmitted={() => {
             setProjectToEdit(null);
             setView('application');

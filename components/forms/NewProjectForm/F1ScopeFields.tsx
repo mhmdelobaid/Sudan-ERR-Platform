@@ -30,6 +30,8 @@ type RoomRow = {
   name: string | null;
   name_ar: string | null;
   err_code: string | null;
+  /** state | locality | base */
+  type?: string | null;
   states?: {
     state_name?: string | null;
     state_name_ar?: string | null;
@@ -196,6 +198,12 @@ export default function F1ScopeFields({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.emergency_room_id, isAr]);
 
+  // Tier 2: the state room itself ('__state__') or a locality; tier 3: the room
+  const [tier, setTier] = useState<string>('');
+  const STATE_TIER = '__state__';
+  const localityKey = (r: RoomRow) => r.states?.locality || r.states?.locality_ar || '—';
+  const roomTypeRank = (r: RoomRow) => (r.type === 'state' ? 0 : r.type === 'locality' ? 1 : 2);
+
   const roomsInState = useMemo(() => {
     if (!value.state_name) return rooms;
     return rooms.filter((r) => {
@@ -228,6 +236,53 @@ export default function F1ScopeFields({
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [rooms, states, isAr]);
 
+  const tierOptions = useMemo(() => {
+    const out: { key: string; label: string }[] = [];
+    if (roomsInState.some((r) => r.type === 'state')) out.push({ key: STATE_TIER, label: tx('x.stateRoomTier') });
+    const locs = new Map<string, string>();
+    for (const r of roomsInState) {
+      if (r.type === 'state') continue;
+      const key = localityKey(r);
+      if (!locs.has(key)) locs.set(key, (isAr ? r.states?.locality_ar : r.states?.locality) || r.states?.locality || key);
+    }
+    Array.from(locs.entries())
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .forEach(([key, label]) => out.push({ key, label }));
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomsInState, isAr]);
+
+  const roomsInTier = useMemo(() => {
+    if (!tier) return [] as RoomRow[];
+    return roomsInState
+      .filter((r) => (tier === STATE_TIER ? r.type === 'state' : r.type !== 'state' && localityKey(r) === tier))
+      .sort((a, b) => roomTypeRank(a) - roomTypeRank(b) || roomLabel(a, locale).localeCompare(roomLabel(b, locale)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomsInState, tier, locale]);
+
+  // Keep the tier in step with a room chosen earlier (draft resumed, back from the form)
+  useEffect(() => {
+    if (!value.emergency_room_id || tier) return;
+    const r = rooms.find((x) => x.id === value.emergency_room_id);
+    if (r) setTier(r.type === 'state' ? STATE_TIER : localityKey(r));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value.emergency_room_id, rooms]);
+
+  const chooseRoom = (id: string) => {
+    const room = rooms.find((r) => r.id === id);
+    const place = room ? placeLabels(room, locale) : { state_name: '', locality: '' };
+    onChange({
+      ...value,
+      emergency_room_id: id,
+      locality: place.locality,
+      state_name: place.state_name || value.state_name,
+      room_label: room ? roomLabel(room, locale) : '',
+    });
+  };
+
+  const typeLabel = (r: RoomRow) =>
+    r.type === 'state' ? tx('x.roomTypeState') : r.type === 'locality' ? tx('x.roomTypeLocality') : tx('x.roomTypeBase');
+
   const segmentLabel = (s: GrantSegment) =>
     isAr && s.label_ar ? s.label_ar : s.label_en;
 
@@ -251,7 +306,7 @@ export default function F1ScopeFields({
   return (
     <div className={stack}>
       {needsRoomPicker ? (
-        <div className={`grid grid-cols-2 ${gap}`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-3 ${gap}`}>
           <div className="min-w-0">
             <label className={labelClass}>{tx('x.state')}</label>
             <select
@@ -265,12 +320,15 @@ export default function F1ScopeFields({
               onChange={(e) => {
                 const state_name = e.target.value;
                 const opt = stateOptions.find((s) => s.valueKey === state_name);
+                setTier('');
                 onChange({
                   ...value,
                   state_name: opt?.label || state_name,
                   emergency_room_id: '',
                   locality: '',
                   room_label: '',
+                  working_group_id: '',
+                  working_group_label: '',
                 });
               }}
             >
@@ -283,28 +341,42 @@ export default function F1ScopeFields({
             </select>
           </div>
           <div className="min-w-0">
+            <label className={labelClass}>{tx('x.localityTier')}</label>
+            <select
+              className={selectClass}
+              value={tier}
+              disabled={!value.state_name}
+              onChange={(e) => {
+                const key = e.target.value;
+                setTier(key);
+                const inTier = roomsInState.filter((r) =>
+                  key === STATE_TIER ? r.type === 'state' : r.type !== 'state' && localityKey(r) === key
+                );
+                // One room at this tier (usually the state room): choose it
+                if (inTier.length === 1) chooseRoom(inTier[0].id);
+                else onChange({ ...value, emergency_room_id: '', locality: '', room_label: '', working_group_id: '', working_group_label: '' });
+              }}
+            >
+              <option value="">{tx('x.select2')}</option>
+              {tierOptions.map((o) => (
+                <option key={o.key} value={o.key}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="min-w-0">
             <label className={labelClass}>{tx('x.errRoom')}</label>
             <select
               className={selectClass}
               value={value.emergency_room_id}
-              disabled={!value.state_name}
-              onChange={(e) => {
-                const id = e.target.value;
-                const room = rooms.find((r) => r.id === id);
-                const place = room ? placeLabels(room, locale) : { state_name: '', locality: '' };
-                onChange({
-                  ...value,
-                  emergency_room_id: id,
-                  locality: place.locality,
-                  state_name: place.state_name || value.state_name,
-                  room_label: room ? roomLabel(room, locale) : '',
-                });
-              }}
+              disabled={!tier}
+              onChange={(e) => chooseRoom(e.target.value)}
             >
               <option value="">{tx('x.select2')}</option>
-              {roomsInState.map((r) => (
+              {roomsInTier.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {roomLabel(r, locale)}
+                  {typeLabel(r)} · {roomLabel(r, locale)}
                 </option>
               ))}
             </select>
@@ -436,7 +508,7 @@ function placeLabels(room: RoomRow, locale: string) {
 function roomLabel(room: RoomRow, locale: string) {
   const name =
     locale?.startsWith('ar') ? room.name_ar || room.name : room.name || room.name_ar;
-  return [room.err_code, name].filter(Boolean).join(' · ') || room.id;
+  return [name, room.err_code].filter(Boolean).join(' · ') || room.id;
 }
 
 export function scopeIsReady(

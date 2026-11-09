@@ -34,15 +34,16 @@ const FormBubble: React.FC<FormBubbleProps> = ({
     children, 
     title, 
     showRequiredLegend = false,
-    removeBoxShadow = false
+    removeBoxShadow: _removeBoxShadow = false
 }) => {
     const { t } = useTranslation('fillForm');
     
     return (
-        <div className={`max-w-4xl ml-auto pr-2 bg-white rounded-lg ${!removeBoxShadow ? 'shadow-lg' : ''}`}>
-            <h2 className="text-2xl font-bold mb-4">{title}</h2>
+        // Dark form surface matching the app (styles: .err-form in globals.css)
+        <div className="err-form">
+            {title && <h2 className="text-2xl font-bold mb-4">{title}</h2>}
             {showRequiredLegend && (
-                <div className="text-sm text-gray-600 mb-4">
+                <div className="text-sm mb-4">
                     * {t('requiredFields')}
                 </div>
             )}

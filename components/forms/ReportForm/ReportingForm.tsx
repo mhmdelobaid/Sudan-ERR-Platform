@@ -330,7 +330,7 @@ const ReportingForm: React.FC<ReportingFormProps> = ({ errId, reportId, project,
                                         await submitEntireForm(values, reportId, project, setIsFormSubmitted)
                                     }  
                                     disabled={isSubmitting}
-                                    className="bg-primaryGreen hover:bg-green-700"
+                                    className="bg-primaryGreen hover:bg-green-700 err-primary"
                                 />
                             </div>
                         </Form>

@@ -450,7 +450,28 @@
     },
     "fundProject": "Project",
     "fundProjectHint": "The national project you are requesting funds from.",
-    "noProjectOpen": "No project is open in this state yet, so this work plan can’t be sent. Ask the national team."
+    "noProjectOpen": "No project is open in this state yet, so this work plan can’t be sent. Ask the national team.",
+    "localityTier": "Locality",
+    "stateRoomTier": "The state room",
+    "roomTypeState": "State",
+    "roomTypeLocality": "Locality",
+    "roomTypeBase": "Base",
+    "wizActivities": "Activities",
+    "wizDemographics": "People reached",
+    "wizQuestions": "Questions",
+    "wizExpenseTable": "Expense table",
+    "wizReceipts": "Receipts",
+    "wizKind": {
+      "activities": "activities",
+      "demographics": "people reached",
+      "questions": "questions",
+      "table": "expense table",
+      "receipts": "receipts"
+    },
+    "aiNotConfigured": "AI reading isn’t switched on yet. Fill in the form by hand for now.",
+    "couldNotReadRegions": "Couldn’t read the selected parts. Try again, or fill in the form by hand.",
+    "chooseFile": "Choose file",
+    "noFileChosen": "No file chosen"
   },
   "fp": {
     "title": "Projects and working groups",
@@ -505,5 +526,28 @@
       "not_found": "Not found. Reload the page.",
       "server_error": "Something went wrong. Try again."
     }
+  },
+  "links": {
+    "title": "Guides and websites",
+    "guide": "User guide",
+    "guideSub": "PDF, in this app’s language",
+    "lcc": "LCC website",
+    "err": "ERR website"
+  },
+  "look": {
+    "title": "Name and icon on your phone",
+    "intro": "When you add the app to your home screen, it shows this name and icon, so it looks like an ordinary tool. It opens to the calculator either way.",
+    "icon": "Icon",
+    "icons": {
+      "calculator": "Calculator",
+      "converter": "Converter",
+      "notes": "Notes",
+      "tools": "Tools"
+    },
+    "name": "Name under the icon",
+    "namePlaceholder": "Calculator",
+    "save": "Save",
+    "saved": "Saved on this phone.",
+    "howTo": "Choose before adding the app to your home screen. If it is already there, remove it and add it again (Share → Add to Home Screen on iPhone; ⋮ → Add to Home screen on Android). Or just use it in the browser and close the tab after."
   }
 }

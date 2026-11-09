@@ -175,7 +175,7 @@ function PageCanvas({
       className={cx(
         'border border-white/10 rounded overflow-hidden bg-white',
         expanded && 'shadow-sm',
-        !expanded && 'mx-auto w-fit max-w-full'
+        (!expanded || fitToContainer) && 'mx-auto w-fit max-w-full'
       )}
     >
       <div
@@ -310,7 +310,8 @@ export function WizardFullscreenShell({
   const { t: tx } = useTranslation('app');
   const continueLabel = continueLabelProp ?? tx('x.continueToReview');
   const backLabel = backLabelProp ?? tx('x.cancel');
-  const fitToContainer = !expanded && zoom <= 1;
+  // Pages fit the width unless zoomed in, in full screen too (phones would otherwise scroll sideways)
+  const fitToContainer = zoom <= 1;
 
   const allStepsDone = steps.every((s) => s.completed);
 
@@ -419,7 +420,7 @@ export function WizardFullscreenShell({
     );
   } else {
     pages = (
-      <div className={cx('pb-2', expanded ? 'mx-auto flex w-max max-w-none flex-col gap-6' : 'space-y-4')}>
+      <div className={cx('pb-2', expanded ? (fitToContainer ? 'mx-auto flex w-full max-w-full flex-col gap-6' : 'mx-auto flex w-max max-w-none flex-col gap-6') : 'space-y-4')}>
         {wizardPages.map((raw, pageIndex) => {
           const page = normalizeWizardPage(raw);
           if (!page?.dataUrl) return null;
@@ -482,7 +483,15 @@ export function WizardFullscreenShell({
 
   if (expanded && typeof document !== 'undefined') {
     return createPortal(
-      <div className="fixed inset-0 z-[80] flex flex-col gap-2 bg-[#0f1828] p-3 sm:p-4 text-[#a8b6cc]">
+      <div
+        className="fixed left-0 right-0 top-0 z-[80] flex flex-col gap-2 bg-[#0f1828] px-3 sm:px-4 text-[#a8b6cc] overflow-hidden"
+        style={{
+          // The visible height on phones (100vh includes the browser's bars)
+          height: '100dvh',
+          paddingTop: 'max(env(safe-area-inset-top), 0.75rem)',
+          paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+        }}
+      >
         {body}
       </div>,
       document.body

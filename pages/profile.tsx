@@ -10,6 +10,7 @@ import { saveMySignature } from '../components/signatures/signApi';
 import { newSupabase } from '../services/newSupabaseClient';
 import { signOutAndLock } from '../services/appLock';
 import Icon from '../components/ui/Icon';
+import AppLookSettings from '../components/profile/AppLookSettings';
 
 interface Profile {
     id: string; display_name: string | null; email: string | null; role: string; status: string;
@@ -318,6 +319,9 @@ const ProfilePage: React.FC = () => {
                 ))}
             </div>
         </section>
+
+        {/* Name and icon on the phone's home screen */}
+        <AppLookSettings cardClass={card} />
 
         {/* Devices and log out */}
         <section className={card} aria-labelledby="sec-devices">

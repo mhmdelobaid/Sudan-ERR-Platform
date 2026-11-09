@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import AppShell from '../../components/layout/AppShell';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { HomeSection, HomeCard } from '../../components/home/HomeSection';
+import QuickLinks from '../../components/layout/QuickLinks';
 import {
   WorkPlanScene,
   ApprovalsScene,
@@ -42,6 +43,7 @@ export default function FSystemHubPage() {
         <HomeCard href="/f-system/f4-f5" code="F4 & F5" title={t('cards.f4f5.title')} subtitle={t('cards.f4f5.sub')}
           illustration={ReportingScene} wash="bg-[#7B96C4]" size="md" />
       </HomeSection>
+      <QuickLinks />
     </AppShell>
   );
 }

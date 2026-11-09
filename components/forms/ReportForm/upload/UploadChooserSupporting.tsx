@@ -133,6 +133,7 @@ const UploadBox: React.FC<UploadBoxProps> = ({ onFileChange, uploadType, uploadI
       <input
         type="file"
         multiple
+        accept="image/jpeg,image/png,image/webp,application/pdf"
         id={inputId}
         className="hidden"
         onChange={onFileChange}

@@ -57,6 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           name,
           name_ar,
           err_code,
+          type,
           state_reference,
           states:states!emergency_rooms_state_reference_fkey (
             id,

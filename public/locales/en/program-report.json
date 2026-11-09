@@ -85,5 +85,8 @@
     "reportingPerson": "Reporting Person",
     "activitiesCount": "Number of Activities",
     "saveDraft": "Save Draft"
-  }
+  },
+  "activityN": "Activity {{n}}",
+  "chooseFiles": "Choose files",
+  "fileTypesHint": "Photos (JPG, PNG, WebP) or PDF."
 }

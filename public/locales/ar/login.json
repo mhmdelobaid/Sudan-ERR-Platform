@@ -42,5 +42,6 @@
   "lockApp": "قفل التطبيق",
   "userGuide": "دليل المستخدم",
   "lccWebsite": "موقع LCC",
-  "offlineMode": "وضع عدم الاتصال"
+  "offlineMode": "وضع عدم الاتصال",
+  "errWebsite": "موقع غرف الطوارئ"
 }

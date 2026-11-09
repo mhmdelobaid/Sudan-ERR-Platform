@@ -1,4 +1,5 @@
 import { newSupabase } from '../../../services/newSupabaseClient';
+import i18n from '../../../services/i18n';
 
 /** Bearer header from the current session (same pattern as other F4/F5 calls). */
 export async function f5AuthHeaders(): Promise<Record<string, string>> {
@@ -48,7 +49,10 @@ export async function f5ParseSnips(form: FormData): Promise<Record<string, unkno
   const res = await fetch('/api/f5/parse-snips', { method: 'POST', headers, body: form });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((json as { error?: string }).error || 'Could not read the selected regions');
+    const j = json as { error?: string; code?: string };
+    // No AI key on the server: say so plainly, in the app's language
+    if (j.code === 'ai_not_configured') throw new Error(i18n.t('app:x.aiNotConfigured'));
+    throw new Error(j.error || i18n.t('app:x.couldNotReadRegions'));
   }
   return json as Record<string, unknown>;
 }

@@ -10,8 +10,11 @@ import { appWithTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 import i18n from '../services/i18n'; // Import i18n initialization
 import LockGate from '../components/LockGate';
+import { applyAppLook } from '../lib/appLook';
 
 function MyApp({ Component, pageProps }) {
+  // Home-screen name and icon chosen on this phone (My account)
+  useEffect(() => { applyAppLook(); }, []);
   const router = useRouter();
 
   useEffect(() => {

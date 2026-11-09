@@ -307,7 +307,9 @@ ACTIVITIES AND EXPENSES:
    - Ignore any numbers that aren't in the الإجمالي column
 
 CURRENCY CONVERSION:
-- Form currency: ${formMetadata.currency || 'USD'}
+- Form currency: ${formMetadata.currency === 'auto'
+    ? 'not given — detect it from the form (symbols and labels such as $, USD, دولار, SDG, جنيه). If unclear, use USD.'
+    : formMetadata.currency || 'USD'}
 - Exchange rate (USD to SDG): ${formMetadata.exchange_rate || '1'}
 - If form currency is SDG, convert all amounts to USD using the exchange rate (divide SDG amount by exchange rate)
 - If form currency is USD, keep amounts in USD (do NOT convert)

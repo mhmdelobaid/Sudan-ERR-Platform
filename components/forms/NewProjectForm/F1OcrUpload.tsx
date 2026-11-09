@@ -11,11 +11,13 @@ const MAX_FILE_SIZE = 40 * 1024 * 1024;
 const DEFAULT_SDG_RATE = 2700;
 
 type F1OcrUploadProps = {
+  /** Currency and exchange rate: state level and staff only. Others: the AI reads the currency from the form. */
+  showCurrency?: boolean;
   onBack: () => void;
   onOcrComplete: (payload: F1OcrReviewPayload) => void;
 };
 
-export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps) {
+export default function F1OcrUpload({ onBack, onOcrComplete, showCurrency = true }: F1OcrUploadProps) {
   const { t: tx } = useTranslation('app');
   // A chosen file or a photo from the camera: checked, then uploaded for the AI to read
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,11 +94,13 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
       } = await newSupabase.auth.getSession();
       if (!session) throw new Error(tx('x.notSignedIn'));
 
-      const rate = currency === 'SDG' ? parsedExchangeRate : 1;
+      // Without the picker the AI detects the currency; SDG amounts use the default rate
+      const sentCurrency = showCurrency ? currency : 'auto';
+      const rate = !showCurrency ? DEFAULT_SDG_RATE : currency === 'SDG' ? parsedExchangeRate : 1;
       const formData = new FormData();
       formData.append('file', file);
       formData.append('form_type', 'F1');
-      formData.append('currency', currency);
+      formData.append('currency', sentCurrency);
       formData.append('exchange_rate', String(rate));
       formData.append('err_id', scope.emergency_room_id);
 
@@ -107,7 +111,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
       });
       const result = await res.json();
       if (!res.ok || !result.success) {
-        throw new Error(result.message || tx('x.ocrFailed'));
+        throw new Error(result.code === 'ai_not_configured' ? tx('x.aiNotConfigured') : result.message || tx('x.ocrFailed'));
       }
 
       const extracted = result.data as MapExtractedData;
@@ -116,7 +120,7 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
       onOcrComplete({
         extracted: {
           ...extracted,
-          form_currency: extracted.form_currency || currency,
+          form_currency: extracted.form_currency || (showCurrency ? currency : 'USD'),
           exchange_rate: extracted.exchange_rate ?? rate,
           state: scope.state_name || extracted.state || null,
           locality: scope.locality || extracted.locality || null,
@@ -131,8 +135,8 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
         locality: scope.locality,
         room_label: scope.room_label,
         temp_file_key: tempFileKey,
-        form_currency: currency,
-        exchange_rate: rate,
+        form_currency: extracted.form_currency || (showCurrency ? currency : 'USD'),
+        exchange_rate: extracted.exchange_rate ?? rate,
         file,
         file_name: file.name,
         file_type: file.type,
@@ -164,16 +168,22 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
             <label className="font-semibold block text-xs text-[#a8b6cc] mb-1">
               {tx('x.f1FilePdfOrWord')}
             </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,application/pdf"
-              className="app-input !py-2 text-sm file:mr-2 file:rounded-md file:border-0 file:bg-brand-orange file:text-[#152238] file:font-semibold file:px-2.5 file:py-1 file:text-xs"
-              disabled={uploadingFile || loading}
-              onChange={onPickFile}
-            />
+            {/* A labelled button instead of the browser's own file box (it shows English text on phones) */}
+            <label className={`app-input !py-2 flex items-center gap-2 cursor-pointer ${uploadingFile || loading ? 'opacity-60 pointer-events-none' : ''}`}>
+              <span className="shrink-0 rounded-md bg-brand-orange text-[#152238] font-semibold px-2.5 py-1 text-xs">{tx('x.chooseFile')}</span>
+              <span className="min-w-0 truncate text-sm text-[#a8b6cc]">{file ? file.name : tx('x.noFileChosen')}</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                className="sr-only"
+                disabled={uploadingFile || loading}
+                onChange={onPickFile}
+              />
+            </label>
             <CameraButton onChange={onPickFile} disabled={uploadingFile || loading}
               className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand-orange/60 text-brand-orange px-3 py-1.5 text-xs font-bold" />
           </div>
+          {showCurrency && (
           <div>
             <label className="font-semibold block text-xs text-[#a8b6cc] mb-1">{tx('x.currency')}</label>
             <div className="inline-flex rounded-lg border border-white/15 overflow-hidden">
@@ -193,9 +203,10 @@ export default function F1OcrUpload({ onBack, onOcrComplete }: F1OcrUploadProps)
               ))}
             </div>
           </div>
+          )}
         </div>
 
-        {currency === 'SDG' && (
+        {showCurrency && currency === 'SDG' && (
           <div>
             <label className="font-semibold block text-xs text-[#a8b6cc] mb-1">
               {tx('x.exchangeRateUsdSdg')}

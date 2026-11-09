@@ -182,3 +182,139 @@ html[dir='ltr'] {
     display: none;
   }
 }
+
+/*
+ * Report forms (F4, F5 and their drafts) inside the dark app: FormBubble renders .err-form.
+ * Inputs fill the width without spilling (iOS date fields included), text is light,
+ * buttons are app-sized: the submit button is the orange primary, others are outlined.
+ */
+.err-form {
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  color: #e8eef8;
+  font-size: 0.9375rem;
+}
+.err-form .prose,
+.err-form.prose {
+  max-width: none;
+  color: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+}
+.err-form :is(h1, h2, h3, h4, h5, h6) {
+  color: #f3f6fb;
+  margin: 1.25rem 0 0.5rem;
+  line-height: 1.35;
+}
+.err-form .text-3xl {
+  font-size: 1.25rem !important;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #ffffff;
+}
+.err-form :is(.text-2xl, h2, h3) {
+  font-size: 1.05rem !important;
+  font-weight: 700;
+}
+.err-form p {
+  color: #a8b6cc;
+  margin: 0.25rem 0;
+}
+.err-form label,
+.err-form .text-black-bold,
+.err-form .text-gray-700 {
+  color: #a8b6cc !important;
+  font-size: 0.8rem !important;
+  font-weight: 600;
+}
+.err-form :is(.bg-white, .bg-gray-50, .bg-gray-100, .bg-slate-50) {
+  background-color: #1c2d48 !important;
+  color: #e8eef8;
+}
+.err-form :is(.border, .border-gray-200, .border-gray-300) {
+  border-color: rgb(255 255 255 / 0.12) !important;
+}
+.err-form :is(input:not([type='checkbox']):not([type='radio']):not([type='file']), select, textarea) {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.12) !important;
+  border-radius: 0.75rem;
+  background-color: #152238 !important;
+  color: #e8eef8 !important;
+  font-size: 16px; /* no zoom on iPhone */
+  line-height: 1.4;
+}
+.err-form input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 2.75rem;
+  text-align: start;
+}
+.err-form input[type='date']::-webkit-date-and-time-value {
+  text-align: start;
+}
+.err-form :is(input, textarea)::placeholder {
+  color: #6b7a90;
+}
+.err-form :is(input, select, textarea):focus {
+  outline: none;
+  border-color: #f9a778 !important;
+  box-shadow: 0 0 0 2px rgb(249 167 120 / 0.25);
+}
+.err-form :is(input, textarea):is([readonly], [disabled], .bg-gray-100) {
+  background-color: #1c2d48 !important;
+  color: #a8b6cc !important;
+}
+.err-form input[type='file'] {
+  max-width: 100%;
+  font-size: 0.8rem;
+  color: #a8b6cc;
+}
+.err-form input[type='file']::file-selector-button {
+  margin-inline-end: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: #f9a778;
+  color: #152238;
+  font-weight: 600;
+}
+.err-form button {
+  margin: 0;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  box-shadow: none;
+}
+.err-form button:is(.bg-primaryGreen, .bg-blue-500, .bg-brand-blue):not([type='submit']):not(.err-primary) {
+  background-color: transparent !important;
+  color: #e8eef8 !important;
+  border: 1px solid rgb(255 255 255 / 0.18);
+}
+.err-form button:is([type='submit'], .err-primary) {
+  background-color: #f9a778 !important;
+  color: #152238 !important;
+  border: 0;
+}
+.err-form button:disabled {
+  opacity: 0.55;
+}
+.err-form .mb-10 {
+  margin-bottom: 0.5rem;
+}
+.err-form .flex.justify-between:has(> button) {
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.err-form .flex.justify-between:has(> button) > button {
+  flex: 1 1 9rem;
+}

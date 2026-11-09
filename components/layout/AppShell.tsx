@@ -110,9 +110,7 @@ const AppShell: React.FC<AppShellProps> = ({ children, title, bare }) => {
       {isDesktop && (
         <aside className="print:hidden w-64 shrink-0 bg-[#152238]/95 backdrop-blur-sm border-e border-white/10 flex flex-col sticky top-0 h-screen">
           <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-            <div className="h-10 w-10 rounded-2xl bg-white flex items-center justify-center overflow-hidden">
-              <img src={LogoImage} alt="ERR" className="h-8 w-8 object-contain" />
-            </div>
+            <img src={LogoImage} alt="ERR" className="h-12 w-12 shrink-0 object-contain" />
             <div>
               <p className="font-bold text-white text-sm leading-tight">{t('shell.appName')}</p>
               <p className="text-[11px] text-[#8a97ab] mb-0">{t('shell.tagline')}</p>
@@ -192,9 +190,7 @@ const AppShell: React.FC<AppShellProps> = ({ children, title, bare }) => {
         <header className="print:hidden sticky top-0 z-40 bg-[#152238]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {!isDesktop && (
-              <div className="h-9 w-9 rounded-xl bg-white flex items-center justify-center shrink-0">
-                <img src={LogoImage} alt="" className="h-7 w-7 object-contain" />
-              </div>
+              <img src={LogoImage} alt="" className="h-11 w-11 shrink-0 object-contain" />
             )}
             <div className="min-w-0">
               <h1 className="font-bold text-white truncate text-base sm:text-lg leading-tight mb-0">

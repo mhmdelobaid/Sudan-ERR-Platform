@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server'
+import { aiProvider, getAiModel } from '../ai/model'
 import mammoth from 'mammoth'
 import * as os from 'os'
 import * as fs from 'fs'
@@ -29,6 +30,8 @@ function getGeminiApiKey(): string {
 }
 
 function getGeminiModel () {
+  // Claude when its key is set, otherwise Gemini (lib/ai/model.ts)
+  if (aiProvider() === 'claude') return getAiModel({ model: 'gemini-2.5-flash', maxOutputTokens: 16000 })
   if (geminiModelInstance) return geminiModelInstance
   geminiModelInstance = new GoogleGenerativeAI(getGeminiApiKey()).getGenerativeModel({ model: 'gemini-2.5-flash' })
   return geminiModelInstance
@@ -39,7 +42,7 @@ async function extractTextWithGemini(
   mimeType: string,
   withTimeout: <T>(p: Promise<T>, ms: number, label: string) => Promise<T>
 ): Promise<string> {
-  if (buffer.length <= INLINE_SIZE_LIMIT) {
+  if (buffer.length <= INLINE_SIZE_LIMIT || aiProvider() === 'claude') {
     const base64 = buffer.toString('base64')
     const result = await withTimeout(
       getGeminiModel().generateContent([
@@ -172,7 +175,7 @@ export async function processFForm(file: File, metadata: ProcessMetadata): Promi
       locality: null,
       planned_activities: [],
       expenses: [],
-      form_currency: metadata?.currency || 'USD',
+      form_currency: metadata?.currency && metadata.currency !== 'auto' ? metadata.currency : 'USD',
       exchange_rate: metadata?.exchange_rate || 1,
       language: null,
       raw_ocr: ''

@@ -20,6 +20,7 @@ import {
   fetchF4SectorsForMatch,
   matchRawActivityToSectorNameEn,
 } from '../../../lib/f4/f4ExpenseSectors';
+import { aiProvider, AI_NOT_CONFIGURED } from '../../../lib/ai/model';
 
 export const config = {
   api: { bodyParser: false },
@@ -380,8 +381,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = await validateSession(authHeader.replace('Bearer ', ''));
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({ error: 'Extraction service is not configured' });
+  if (!aiProvider()) {
+    return res.status(503).json({ error: AI_NOT_CONFIGURED, code: 'ai_not_configured' });
   }
 
   try {

@@ -1,18 +1,17 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { getAiModel } from '../ai/model'
 
-let genAI: GoogleGenerativeAI | null = null
-
-function getGenAI (): GoogleGenerativeAI {
-  if (!genAI) {
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) {
-      throw new Error(
-        'GEMINI_API_KEY not set. Add GEMINI_API_KEY=<your-key> to .env.local, then restart the dev server.'
-      )
-    }
-    genAI = new GoogleGenerativeAI(apiKey)
+// Claude when its key is set, otherwise Gemini (lib/ai/model.ts)
+function getGenAI () {
+  return {
+    getGenerativeModel: (o: { model: string; systemInstruction?: string; generationConfig?: any }) =>
+      getAiModel({
+        model: o.model,
+        systemInstruction: o.systemInstruction,
+        temperature: o.generationConfig?.temperature,
+        maxOutputTokens: o.generationConfig?.maxOutputTokens,
+        json: o.generationConfig?.responseMimeType === 'application/json',
+      }),
   }
-  return genAI
 }
 
 /** Normalize Gemini JSON output for JSON.parse (fences, control chars, bad backslashes). */

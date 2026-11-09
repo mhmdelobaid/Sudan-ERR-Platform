@@ -14,6 +14,7 @@ import {
 } from '../../../services/prodProjectAccess';
 import { processFForm } from '../../../lib/ocr/ocrProcess';
 import { mapOcrToF4Drafts } from '../../../lib/f4/mapOcrToDrafts';
+import { aiProvider, AI_NOT_CONFIGURED } from '../../../lib/ai/model';
 
 export const config = {
   api: {
@@ -32,8 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!isProdSupabaseConfigured()) {
     return res.status(500).json({ error: 'Reporting database not configured' });
   }
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
+  if (!aiProvider()) {
+    return res.status(503).json({ error: AI_NOT_CONFIGURED, code: 'ai_not_configured' });
   }
 
   const authHeader = req.headers.authorization;

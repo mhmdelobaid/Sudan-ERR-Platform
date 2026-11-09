@@ -85,5 +85,8 @@
     "reportingPerson": "الشخص المقدم للتقرير",
     "activitiesCount": "عدد الأنشطة",
     "saveDraft": "حفظ المسودة"
-  }
-} 
+  },
+  "activityN": "النشاط {{n}}",
+  "chooseFiles": "اختر ملفات",
+  "fileTypesHint": "صور (JPG أو PNG أو WebP) أو PDF."
+}

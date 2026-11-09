@@ -1,8 +1,8 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getAiModel, aiProvider, AI_NOT_CONFIGURED } from '../ai/model';
 
 export function isRetryableGeminiError(e: unknown): boolean {
   const m = e instanceof Error ? e.message : String(e);
-  return /\[503|\[429|503 Service|429 Too Many|UNAVAILABLE|RESOURCE_EXHAUSTED|high demand|try again later|overloaded|ECONNRESET|ETIMEDOUT|fetch failed/i.test(
+  return /\[503|\[529|\[429|503 Service|429 Too Many|UNAVAILABLE|RESOURCE_EXHAUSTED|high demand|try again later|overloaded|ECONNRESET|ETIMEDOUT|fetch failed/i.test(
     m
   );
 }
@@ -15,22 +15,20 @@ export type GeminiParseSnipsResilientConfig = {
 };
 
 function getModelWithId(
-  apiKey: string,
+  _apiKey: string,
   modelId: string,
   systemInstruction: string,
   maxOutputTokens: number,
   temperatureDefault: number,
   opts?: { temperature?: number }
 ) {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({
+  // Claude when its key is set, otherwise Gemini (lib/ai/model.ts)
+  return getAiModel({
     model: modelId,
     systemInstruction,
-    generationConfig: {
-      temperature: opts?.temperature ?? temperatureDefault,
-      responseMimeType: 'application/json',
-      maxOutputTokens,
-    },
+    temperature: opts?.temperature ?? temperatureDefault,
+    json: true,
+    maxOutputTokens,
   });
 }
 
@@ -47,8 +45,8 @@ export function createGeminiParseSnipsResilient(config: GeminiParseSnipsResilien
     opts: { temperature?: number } | undefined,
     content: any
   ) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error('GEMINI_API_KEY not set');
+    if (!aiProvider()) throw new Error(AI_NOT_CONFIGURED);
+    const apiKey = '';
 
     const primaryAttempts = 3;
     let lastErr: unknown;
@@ -79,7 +77,7 @@ export function createGeminiParseSnipsResilient(config: GeminiParseSnipsResilien
     }
 
     const tryFallback =
-      primaryModelId !== fallbackModelId && primaryModelId.includes('flash-lite');
+      aiProvider() === 'gemini' && primaryModelId !== fallbackModelId && primaryModelId.includes('flash-lite');
     if (tryFallback) {
       console.warn(`${logPrefix} FALLBACK_MODEL`, {
         from: primaryModelId,

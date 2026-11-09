@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { BookOpen, ExternalLink, WifiOff, Eye, EyeOff } from 'lucide-react';
+import { BookOpen, ExternalLink, WifiOff, Eye, EyeOff, Globe } from 'lucide-react';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { newSupabase } from '../services/newSupabaseClient';
@@ -137,8 +137,8 @@ const Login = () => {
 
       <div className="relative z-10 w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <div className="mb-4 h-[5.5rem] w-[5.5rem] rounded-3xl bg-white flex items-center justify-center shadow-lift">
-            <Image src={LogoImage} alt={t('logoAlt')} width={88} height={88} className="object-contain" priority />
+          <div className="mb-4 h-32 w-32 flex items-center justify-center">
+            <Image src={LogoImage} alt={t('logoAlt')} width={128} height={128} className="object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)]" priority />
           </div>
           <h1 className="text-xl font-bold text-center text-white leading-snug px-2">{t('welcomeMessage')}</h1>
         </div>
@@ -210,7 +210,7 @@ const Login = () => {
           <p className="text-sm text-red-300 mt-3 text-center bg-red-500/10 border border-red-400/20 rounded-xl px-3 py-2">{error}</p>
         )}
 
-        <div className="mt-8 flex items-start justify-center gap-6">
+        <div className="mt-8 flex items-start justify-center gap-3 sm:gap-5">
           <a href={guideHref} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1.5 w-20 text-[#a8b6cc] hover:text-brand-orange transition-colors">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1c2d48] border border-white/10">
               <BookOpen className="h-5 w-5" />
@@ -225,6 +225,13 @@ const Login = () => {
             <span className="text-[11px] font-medium text-center leading-tight">{t('lccWebsite')}</span>
           </a>
 
+          <a href="https://emergencyresponserooms.org/" target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1.5 w-20 text-[#a8b6cc] hover:text-brand-orange transition-colors">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1c2d48] border border-white/10">
+              <Globe className="h-5 w-5" />
+            </span>
+            <span className="text-[11px] font-medium text-center leading-tight">{t('errWebsite')}</span>
+          </a>
+
           <button type="button" onClick={() => router.push('/offline-mode')} className="flex flex-col items-center gap-1.5 w-20 text-[#a8b6cc] hover:text-brand-orange transition-colors">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1c2d48] border border-white/10">
               <WifiOff className="h-5 w-5" />
@@ -234,9 +241,6 @@ const Login = () => {
         </div>
 
         <div className="mt-6 flex flex-col items-center gap-3 text-sm">
-          <Link href="/register" className="text-[#9BB0D4] hover:text-brand-orange font-medium transition-colors">
-            {t('registerLink')}
-          </Link>
           <button type="button" onClick={lockApp} className="text-[#8a97ab] hover:text-white transition-colors">
             {t('lockApp')}
           </button>

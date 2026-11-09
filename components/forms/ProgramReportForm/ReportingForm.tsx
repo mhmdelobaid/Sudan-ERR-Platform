@@ -261,7 +261,7 @@ const ProgramReportForm: React.FC<ReportingFormProps> = ({
                                     {values.activities.map((_, index) => (
                                         <div key={index} className="border pt-1 px-2 pb-2 rounded-lg mb-2 bg-gray-50">
                                             <div className="flex justify-between items-center">
-                                                <h4 className="font-bold mb-1">Activity {index + 1}</h4>
+                                                <h4 className="font-bold mb-1">{t('activityN', { n: index + 1 })}</h4>
                                                 <div className="flex items-center gap-2">
                                                     {values.activities.length > 1 && (
                                                         <button

@@ -8,6 +8,7 @@ import { sniffUploadType, UPLOAD_NOT_ALLOWED } from '../../../lib/uploadRules';
 import { processFForm } from '../../../lib/ocr/ocrProcess';
 import { f4ToPrefilled } from '../../../lib/ocr/f4ToPrefilled';
 import { requireApiSession } from '../../../services/requireApiSession';
+import { aiProvider, AI_NOT_CONFIGURED } from '../../../lib/ai/model';
 
 export const config = {
   api: {
@@ -43,11 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = await requireApiSession(req, res);
   if (!user) return;
 
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({
-      success: false,
-      message: 'GEMINI_API_KEY not configured. Add it to .env.local and restart.',
-    });
+  if (!aiProvider()) {
+    return res.status(503).json({ success: false, code: 'ai_not_configured', message: AI_NOT_CONFIGURED })
   }
 
   try {

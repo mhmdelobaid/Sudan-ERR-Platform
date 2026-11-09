@@ -548,16 +548,16 @@ export default function F4WizardFlow({
 
   if (step === 'wizard') {
     const pills: WizardStepPill[] = [
-      { id: 'table', label: '1) Expense table', completed: wizardProgress.table, isCurrent: expectedKind === 'table' },
-      { id: 'questions', label: '2) Questions', completed: wizardProgress.questions, isCurrent: expectedKind === 'questions' },
-      { id: 'receipts', label: '3) Receipts', completed: wizardProgress.receipts, isCurrent: expectedKind === 'receipts' },
+      { id: 'table', label: `1) ${tx('x.wizExpenseTable')}`, completed: wizardProgress.table, isCurrent: expectedKind === 'table' },
+      { id: 'questions', label: `2) ${tx('x.wizQuestions')}`, completed: wizardProgress.questions, isCurrent: expectedKind === 'questions' },
+      { id: 'receipts', label: `3) ${tx('x.wizReceipts')}`, completed: wizardProgress.receipts, isCurrent: expectedKind === 'receipts' },
     ];
     return (
       <WizardFullscreenShell
         title={tx('x.f4FinancialReport')}
         steps={pills}
         expectedStepId={expectedKind}
-        expectedStepLabel={STEP_LABEL[expectedKind]}
+        expectedStepLabel={tx(`x.wizKind.${expectedKind}`, { defaultValue: STEP_LABEL[expectedKind] })}
         selectionCount={selectionByKind[expectedKind].length}
         wizardLoading={wizardLoading != null}
         processDisabled={
@@ -607,7 +607,7 @@ export default function F4WizardFlow({
           setWizardExpanded(false);
           onReturnToMenu();
         }}
-        backLabel="Cancel"
+        backLabel={tx('x.cancel')}
         onContinue={() => {
           setWizardExpanded(false);
           setError('');
